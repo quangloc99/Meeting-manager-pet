@@ -1,5 +1,6 @@
-package ru.ifmo.se.s267880.lab5.cvs;
+package ru.ifmo.se.s267880.lab5.csv;
 
+// TODO: handle the EOF more properly
 abstract public class CsvLexerStateMachine {
     protected interface State {
         State process(int nextByte);
@@ -28,8 +29,9 @@ abstract public class CsvLexerStateMachine {
     }
 
     public boolean feed(int nextByte) {
+        if (currentState == null) return false;
         currentState = currentState.process(nextByte);
-        return currentState == null;
+        return true;
     }
 
     public abstract void whenGotNewField(String field);
@@ -85,6 +87,7 @@ abstract public class CsvLexerStateMachine {
             whenGotNewField(currentField);
         }
         if (nextByte == -1) {
+            whenRowEnd();
             return null;
         }
         if (nextByte == COMMA) {
