@@ -1,6 +1,7 @@
 package ru.ifmo.se.s267880.lab5;
 
 import ru.ifmo.se.s267880.lab5.csv.CsvParser;
+import ru.ifmo.se.s267880.lab5.csv.CsvRowWriter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,12 +16,15 @@ public class Main {
                 ",,\r\n" +
                 "cool,,yeah";
         try {
-            CsvParser ps = new CsvParser(new ByteArrayInputStream(csv.getBytes()), true);
-            Map<String, String> row;
-            do {
-                row = ps.getNextRowWithNames();
-                System.out.println(row);
-            } while (row != null);
+            CsvParser ps = new CsvParser(new ByteArrayInputStream(csv.getBytes()));
+            CsvRowWriter rw = new CsvRowWriter(System.out, 3);
+//            Map<String, String> row;
+            List<String> row;
+            while (true) {
+                row = ps.getNextRow();
+                if (row == null) break;
+                rw.writeRow(row);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

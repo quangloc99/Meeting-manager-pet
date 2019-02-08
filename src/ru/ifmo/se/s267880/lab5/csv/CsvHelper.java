@@ -10,7 +10,7 @@ public class CsvHelper {
         return ch == 0x20 || ch ==0x21 || (0x23 <= ch && ch <= 0x2B) || (0x2D <= ch && ch <= 0x7E);
     }
 
-    public static String enclosedQuote(String field) {
+    public static String encloseQuote(String field) {
         if (!field.contains("\"") && !field.contains(",") && !field.contains("\r") && !field.contains("\n")) {
             return field;
         }
