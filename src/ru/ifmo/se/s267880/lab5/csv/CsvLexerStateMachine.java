@@ -1,5 +1,7 @@
 package ru.ifmo.se.s267880.lab5.csv;
 
+import ru.ifmo.se.s267880.lab5.csv.CsvHelper;
+
 // TODO: handle the EOF more properly
 abstract public class CsvLexerStateMachine {
     protected interface State {
@@ -7,14 +9,6 @@ abstract public class CsvLexerStateMachine {
     }
 
     protected class LexingError extends RuntimeException {}
-
-    private final int CR = '\r';
-    private final int LF = '\n';
-    private final int COMMA = ',';
-    private final int QUOTE = '"';
-    private boolean isTextData(int ch) {
-        return ch == 0x20 || ch ==0x21 || (0x23 <= ch && ch <= 0x2B) || (0x2D <= ch && ch <= 0x7E);
-    }
 
     protected String currentField;
     protected State currentState;
@@ -41,8 +35,8 @@ abstract public class CsvLexerStateMachine {
     protected State beginParse(int nextByte) { return beginParseField(nextByte); }
     protected State beginParseField(int nextByte) {
         currentField = "";
-        if (nextByte == QUOTE) return this::parseQuotedField;
-        if (isTextData(nextByte)) {
+        if (nextByte == CsvHelper.QUOTE) return this::parseQuotedField;
+        if (CsvHelper.isTextData(nextByte)) {
             currentField += (char) nextByte;
             return this::parseField;
         }
@@ -50,7 +44,7 @@ abstract public class CsvLexerStateMachine {
     }
 
     protected State parseField(int nextByte) {
-        if (isTextData(nextByte)) {
+        if (CsvHelper.isTextData(nextByte)) {
             currentField += (char) nextByte;
             return this::parseField;
         }
@@ -58,7 +52,7 @@ abstract public class CsvLexerStateMachine {
     }
 
     protected State parseLF(int nextByte) {
-        if (nextByte != LF) {
+        if (nextByte != CsvHelper.LF) {
             throw new LexingError();
         }
         whenRowEnd();
@@ -66,34 +60,34 @@ abstract public class CsvLexerStateMachine {
     }
 
     protected State parseQuotedField(int nextByte) {
-        if (isTextData(nextByte) || nextByte == COMMA || nextByte == CR || nextByte == LF) {
+        if (CsvHelper.isTextData(nextByte) || nextByte == CsvHelper.COMMA || nextByte == CsvHelper.CR || nextByte == CsvHelper.LF) {
             currentField += (char)nextByte;
             return this::parseQuotedField;
         }
-        if (nextByte == QUOTE) return this::tryParseDoubleQuote;
+        if (nextByte == CsvHelper.QUOTE) return this::tryParseDoubleQuote;
         throw new LexingError();
     }
 
     protected State tryParseDoubleQuote(int nextByte) {
-        if (nextByte == QUOTE) {
-            currentField += (char) QUOTE;
+        if (nextByte == CsvHelper.QUOTE) {
+            currentField += (char) CsvHelper.QUOTE;
             return this::parseQuotedField;
         }
         return parseEndOfField(nextByte);
     }
 
     protected State parseEndOfField(int nextByte) {
-        if (nextByte == -1 || nextByte == COMMA || nextByte == CR) {
+        if (nextByte == -1 || nextByte == CsvHelper.COMMA || nextByte == CsvHelper.CR) {
             whenGotNewField(currentField);
         }
         if (nextByte == -1) {
             whenRowEnd();
             return null;
         }
-        if (nextByte == COMMA) {
+        if (nextByte == CsvHelper.COMMA) {
             return this::beginParseField;
         }
-        if (nextByte == CR) {
+        if (nextByte == CsvHelper.CR) {
             return this::parseLF;
         }
         throw new LexingError();
