@@ -69,4 +69,8 @@ public class CsvParser {
 
         return res;
     }
+
+    public List<String> getHeader() {
+        return List.copyOf(header);
+    }
 }
