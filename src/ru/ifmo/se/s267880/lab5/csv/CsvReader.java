@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.*;
 
 // TODO: separate CSV row Parser with CSV row with names Parser
-public class CsvParser {
+public class CsvReader {
     public class ParsingError extends RuntimeException {
         public ParsingError(String msg) {
             super(msg);
@@ -19,7 +19,7 @@ public class CsvParser {
     private List<String> currentRow = new LinkedList<>();
     private boolean rowEnd;
 
-    public CsvParser(InputStream in) {
+    public CsvReader(InputStream in) {
         this.in = in;
         header = null;
         lexer = new CsvLexerStateMachine() {
@@ -35,7 +35,7 @@ public class CsvParser {
         };
     }
 
-    public CsvParser(InputStream in, boolean withHeader) throws IOException {
+    public CsvReader(InputStream in, boolean withHeader) throws IOException {
         this(in);
         if (withHeader) {
             this.header = getNextRow();
