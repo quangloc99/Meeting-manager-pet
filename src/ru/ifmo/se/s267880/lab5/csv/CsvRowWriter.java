@@ -32,7 +32,11 @@ public class CsvRowWriter {
         firstRowWritten = true;
     }
 
-    int getNRowFields() {
+    public void close() throws IOException {
+        out.close();
+    }
+
+    public int getNRowFields() {
         return nRowFields;
     }
 }
