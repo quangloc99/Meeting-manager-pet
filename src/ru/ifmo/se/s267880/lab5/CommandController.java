@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab5;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,6 +92,8 @@ public class CommandController {
     }
 
     protected JsonElement getUserJsonInput() {
-        return (new JsonParser()).parse(userInputStream);
+        JsonReader jreader = new JsonReader(userInputStream);
+        jreader.setLenient(true);
+        return (new JsonParser()).parse(jreader);
     }
 }
