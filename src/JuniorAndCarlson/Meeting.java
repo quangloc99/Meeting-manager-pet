@@ -1,4 +1,6 @@
 package JuniorAndCarlson;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Meeting implements Comparable<Meeting> {
@@ -33,7 +35,11 @@ public class Meeting implements Comparable<Meeting> {
 
     @Override
     public String toString() {
-        return "Meeting \"" + meetingName + "\" at " + meetingTime;
+        return toString(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"));
+    }
+
+    public String toString(DateFormat dateFormat) {
+        return "At " + dateFormat.format(meetingTime) + ": " + meetingName;
     }
 
     @Override
