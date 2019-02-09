@@ -16,6 +16,21 @@ import java.util.Map;
 import java.util.Scanner;
 import java.io.InputStreamReader;
 
+import ru.ifmo.se.s267880.lab5.commandControllerHelper.*;
+
+class DefinedCommands {
+    @Command(usage = "just say hello")
+    public void hi() {
+        System.out.println("hello");
+    }
+
+    @Command(usage = "say hello to someone in the input")
+    public void hello(JsonElement elm) {
+        if (!elm.isJsonPrimitive()) System.out.println("The person's name must be a string");
+        else System.out.println("hello " + elm.getAsString());
+    }
+}
+
 public class Main {
     public static void main(String[] args) {
 //        String csv = "name,\"high score\",time\r\n" +
@@ -40,6 +55,11 @@ public class Main {
 //        System.out.printf("%20s", je.getAsJsonObject().get("name").getAsString());
         CommandController cc = new CommandController();
         cc.addCommand("exit", "escape the program", () -> System.exit(0));
+        cc.addCommandWithJson("test", "print the value of the name field in json", elm -> {
+            System.out.println(elm);
+        });
+
+        ReflectionCommandAdder.addCommand(cc, new DefinedCommands());
         while (true) {
             try {
                 cc.prompt();
