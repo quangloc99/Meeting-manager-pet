@@ -12,23 +12,16 @@ import java.util.*;
 public class MeetingManager {
     private List<Meeting> collection = new LinkedList<>();
     private String currentFileName;
+    private Date fileOpenSince;
     public MeetingManager(String path) {
         open(path);
+        save();
     }
 
-    @Command(usage = "[Additional] Open a file with name given by arg. The content of the collection will be replaced.")
-    public void open(String path) {
-        collection.clear();
-        try {
-            collection = getMeetingsFromFile(path);
-        } catch (ParseException | IOException e) {
-            System.err.println(e);
-            System.err.println("The collection is initialized empty and still be saved into " + path);
-        }
-        currentFileName = path;
-    }
-
-    @Command(usage = "Add all data from the file given by the arg into the current collection.")
+    @Command(
+            commandName = "import",
+            usage = "Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted"
+    )
     public void doImport(String path) {
         try {
             collection.addAll(getMeetingsFromFile(path));
@@ -38,7 +31,6 @@ public class MeetingManager {
     }
 
     private List<Meeting> getMeetingsFromFile(String path) throws ParseException, IOException {
-        currentFileName = path;
         CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(path)), true);
 
         List<Meeting> newData = new LinkedList<>();
@@ -103,11 +95,41 @@ public class MeetingManager {
         add(meeting);
     }
 
-    @Command(usage = "show some information.")
+    @Command(usage = "show some basic information.")
     public void info() {
         System.out.println("# Information");
         System.out.println("File name: " + currentFileName);
         System.out.println("Number of meeting: " + collection.size());
-        System.out.println("Last time modified: " + Helper.meetingDateFormat.format(new Date(new File(currentFileName).lastModified())));
+        System.out.println("File open since: " + Helper.meetingDateFormat.format(fileOpenSince));
+    }
+
+    @Command(usage = "[Additional] Open a file with name given by arg. The content of the collection will be replaced.\nNote that the file name must be quoted")
+    public void open(String path) {
+        collection.clear();
+        try {
+            collection = getMeetingsFromFile(path);
+        } catch (ParseException | IOException e) {
+            System.err.println(e);
+            System.err.println("The collection is initialized empty and still be saved into " + path);
+        }
+        fileOpenSince = Calendar.getInstance().getTime();
+        currentFileName = path;
+    }
+
+    @Command(commandName = "save-as", usage = "[Additional] Change the current working file.\nNote that the file name must be quoted.")
+    public void saveAs(String path) {
+        currentFileName = path;
+        save();
+        fileOpenSince = Calendar.getInstance().getTime();
+    }
+
+    @Command(usage = "[Additional] sort all the meeting ascending by their date.")
+    public void sort() {
+        Collections.sort(collection);
+    }
+
+    @Command(usage = "[Additional] Reverse all the order ot the meetings.")
+    public void reverse() {
+        Collections.reverse(collection);
     }
 }
