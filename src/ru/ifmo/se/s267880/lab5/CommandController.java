@@ -2,8 +2,11 @@ package ru.ifmo.se.s267880.lab5;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,11 +17,11 @@ import java.util.TreeMap;
 public class CommandController {
     public interface Handler {}
     public interface HandlerWithNoArgument extends Handler {
-        void process();
+        void process() throws Exception ;
     }
 
     public interface HandlerWithJson extends Handler {
-        void process(JsonElement json);
+        void process(JsonElement json) throws Exception;
     }
 
     public class CommandNotFoundException extends Exception {
@@ -30,16 +33,19 @@ public class CommandController {
     private Map<String, Handler> commandHandlers = new TreeMap<>();  // so the commands can be alphabetized
     private Map<String, String> commandUsages = new HashMap<>();
 
-    protected InputStreamReader userInputStream;
+    protected BufferedReader userInputStream;
 
     public CommandController(InputStream userInputStream) {
-        this.userInputStream = new InputStreamReader(userInputStream);
-        addCommand("list-commands", "list all the commands", () -> {
-            System.out.println("Commands list:");
-            commandHandlers.forEach((commandName, handler) -> System.out.printf("   - %15s - %s\n",
-                commandName + (handler instanceof HandlerWithJson ? " {input}" : ""),
-                commandUsages.get(commandName)
-            ));
+        this.userInputStream = new BufferedReader(new InputStreamReader(userInputStream));
+        addCommand("list-commands", "[Additional] List all the commands.", () -> {
+            System.out.println("# Commands list:");
+            commandHandlers.forEach((commandName, handler) -> {
+                System.out.printf("- %s %s\n", commandName, (handler instanceof HandlerWithJson ? "{arg}" : ""));
+                for (String s : commandUsages.get(commandName).split("\n")) {
+                    System.out.printf("\t%s\n", s);
+                }
+                System.out.println();
+            });
         });
     }
 
@@ -65,7 +71,7 @@ public class CommandController {
         return commandUsages.get(commandName);
     }
 
-    public void prompt() throws IOException, CommandNotFoundException {
+    public void prompt() throws IOException, CommandNotFoundException, Exception {
         System.out.printf("> ");
         String userCommand = getUserCommand();
         if (!commandHandlers.containsKey(userCommand)) {
@@ -91,9 +97,19 @@ public class CommandController {
         return command;
     }
 
-    protected JsonElement getUserJsonInput() {
+    protected JsonElement getUserJsonInput() throws IOException {
         JsonReader jreader = new JsonReader(userInputStream);
-        jreader.setLenient(true);
+
+        // try to preread some primitive type because after reading them the parser will call the "hasNext" method,
+        // and the reader will try to read more, so the command will not be executed immediately.
+        if (jreader.peek() == JsonToken.NUMBER)
+            return new JsonPrimitive(jreader.nextLong());
+        else if (jreader.peek() == JsonToken.STRING)
+            return new JsonPrimitive(jreader.nextString());
+        else if (jreader.peek() == JsonToken.BOOLEAN)
+            return new JsonPrimitive(jreader.nextBoolean());
+
+        jreader.setLenient(false);
         return (new JsonParser()).parse(jreader);
     }
 }
