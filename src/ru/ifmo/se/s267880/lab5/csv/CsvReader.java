@@ -5,6 +5,11 @@ import java.io.InputStream;
 import java.util.*;
 
 // TODO: separate CSV row Parser with CSV row with names Parser
+
+/**
+ * A simiple CSV reader.
+ * @author Tran Quang Loc
+ */
 public class CsvReader {
     public class ParsingError extends RuntimeException {
         public ParsingError(String msg) {
@@ -19,6 +24,9 @@ public class CsvReader {
     private List<String> currentRow = new LinkedList<>();
     private boolean rowEnd;
 
+    /**
+     * Initialize the reader with a csv stream with no header.
+     */
     public CsvReader(InputStream in) {
         this.in = in;
         header = null;
@@ -35,6 +43,11 @@ public class CsvReader {
         };
     }
 
+    /**
+     * Initialize the reader. If withHeader is set, then the reader will parse the first row of the stream
+     * and let it be the header.
+     * @throws IOException
+     */
     public CsvReader(InputStream in, boolean withHeader) throws IOException {
         this(in);
         if (withHeader) {
@@ -42,6 +55,11 @@ public class CsvReader {
         }
     }
 
+    /**
+     * Get the next row and return its fields.
+     * @return
+     * @throws IOException
+     */
     public List<String> getNextRow() throws IOException {
         currentRow.clear();
         rowEnd = false;
@@ -56,6 +74,11 @@ public class CsvReader {
         return List.copyOf(currentRow);
     }
 
+    /**
+     * Get the next row and return its fields corresponding to the header.
+     * @return
+     * @throws IOException
+     */
     public Map<String, String> getNextRowWithNames() throws IOException {
         if (header == null) {
             throw new ParsingError("The current parsing process had no header.");
@@ -70,6 +93,10 @@ public class CsvReader {
         return res;
     }
 
+    /**
+     * Get the header row's field.
+     * @return null when the reader is initialized without header.
+     */
     public List<String> getHeader() {
         return List.copyOf(header);
     }

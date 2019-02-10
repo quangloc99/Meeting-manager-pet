@@ -1,14 +1,14 @@
 package ru.ifmo.se.s267880.lab5;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonValue;
-import com.google.gson.stream.JsonReader;
 import ru.ifmo.se.s267880.lab5.commandControllerHelper.*;
 
-import java.io.InputStreamReader;
-import java.rmi.server.ExportException;
-
+/**
+ * @author Tran Quang Loc
+ */
 public class Main {
+    /**
+     * Print a help message.
+     */
     public static void help() {
         System.out.println("# Help");
         System.out.println("\tUse command \"help\" to display this message.");

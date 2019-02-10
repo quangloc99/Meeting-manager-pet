@@ -5,11 +5,18 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.LinkedList;
 
+/**
+ * A simple CSV writer. This writer does not have field. It just write row by row.
+ * @author Tran Quang Loc
+ */
 public class CsvRowWriter {
     private OutputStream out;
     private int nRowFields;
     private boolean firstRowWritten = false;
 
+    /**
+     * @param nRowFields the number of fields, for safety while writing.
+     */
     public CsvRowWriter(OutputStream out, int nRowFields) {
         assert(nRowFields > 0);
         this.nRowFields = nRowFields;
@@ -17,6 +24,12 @@ public class CsvRowWriter {
     }
 
     // TODO: (or not :)) optimization for memory.
+
+    /**
+     * Write a row to the stream.
+     * @throws IOException
+     * @throws AssertionError when the row's size is not equals to {@link #nRowFields}.
+     */
     public void writeRow(List<String> row) throws IOException {
         assert(row.size() == nRowFields);
         if (firstRowWritten) {
@@ -32,6 +45,10 @@ public class CsvRowWriter {
         firstRowWritten = true;
     }
 
+    /**
+     * Close the stream.
+     * @throws IOException
+     */
     public void close() throws IOException {
         out.close();
     }

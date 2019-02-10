@@ -3,7 +3,14 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * @author Tran Quang Loc
+ * A class to check if a meeting is held late or not.
+ */
 public class Meeting implements Comparable<Meeting> {
+    /**
+     * This exception will be thrown when a meeting was held late.
+     */
     public class LateException extends RuntimeException {
         public LateException() {
             super("Встреча " + meetingName + " была отменена из-за опоздания");
@@ -13,11 +20,19 @@ public class Meeting implements Comparable<Meeting> {
     private Date meetingTime;
     private String meetingName;
 
+    /**
+     * @param meetingName The name of the meeting.
+     * @param meetingTime The meeting time.
+     */
     public Meeting(String meetingName, Date meetingTime) {
         this.meetingName = meetingName;
         this.meetingTime = meetingTime;
     }
 
+    /**
+     * Held the meeting.
+     * @throws LateException
+     */
     public void held(Date heldTime) {
         if (heldTime.after(meetingTime)) {
             throw new LateException();
@@ -38,6 +53,10 @@ public class Meeting implements Comparable<Meeting> {
         return toString(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"));
     }
 
+    /**
+     * Generate string representation with custom date format.
+     * @return
+     */
     public String toString(DateFormat dateFormat) {
         return "At " + dateFormat.format(meetingTime) + ": " + meetingName;
     }

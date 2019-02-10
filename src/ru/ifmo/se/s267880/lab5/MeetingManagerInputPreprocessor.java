@@ -10,10 +10,25 @@ import ru.ifmo.se.s267880.lab5.commandControllerHelper.InputPreprocessor;
 import java.text.ParseException;
 import java.util.*;
 
+/**
+ * An input preprocessor that preprocess Json into Meeting and Date.
+ *
+ * @author Tran Quang Loc
+ * @see InputPreprocessor
+ * @see ru.ifmo.se.s267880.lab5.commandControllerHelper.ReflectionCommandAdder
+ */
 public class MeetingManagerInputPreprocessor extends InputPreprocessor {
+    /**
+     * The only function that used to transform user input.
+     *
+     * @param elm the json that typed by the user.
+     * @param inputType the desired class of the output.
+     * @return
+     * @see InputPreprocessor#preprocess(JsonElement, Class)
+     */
     @Override
-    public Object preprocess(JsonElement elm, Class cls) {
-        if (cls == Meeting.class) {
+    public Object preprocess(JsonElement elm, Class inputType) {
+        if (inputType == Meeting.class) {
             try {
                 return json2Meeting(elm.getAsJsonObject());
             } catch (ParseException e) {
@@ -24,13 +39,38 @@ public class MeetingManagerInputPreprocessor extends InputPreprocessor {
 
             }
         }
-        return super.preprocess(elm, cls);
+        return super.preprocess(elm, inputType);
     }
 
+    /**
+     * Transform JsonObject into Meeting
+     * Json object must have 2 following field:<ul>
+     * <li>"name": String - the name of the meeting.</li>
+     * <li>"time": Date - the meeting time.</li>
+     * </ul>
+     *
+     * @param obj the object needed to be transformed
+     * @throws ParseException
+     * @see #json2Date(JsonElement)
+     */
     public static Meeting json2Meeting(JsonObject obj) throws ParseException {
         return new Meeting(obj.get("name").getAsString(), json2Date(obj.get("time")));
     }
 
+    /**
+     * Transform JsonElement into Date.
+     * JsonElement can be: <ul>
+     *     <li>[int, int, int, int, int, int. From left to right, the values are corresponding,
+     *     to Year, Month, Date, Hour, Minute and Second. The array can be shorter, in that case the current time's value
+     *     will fill them up. </li>
+     *     <li>String with format "yyyy/MM/dd HH:mm:ss"</li>
+     *     <li>Object that has fiels: "year", "month", "date", "hour", "minute", "second" and each field must be a int.
+     *     The missing field will be filled up like above.</li>
+     * </ul>
+     * @param elm the json element
+     * @return
+     * @throws ParseException
+     */
     public static Date json2Date(JsonElement elm) throws ParseException {
         if (elm.isJsonArray()) {
             JsonArray arr = elm.getAsJsonArray();
