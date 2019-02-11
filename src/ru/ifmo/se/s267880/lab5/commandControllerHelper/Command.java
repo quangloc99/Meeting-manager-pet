@@ -22,4 +22,9 @@ public @interface Command {
      * instead.
      */
     String value() default "";
+
+    /**
+     * Mark this field if the method is an additional command (not in the task).
+     */
+    boolean additional() default false;
 }

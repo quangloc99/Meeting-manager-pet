@@ -1,7 +1,9 @@
 package ru.ifmo.se.s267880.lab5.commandControllerHelper;
 
+import ru.ifmo.se.s267880.lab5.CLIWithJSONCommandController;
 import ru.ifmo.se.s267880.lab5.CommandController;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,7 +15,8 @@ import java.util.Map;
  * and nicely.
  * Example: <pre>
  *      class MyCommands {
- *         {@code @Usage} (usage = "say hi to {arg}")
+ *         {@code @Command}
+ *         {@code @Usage} ("say hi to {arg}")
  *         {@code
  *         public void hi(String name) {
  *             System.out.println("Hi " + name);
@@ -21,7 +24,8 @@ import java.util.Map;
  *         }
  *
  *         private int i = 0;
- *         {@code @Usage} (commandName = "print-next", usage = "first it prints 1. Then after that each call it will increase the printed number.")
+ *         {@code @Command("print-next")}
+ *         {@code @Usage} ("first it prints 1. Then after that each call it will increase the printed number.")
  *         public void printNext() {
  *             System.out.println(++i);
  *         }
@@ -32,11 +36,14 @@ import java.util.Map;
  *
  *      {@code
  *      public static void main(String[] args) {
- *          CommandController cc = new CommandController();
- *          ReflectionCommandAdder.addCommand(cc, new MyCommands(), new InputPreprocessor());
- *          cc.addCommand("exit", "just exit", () -> System.exit(0));  // beside using this adder, we can combined it with the traditional ones.
+ *          CommandController cc = new CommandController();  // use CLIWithJsonCommandController inorder to display all the commands.
+ *          ReflectionCommandAdder.addCommand(cc, new MyCommands(), new JsonBasicInputPreprocessor());
+ *          cc.addCommand("exit", "just exit", () -> {
+     *        System.exit(0);
+ *            return CommandController.SUCESS;
+ *          });  // beside using this adder, we can combined it with the traditional ones.
  *          while (1) {
- *              cc.prompt();
+ *              cc.execute();
  *          }
  *      }
  *      }
@@ -44,63 +51,103 @@ import java.util.Map;
  *
  * @author Tran Quang Loc
  * @see Usage
- * @see InputPreprocessor
+ * @see JsonBasicInputPreprocessor
  */
 public class ReflectionCommandAdder {
     /**
-     * The only method in this class, that add all commands represented by obj's methods (with annotation {@link Usage}),
+     * The only method in this class, that add all commands represented by obj's methods (with annotation {@link Command}),
      * which has input preprocessed by preprocessor.
      *
      * @param cc the command controller that is
-     * @param obj the object that has methods with annotation {@link Usage}
-     * @param preprocessor the InputPreprocessor. Note that this class can be extends to be used with the other types.
+     * @param obj the object that has methods with annotation {@link Command}
+     * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
      */
     public static void addCommand(CommandController cc, Object obj, InputPreprocessor preprocessor) {
-        Class cls = obj.getClass();
-        Map<String, LinkedList<Method>> commandList = new HashMap<>();
+        filterCommands(obj.getClass()).forEach((commandName, methodList) -> {
+            cc.addCommand(commandName, generateHandler(obj, methodList, preprocessor));
+        });
+    }
+
+    private static Map<String, List<Method>> filterCommands(Class cls) {
+        Map<String, List<Method>> commandList = new HashMap<>();
         for (Method med: cls.getDeclaredMethods()) {
             Command anno = med.getAnnotation(Command.class);
             if (anno == null) continue;
+            String commandName = anno.value().isEmpty() ? med.getName() : anno.value();
+            commandList.computeIfAbsent(commandName, k -> new LinkedList<>()).add(med);
+        }
+        return commandList;
+    }
 
+    private static CommandController.Handler generateHandler(Object obj, List<Method> methodList, InputPreprocessor preprocessor) {
+        final Map<Integer, LinkedList<Method>> methodMap = new HashMap<>();
+        final String usage = generateUsage(methodList);
+        int maxNElement_ = 0;
+        for (Method med: methodList) {
             med.setAccessible(true);           // This line is necessary, even when the method is public.
-
-            String commandName = med.getName();
-            if (anno.value().length() > 0) {
-                commandName = anno.value();
-            }
-
-            if (!commandList.containsKey(commandName)) {
-                commandList.put(commandName, new LinkedList<>());
-            }
-
-            commandList.get(commandName).add(med);
+            int nElm = med.getParameterCount();
+            methodMap.computeIfAbsent(nElm, k -> new LinkedList<>()).add(med);
+            maxNElement_ = Math.max(maxNElement_, nElm);
         }
 
-        commandList.forEach((commandName, methodList) -> {
-            boolean hasOtherParam = false;
-            List<String> commandWithParamUsage = new LinkedList<>();
-            for (Method med: methodList) {
-                Usage usageAnno = med.getAnnotation(Usage.class);
-                String usage = usageAnno == null ? "" : usageAnno.value();
-                if (med.getParameterCount() > 0) {
-                    hasOtherParam = true;
-                    commandWithParamUsage.add(usage);
-                    continue;
-                }
-                cc.addCommand(commandName, usage, () -> {
-                    med.invoke(obj);
-                });
+        final int maxNElement = maxNElement_;
+        return new CLIWithJSONCommandController.HandlerWithUsage() {
+            @Override
+            public String getUsage() {
+                return usage;
             }
-            if (!hasOtherParam) return;
-            cc.addCommandWithJson(commandName, String.join("\n", commandWithParamUsage), elm -> {
-                for (Method med: methodList) {
-                    Class inputType = med.getParameterTypes()[0];
-                    Object inp = preprocessor.preprocess(elm, inputType);
-                    if (inp == null) continue;
-                    med.invoke(obj, inp);
-                    break;
+
+            @Override
+            public int process(Object[] args) {
+                if (methodMap.containsKey(args.length)) {
+                    for (Method med : methodMap.get(args.length)) {
+                        Object[] preprocessedArgs;
+                        try {
+                            preprocessedArgs = preprocessor.preprocess(args,med.getParameterTypes());
+                        } catch (CannotPreprocessInputException e) {
+                            continue;
+                        }
+
+                        try {
+                            med.invoke(obj, preprocessedArgs);
+                            return CommandController.SUCCESS;
+                        } catch (InvocationTargetException | IllegalAccessException e) {
+                            continue;
+                        }
+                    }
                 }
-            });
-        });
+
+                return (args.length < maxNElement) ? CommandController.NEED_MORE_INPUT : CommandController.FAIL;
+            }
+        };
+    }
+
+    private static String generateUsage(List<Method> methodList) {
+        StringBuilder usageBuilder = new StringBuilder();
+        for (Method med : methodList) {
+            Usage cmdUsage = med.getAnnotation(Usage.class);
+            if (cmdUsage == null) continue;
+            if (usageBuilder.length() != 0) {
+                usageBuilder.append("\n");
+            }
+            List<String> clsnames = new LinkedList<>();
+            for (Class cls: med.getParameterTypes()) {
+                clsnames.add(cls.getSimpleName());
+            }
+            String usage = "";
+            if (clsnames.isEmpty()) {
+                usage = cmdUsage.value();
+                if (methodList.size() > 1)
+                    usage = "If there is no argument, then " + usage;
+            } else {
+                usage = String.format("If the arguments are {%s}, then %s", String.join(", ", clsnames), cmdUsage.value());
+            }
+            if (med.getAnnotation(Command.class).additional()) {
+                usageBuilder.append("[Additional] ");
+            }
+            usageBuilder.append(usage);
+        }
+        return usageBuilder.toString();
     }
 }
+
