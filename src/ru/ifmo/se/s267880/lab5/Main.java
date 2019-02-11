@@ -67,6 +67,22 @@ public class Main {
             System.exit(0);
             return CommandController.SUCCESS;
         });
+        cc.addCommand("clrscr", "[Additional] Clear the screen. ", arg-> {
+            try {
+                final String os = System.getProperty("os.name");
+                if (os.contains("Windows")) {
+                    Runtime.getRuntime().exec("cls");
+                }
+                else {
+                    System.out.print("\033[H\033[2J");
+                    System.out.flush();
+                    Runtime.getRuntime().exec("clear");
+                }
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+            return CommandController.SUCCESS;
+        });
         cc.addCommand("help", "[Additional] Display the help message, the arg json format.", Main::help);
         while (true) {
             try {
