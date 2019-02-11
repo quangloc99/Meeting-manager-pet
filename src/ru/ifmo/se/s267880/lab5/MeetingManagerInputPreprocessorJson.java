@@ -82,12 +82,17 @@ public class MeetingManagerInputPreprocessorJson extends JsonBasicInputPreproces
                 for (int i = 0; i < fields.length && i < arr.size(); ++i) {
                     fields[i] = arr.get(i).getAsInt();
                 }
-                return new GregorianCalendar(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5]).getTime();
+                return new GregorianCalendar(fields[0], Helper.monthMap.get(fields[1]), fields[2], fields[3], fields[4], fields[5]).getTime();
             } else if (elm.isJsonObject()) {
                 JsonObject obj = elm.getAsJsonObject();
                 GregorianCalendar cal = new GregorianCalendar();
                 Helper.calendarFieldMap.forEach((k, v) -> {
-                    if (obj.has(k)) cal.set(v, obj.get(k).getAsInt());
+                    if (obj.has(k)) {
+                        if (k.equals("month"))
+                            cal.set(v, Helper.monthMap.get(obj.get(k).getAsInt()));
+                        else
+                            cal.set(v, obj.get(k).getAsInt());
+                    } else cal.set(v, 0);
                 });
                 return cal.getTime();
             } else {

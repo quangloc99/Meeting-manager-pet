@@ -21,6 +21,11 @@ public class Helper {
      */
     static final Map<String, Integer> calendarFieldMap = new HashMap<>();
 
+    /**
+     * Contains mapping between human integer's presentation for month and Calendar.{@code <MONTH>} constants.
+     */
+    static final Map<Integer, Integer> monthMap = new HashMap<>();
+
     static {
         calendarFieldMap.put("year", Calendar.YEAR);
         calendarFieldMap.put("month", Calendar.MONTH);
@@ -28,6 +33,19 @@ public class Helper {
         calendarFieldMap.put("hour", Calendar.HOUR);
         calendarFieldMap.put("minute", Calendar.MINUTE);
         calendarFieldMap.put("second", Calendar.SECOND);
+
+        monthMap.put(1, Calendar.JANUARY);
+        monthMap.put(2, Calendar.FEBRUARY);
+        monthMap.put(3, Calendar.MARCH);
+        monthMap.put(4, Calendar.APRIL);
+        monthMap.put(5, Calendar.MAY);
+        monthMap.put(6, Calendar.JUNE);
+        monthMap.put(7, Calendar.JULY);
+        monthMap.put(8, Calendar.AUGUST);
+        monthMap.put(9, Calendar.SEPTEMBER);
+        monthMap.put(10, Calendar.OCTOBER);
+        monthMap.put(11, Calendar.NOVEMBER);
+        monthMap.put(12, Calendar.DECEMBER);
     }
 
 }

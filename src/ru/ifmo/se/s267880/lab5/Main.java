@@ -26,7 +26,7 @@ public class Main {
         System.out.println("\t1) [int, int, int, int, int, int] - This format is an array. Its elements from left to right represent");
         System.out.println("\tthe year, the month, the date, the hour, the minute and the seconds respectively.");
         System.out.println("\tThe array can have any size. If the size is less than 6, the other fields will be filled with");
-        System.out.println("\tthe current time's values.");
+        System.out.println("\tzero or current time's value.");
         System.out.println("\t2) String representation with the following format: \"yyyy/MM/dd HH:mm:ss\"");
         System.out.println("\t3) Object representation:");
         System.out.println(
@@ -39,7 +39,7 @@ public class Main {
                 "\t\t\t\"second\": int\n" +
                 "\t\t}"
         );
-        System.out.println("\tlike array representation, if a field missing, it will be filled by the current time's values.");
+        System.out.println("\tlike array representation, if a field missing, it will be filled with zero or by the current time's values.");
         return CommandController.SUCCESS;
     }
 
