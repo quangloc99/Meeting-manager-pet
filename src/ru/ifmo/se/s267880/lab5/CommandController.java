@@ -1,18 +1,6 @@
 package ru.ifmo.se.s267880.lab5;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * A class for reading user input (both command and arguments) and execute the correspond command.
@@ -22,24 +10,16 @@ import java.util.TreeMap;
  * this class can be extends more.
  * @author Tran Quang Loc
  */
-public class CommandController {
+abstract public class CommandController {
+    public static final int SUCCESS = 0;
+    public static final int NEED_MORE_INPUT = 1;
+    public static final int FAIL = 2;
+
     /**
      * The base interface for Handler
      */
-    public interface Handler {}
-
-    /**
-     * The interface that describes the handler lambda with no arguments.
-     */
-    public interface HandlerWithNoArgument extends Handler {
-        void process() throws Exception ;
-    }
-
-    /**
-     * The interface that describes the handler lambda with 1 arguments.
-     */
-    public interface HandlerWithJson extends Handler {
-        void process(JsonElement json) throws Exception;
+    public interface Handler {
+        int process(Object args[]) throws Exception;
     }
 
     public class CommandNotFoundException extends Exception {
@@ -48,127 +28,106 @@ public class CommandController {
         }
     }
 
-    private Map<String, Handler> commandHandlers = new TreeMap<>();  // so the commands can be alphabetized
-    private Map<String, String> commandUsages = new HashMap<>();
+    protected Map<String, Handler> commandHandlers = new TreeMap<>();  // so the commands can be alphabetized
 
-    private BufferedReader userInputStream;
-
-    /**
-     * Use this constructor for custom type of input. Maybe from file, or interactive with other problem. Who knows?
-     * After initialized, "list-commands" command is added to show all the commands.
-     * @param userInputStream the stream that receives the user's input.
-     */
-    public CommandController(InputStream userInputStream) {
-        this.userInputStream = new BufferedReader(new InputStreamReader(userInputStream));
-        addCommand("list-commands", "[Additional] List all the commands.", () -> {
-            System.out.println("# Commands list:");
-            commandHandlers.forEach((commandName, handler) -> {
-                System.out.printf("- %s %s\n", commandName, (handler instanceof HandlerWithJson ? "{arg}" : ""));
-                for (String s : commandUsages.get(commandName).split("\n")) {
-                    System.out.printf("\t%s\n", s);
-                }
-                System.out.println();
-            });
-        });
-    }
-
-    /**
-     * Initialize the Controller with stdin.
-     * After initialized, "list-commands" command is added to show all the commands.
-     */
-    public CommandController() {
-        this(System.in);
-    }
+    private int nInputLimit = 10;
 
     /**
      * Add a command with no argument.
+     * <p>
+     * A lambda can be passed into this method with the following form:
+     * <pre>{@code
+     * (Object[] args) -> {
+     *     return <<status>>;
+     * }
+     * }
+     * </pre>
+     * </p>
+     *
+     * <p>
+     * The {@code <<status>>} here is one of the following value: <ul>
+     *     <li>{@link #SUCCESS}: when the command is successfully executed.</li>
+     *     <li>{@link #FAIL}: when the command is fail to executed.</li>
+     *     <li>{@link #NEED_MORE_INPUT}: ask for more input. The handler will be called again with one more input.</li>
+     * </ul>
+     * </p>
+     *
+     * Inorder to avoid infinity request for input, {@link #nInputLimit} - maximum number of inputs per command - is set to 10 by default.
+     * But it can be config easily using the setter.
+     *
      * @param commandName the name of the command
-     * @param usage the usage of the command. It may contains multiple lines, separated by \n. "list-commands" command
-     *              will print these lines nicely.
-     * @param handler
+     * @param handler the handler for the command.
      */
-    public void addCommand(String commandName, String usage, HandlerWithNoArgument handler) {
-        commandUsages.put(commandName, usage);
+    public void addCommand(String commandName, Handler handler) {
         commandHandlers.put(commandName, handler);
     }
 
     /**
-     * Add a command with 1 argument - the JsonElement.
-     * @param commandName the name of the command
-     * @param usage the usage of the command. It may contains multiple lines, separated by \n. "list-commands" command
-     *              will print these lines nicely.
-     * @param handler
+     * Get the command's handler.
+     * @param commandName the name of the command.
      */
-    public void addCommandWithJson(String commandName, String usage, HandlerWithJson handler) {
-        commandUsages.put(commandName, usage);
-        commandHandlers.put(commandName, handler);
-    }
-
     public Handler getCommandHandler(String commandName) {
         return commandHandlers.get(commandName);
     }
 
-    public String getCommandUsage(String commandName) {
-        return commandUsages.get(commandName);
-    }
-
     /**
      * Read user input and the execute the correspond command.
-     * @throws IOException
      * @throws CommandNotFoundException
      * @throws Exception
      */
-    public void prompt() throws IOException, CommandNotFoundException, Exception {
-        System.out.printf("> ");
+    public void execute() throws CommandNotFoundException, Exception {
         String userCommand = getUserCommand();
         if (!commandHandlers.containsKey(userCommand)) {
             throw new CommandNotFoundException(userCommand);
         }
+
         Handler handler = commandHandlers.get(userCommand);
-        if (handler instanceof HandlerWithJson) {
-            ((HandlerWithJson)handler).process(getUserJsonInput());
-        } else {
-            ((HandlerWithNoArgument)handler).process();
+        List<Object> argList = new LinkedList<>();
+        boolean isExecuting = true;
+        for (int i = 0; i < nInputLimit && isExecuting; ++i) {
+            try {
+                int status = handler.process(argList.toArray());
+                switch (status) {
+                    case CommandController.SUCCESS:
+                        isExecuting = false;
+                        break;
+                    case CommandController.NEED_MORE_INPUT:
+                        argList.add(getUserInput());
+                        break;
+                    case CommandController.FAIL:
+                        System.err.printf("Command %s fails to run with inputs: ", userCommand);
+                        argList.forEach(elm -> System.err.printf("%s ", elm));
+                        System.err.println();
+                        isExecuting = false;
+                        break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    /**
+     * Get the number of input limit.
+     */
+    public int getNInputLimit() {
+        return nInputLimit;
+    }
+
+    /**
+     * Set the number of input limit.
+     */
+    public void setNInputLimit(int nInputLimit) {
+        this.nInputLimit = nInputLimit;
     }
 
     /**
      * Get user command.
-     * This function tried not to ead all the character from {@link #userInputStream}, so the {@link JsonParser} can
-     * continue parsing from the next character.
-     * @return
-     * @throws IOException
      */
-    protected String getUserCommand() throws IOException {
-        int currentByte;
-        while ((currentByte = userInputStream.read()) == ' ');
-        String command = "" + (char) currentByte;
-        while (true) {
-            currentByte = userInputStream.read();
-            if (Character.isWhitespace(currentByte) || currentByte == -1) break;
-            command += (char) currentByte;
-        }
-        return command;
-    }
+    abstract protected String getUserCommand();
 
     /**
-     * Ger user json input, or the json argument for a command.
-     * @return
-     * @throws IOException
+     * Get user input.
      */
-    protected JsonElement getUserJsonInput() throws IOException {
-        JsonReader jreader = new JsonReader(userInputStream);
-
-        // try to preread some primitive type because after reading them the parser will call the "hasNext" method,
-        // and the reader will try to read more, so the command will not be executed immediately.
-        if (jreader.peek() == JsonToken.NUMBER)
-            return new JsonPrimitive(jreader.nextLong());
-        else if (jreader.peek() == JsonToken.STRING)
-            return new JsonPrimitive(jreader.nextString());
-        else if (jreader.peek() == JsonToken.BOOLEAN)
-            return new JsonPrimitive(jreader.nextBoolean());
-
-        jreader.setLenient(false);
-        return (new JsonParser()).parse(jreader);
-    }
+    abstract protected Object getUserInput();
 }
