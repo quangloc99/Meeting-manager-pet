@@ -22,7 +22,7 @@ import java.util.*;
  * @see Command
  * @see Usage
  * @see CommandController
- * @see MeetingManagerInputPreprocessor
+ * @see MeetingManagerInputPreprocessorJson
  */
 public class MeetingManager {
     private List<Meeting> collection = new LinkedList<>();
@@ -31,6 +31,10 @@ public class MeetingManager {
     public MeetingManager(String path) {
         open(path);
         save();
+    }
+
+    public String getCurrentFileName() {
+        return currentFileName;
     }
 
     /**
@@ -91,10 +95,28 @@ public class MeetingManager {
 
     /**
      * Add meeting into the collection
+     */
+    @Command(additional = true)
+    @Usage("add new meeting into the collection with string a string instead of an object.\n" +
+           "The string can have this form: yyyy/MM/dd hh:mm:ss, <meeting-name>.\n" +
+           "the meeting name can still have commas, but it will be trim.")
+
+    public void add(String stringForm) {
+        stringForm = stringForm.trim();
+        String[] parts = stringForm.split(",");
+        try {
+            add(new Meeting(stringForm.substring(parts[0].length() + 2).trim(), Helper.meetingDateFormat.parse(parts[0])));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Add meeting into the collection
      * @param meeting the meeting wanted to be add.
      */
     @Command
-    @Usage("Add new meeting into the collection.")
+    @Usage("add new meeting into the collection.")
     public void add(Meeting meeting) {
         collection.add(meeting);
     }
@@ -108,7 +130,7 @@ public class MeetingManager {
         System.out.println("# Meeting list:");
         int i = 1;
         for (Meeting meeting: collection) {
-            System.out.printf("%d) %s\n", i++, meeting);
+            System.out.printf("%3d) %s\n", i++, meeting);
         }
     }
 
@@ -117,7 +139,7 @@ public class MeetingManager {
      * @param meeting the meeting wanted to be removed.
      */
     @Command
-    @Usage("If arg is an object then the correspond meeting in the collection will be removed.")
+    @Usage("remove the meeting correspond to the argument.")
     public void remove(Meeting meeting) {
         collection.remove(meeting);
     }
@@ -127,7 +149,7 @@ public class MeetingManager {
      * @param num the index (base 1) of the element.
      */
     @Command
-    @Usage("If arg is a number then the meeting with the given index (1-base indexed) will be removed.")
+    @Usage("remove the meeting with index given by the argument.")
     public void remove(int num) {
         collection.remove(num - 1);
     }
@@ -137,14 +159,14 @@ public class MeetingManager {
      * @param meeting the meeting wanted to be added.
      */
     @Command("add_if_min")
-    @Usage("Add new meeting into the collection if it's date is before every other meeting in the collection.")
+    @Usage("add new meeting into the collection if it's date is before every other meeting in the collection.")
     public void addIfMin(Meeting meeting) {
         if (meeting.compareTo(Collections.min(collection)) >= 0) return;
         add(meeting);
     }
 
     /**
-     * Show file name, number of meeting and the time the file first open during this session.
+     * show file name, number of meeting and the time the file first open during this session.
      */
     @Command
     @Usage("Show some basic information.")
@@ -159,9 +181,9 @@ public class MeetingManager {
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
      */
-    @Command
-    @Usage("[Additional] Open a file with name given by arg. The content of the collection will be replaced.\n" +
-           "Note that the file name must be quoted" )
+    @Command(additional = true)
+    @Usage("open a file with name given by arg. The content of the collection will be replaced.\n" +
+           "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
     public void open(String path) {
         collection.clear();
         try {
@@ -178,8 +200,9 @@ public class MeetingManager {
      * Just change the current working file. The data of that file will be replaced.
      * @param path that path to the file.
      */
-    @Command("save-as")
-    @Usage("[Additional] Change the current working file.\nNote that the file name must be quoted.")
+    @Command(value = "save-as", additional = true)
+    @Usage("change the current working file.\n" +
+           "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
     public void saveAs(String path) {
         currentFileName = path;
         save();
@@ -189,8 +212,8 @@ public class MeetingManager {
     /**
      * Sort all the meeting ascending by their date.
      */
-    @Command
-    @Usage("[Additional] sort all the meeting ascending by their date.")
+    @Command(additional = true)
+    @Usage("sort all the meeting ascending by their date.")
     public void sort() {
         Collections.sort(collection);
     }
@@ -198,9 +221,29 @@ public class MeetingManager {
     /**
      * Reverse the order of the meetings.
      */
-    @Command
-    @Usage("[Additional] Reverse the order ot the meetings.")
+    @Command(additional = true)
+    @Usage("reverse the order ot the meetings.")
     public void reverse() {
         Collections.reverse(collection);
+    }
+
+    /**
+     * Swap 2 meeting.
+     * @param a the index of the first meeting.
+     * @param b the index of the second meeting.
+     */
+    @Command(additional = true)
+    @Usage("swap 2 meetings with the given indexes")
+    public void swap(int a, int b) {
+        Collections.swap(collection, a - 1, b - 1);
+    }
+
+    /**
+     * Clear the collection.
+     */
+    @Command(additional = true)
+    @Usage("delete all the elements from the collection")
+    public void clear() {
+        collection.clear();
     }
 }
