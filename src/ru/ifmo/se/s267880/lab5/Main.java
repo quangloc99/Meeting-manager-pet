@@ -9,7 +9,7 @@ public class Main {
     /**
      * Print a help message.
      */
-    public static void help() {
+    public static int help(Object[] args) {
         System.out.println("# Help");
         System.out.println("\tUse command \"help\" to display this message.");
         System.out.println("\tUse command \"list-commands\" for the full list of commands.");
@@ -40,6 +40,7 @@ public class Main {
                 "\t\t}"
         );
         System.out.println("\tlike array representation, if a field missing, it will be filled by the current time's values.");
+        return CommandController.SUCCESS;
     }
 
     public static void main(String[] args) {
@@ -59,13 +60,18 @@ public class Main {
         }
         System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
         MeetingManager mm = new MeetingManager(savedFileName);
-        CommandController cc = new CommandController();
-        ReflectionCommandAdder.addCommand(cc, mm, new MeetingManagerInputPreprocessor());
-        cc.addCommand("exit", "[Additional] I don't have to explain :).", () -> System.exit(0));
+        CLIWithJSONCommandController cc = new CLIWithJSONCommandController(System.in);
+        cc.removeGSONNonExecutablePrefix();
+        ReflectionCommandAdder.addCommand(cc, mm, new MeetingManagerInputPreprocessorJson());
+        cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
+            System.exit(0);
+            return CommandController.SUCCESS;
+        });
         cc.addCommand("help", "[Additional] Display the help message, the arg json format.", Main::help);
         while (true) {
             try {
-                cc.prompt();
+                System.out.printf("%s> ", mm.getCurrentFileName());
+                cc.execute();
                 mm.save();
             } catch (Exception e) {
                 e.printStackTrace();
