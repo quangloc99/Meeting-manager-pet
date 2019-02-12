@@ -59,7 +59,14 @@ public class Main {
             System.out.println("No file name passed. Data will be read and saved into " + savedFileName);
         }
         System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
-        MeetingManager mm = new MeetingManager(savedFileName);
+
+        MeetingManager mm = null;
+        try {
+            mm = new MeetingManager(savedFileName);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+
         CLIWithJSONCommandController cc = new CLIWithJSONCommandController(System.in);
         if (!cc.removeGSONNonExecutablePrefix()) {
             System.err.println("cannot remove gson non execute prefix :(");

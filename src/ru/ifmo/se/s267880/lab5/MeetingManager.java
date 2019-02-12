@@ -28,12 +28,8 @@ public class MeetingManager {
     private List<Meeting> collection = new LinkedList<>();
     private String currentFileName;
     private Date fileOpenSince;
-    public MeetingManager(String path) {
-        try {
-            open(path);
-        } catch (Exception e) {
-            assert(false);  // "This code must not be reached"
-        }
+    public MeetingManager(String path) throws Exception {
+        open(path);
         save();
     }
 
@@ -192,8 +188,12 @@ public class MeetingManager {
     @Usage("open a file with name given by arg. The content of the collection will be replaced.\n" +
            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
     public void open(String path) throws Exception {
-        if (new File(path).isDirectory()) {
-            throw new Exception(path + " must be a file, not a directory.");
+        File file = new File(path);
+        if (!file.isFile()) {
+            throw new Exception(path + " must be a file.");
+        }
+        if (!file.canRead() || !file.canWrite()) {
+            throw new Exception(path + " can not be read or write.");
         }
         collection.clear();
         try {
