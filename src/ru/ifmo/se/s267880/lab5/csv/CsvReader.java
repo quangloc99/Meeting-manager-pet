@@ -71,7 +71,7 @@ public class CsvReader {
         if (header != null && header.size() != currentRow.size()) {
             throw new ParsingError("The number of entries of header row and the current row are not equals");
         }
-        return List.copyOf(currentRow);
+        return new LinkedList<>(currentRow);
     }
 
     /**
@@ -98,6 +98,6 @@ public class CsvReader {
      * @return null when the reader is initialized without header.
      */
     public List<String> getHeader() {
-        return List.copyOf(header);
+        return new LinkedList(header);
     }
 }

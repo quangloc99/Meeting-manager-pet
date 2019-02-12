@@ -75,10 +75,13 @@ public class MeetingManager {
      * Save all the collection into the file with name {@link #currentFileName}.
      */
     public void save() {
+        List<String> header = new LinkedList<>();
+        header.add("meeting name");
+        header.add("meeting time");
         try {
             CsvRowWithNamesWriter writer = new CsvRowWithNamesWriter(
                     new FileOutputStream(currentFileName),
-                    List.of("meeting name", "meeting time")
+                    header
             );
             for (Meeting meeting: collection) {
                 Map<String, String> row = new HashMap<>();

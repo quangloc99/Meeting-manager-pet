@@ -21,7 +21,7 @@ public class CsvRowWithNamesWriter extends CsvRowWriter {
      */
     public CsvRowWithNamesWriter(OutputStream out, List<String> header) throws IOException {
         super(out, header.size());
-        this.header = List.copyOf(header);
+        this.header = new LinkedList(header);
         super.writeRow(this.header);
     }
 
