@@ -61,7 +61,9 @@ public class Main {
         System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
         MeetingManager mm = new MeetingManager(savedFileName);
         CLIWithJSONCommandController cc = new CLIWithJSONCommandController(System.in);
-        cc.removeGSONNonExecutablePrefix();
+        if (!cc.removeGSONNonExecutablePrefix()) {
+            System.err.println("cannot remove gson non execute prefix :(");
+        }
         ReflectionCommandAdder.addCommand(cc, mm, new MeetingManagerInputPreprocessorJson());
         cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
             System.exit(0);

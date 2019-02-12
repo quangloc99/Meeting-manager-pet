@@ -78,7 +78,6 @@ public class CLIWithJSONCommandController extends CommandController {
             Field logger = cls.getDeclaredField("logger");
             u.putObjectVolatile(cls, u.staticFieldOffset(logger), null);
         } catch (Exception e) {
-            return false;
         }
 
         try {
