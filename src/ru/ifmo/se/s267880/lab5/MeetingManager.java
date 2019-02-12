@@ -29,7 +29,11 @@ public class MeetingManager {
     private String currentFileName;
     private Date fileOpenSince;
     public MeetingManager(String path) {
-        open(path);
+        try {
+            open(path);
+        } catch (Exception e) {
+            assert(false);  // "This code must not be reached"
+        }
         save();
     }
 
@@ -187,7 +191,10 @@ public class MeetingManager {
     @Command(additional = true)
     @Usage("open a file with name given by arg. The content of the collection will be replaced.\n" +
            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    public void open(String path) {
+    public void open(String path) throws Exception {
+        if (new File(path).isDirectory()) {
+            throw new Exception(path + " must be a file, not a directory.");
+        }
         collection.clear();
         try {
             collection = getDataFromFile(path);

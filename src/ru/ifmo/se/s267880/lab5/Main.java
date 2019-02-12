@@ -76,6 +76,7 @@ public class Main {
                     Runtime.getRuntime().exec("cls");
                 }
                 else {
+                    System.err.println("this command will not work on IntelliJ IDE");
                     System.out.print("\033[H\033[2J");
                     System.out.flush();
                     Runtime.getRuntime().exec("clear");
@@ -92,7 +93,7 @@ public class Main {
                 cc.execute();
                 mm.save();
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.printf("Error: %s\n", e.getMessage());
             }
         }
     }

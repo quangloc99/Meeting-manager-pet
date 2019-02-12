@@ -98,7 +98,7 @@ public class ReflectionCommandAdder {
             }
 
             @Override
-            public int process(Object[] args) {
+            public int process(Object[] args) throws Exception {
                 if (methodMap.containsKey(args.length)) {
                     for (Method med : methodMap.get(args.length)) {
                         Object[] preprocessedArgs;
@@ -111,8 +111,10 @@ public class ReflectionCommandAdder {
                         try {
                             med.invoke(obj, preprocessedArgs);
                             return CommandController.SUCCESS;
-                        } catch (InvocationTargetException | IllegalAccessException e) {
+                        } catch (IllegalAccessException e) {
                             continue;
+                        } catch (InvocationTargetException e) {
+                            throw (Exception)e.getTargetException();
                         }
                     }
                 }

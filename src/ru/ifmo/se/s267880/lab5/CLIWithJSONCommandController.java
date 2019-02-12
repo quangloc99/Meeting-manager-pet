@@ -18,6 +18,11 @@ import java.lang.reflect.Modifier;
  * @author Tran Quang Loc
  */
 public class CLIWithJSONCommandController extends CommandController {
+    public class IncorrectCommandFormatException extends RuntimeException {
+        public IncorrectCommandFormatException() {
+            super("User command must be a string. If the command's name contains special character, then it must be quoted.");
+        }
+    }
     /**
      * An interface that will contains the usage of the command to show to the user beside the handler itself.
      */
@@ -152,8 +157,10 @@ public class CLIWithJSONCommandController extends CommandController {
             jreader = new JsonReader(userInputStream);  // always initialize a new object, so it will read from the new line.
             jreader.setLenient(true);
             return jreader.nextString();
+        }  catch (MalformedJsonException e) {
+            throw new IncorrectCommandFormatException();
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return null;
         }
     }

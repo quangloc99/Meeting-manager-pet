@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab5;
 
+import com.google.gson.stream.MalformedJsonException;
 import java.util.*;
 
 /**
@@ -25,6 +26,18 @@ abstract public class CommandController {
     public class CommandNotFoundException extends Exception {
         public CommandNotFoundException(String commandName) {
             super("Usage \"" + commandName + "\" not found. Use command \"list-commands\" for the list of usable commands.");
+        }
+    }
+
+    public class ErrorWhileRunningCommand extends Exception {
+        public ErrorWhileRunningCommand(String command, Exception error) {
+            super(String.format("An Error orcured while running command \"%s\": %s", command, error.getMessage()));
+        }
+    }
+
+    public class IncorrectInput extends Exception {
+        public IncorrectInput(String command, Object[] objs) {
+            super(String.format("Command \"%s\" can not run with input: %s", command, Helper.join(", ", objs)));
         }
     }
 
@@ -75,7 +88,7 @@ abstract public class CommandController {
      * @throws CommandNotFoundException
      * @throws Exception
      */
-    public void execute() throws CommandNotFoundException, Exception {
+    public void execute() throws CommandNotFoundException, IncorrectInput, Exception {
         String userCommand = getUserCommand();
         if (!commandHandlers.containsKey(userCommand)) {
             throw new CommandNotFoundException(userCommand);
@@ -95,14 +108,12 @@ abstract public class CommandController {
                         argList.add(getUserInput());
                         break;
                     case CommandController.FAIL:
-                        System.err.printf("Command %s fails to run with inputs: ", userCommand);
-                        argList.forEach(elm -> System.err.printf("%s ", elm));
-                        System.err.println();
-                        isExecuting = false;
-                        break;
+                        throw new IncorrectInput(userCommand, argList.toArray());
                 }
+            } catch (IncorrectInput e) {
+                throw e;  // rethrow
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new ErrorWhileRunningCommand(userCommand, e);
             }
         }
     }

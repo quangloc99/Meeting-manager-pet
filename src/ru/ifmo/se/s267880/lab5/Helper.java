@@ -48,4 +48,11 @@ public class Helper {
         monthMap.put(12, Calendar.DECEMBER);
     }
 
+    public static String join(CharSequence delimitor, Object[] obj) {
+        String [] str = new String[obj.length];
+        for (int i = 0; i < obj.length; ++i) {
+            str[i] = obj[i].toString();
+        }
+        return String.join(delimitor, str);
+    }
 }
