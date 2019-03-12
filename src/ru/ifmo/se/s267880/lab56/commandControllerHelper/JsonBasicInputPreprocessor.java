@@ -1,7 +1,7 @@
-package ru.ifmo.se.s267880.lab5.commandControllerHelper;
+package ru.ifmo.se.s267880.lab56.commandControllerHelper;
 
 import com.google.gson.JsonElement;
-import ru.ifmo.se.s267880.lab5.CommandController;
+import ru.ifmo.se.s267880.lab56.CommandController;
 
 /**
  * A badic input preprocessor that transform Json into some primitive types.

@@ -1,6 +1,4 @@
-package ru.ifmo.se.s267880.lab5.commandControllerHelper;
-
-import ru.ifmo.se.s267880.lab5.CommandController;
+package ru.ifmo.se.s267880.lab56.commandControllerHelper;
 
 import java.lang.annotation.*;
 

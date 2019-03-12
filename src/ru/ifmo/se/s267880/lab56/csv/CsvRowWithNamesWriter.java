@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab5.csv;
+package ru.ifmo.se.s267880.lab56.csv;
 
 import java.io.IOException;
 import java.io.OutputStream;

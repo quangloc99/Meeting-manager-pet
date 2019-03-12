@@ -1,10 +1,10 @@
-package ru.ifmo.se.s267880.lab5;
+package ru.ifmo.se.s267880.lab56;
 
 import JuniorAndCarlson.Meeting;
-import ru.ifmo.se.s267880.lab5.commandControllerHelper.Usage;
-import ru.ifmo.se.s267880.lab5.commandControllerHelper.Command;
-import ru.ifmo.se.s267880.lab5.csv.CsvReader;
-import ru.ifmo.se.s267880.lab5.csv.CsvRowWithNamesWriter;
+import ru.ifmo.se.s267880.lab56.commandControllerHelper.Usage;
+import ru.ifmo.se.s267880.lab56.commandControllerHelper.Command;
+import ru.ifmo.se.s267880.lab56.csv.CsvReader;
+import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 
 import java.io.*;
 import java.text.ParseException;
@@ -13,12 +13,12 @@ import java.util.*;
 /**
  * A class that manage the meeting with basic operation: add, remove, ...
  *
- * This class also be used with {@link ru.ifmo.se.s267880.lab5.commandControllerHelper.ReflectionCommandAdder} to add commands into {@link CommandController}.
+ * This class also be used with {@link ru.ifmo.se.s267880.lab56.commandControllerHelper.ReflectionCommandAdder} to add commands into {@link CommandController}.
  * Each methods with the annotation {@link Command} will be added into {@link CommandController}, and also each of them
  * also has {@link Usage} annotation, but it was not render in the dog because it will be ugly if I do so.
  *
  * @author Tran Quang Loc
- * @see ru.ifmo.se.s267880.lab5.commandControllerHelper.ReflectionCommandAdder
+ * @see ru.ifmo.se.s267880.lab56.commandControllerHelper.ReflectionCommandAdder
  * @see Command
  * @see Usage
  * @see CommandController

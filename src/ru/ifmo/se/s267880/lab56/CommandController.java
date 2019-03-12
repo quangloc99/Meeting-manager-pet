@@ -1,6 +1,5 @@
-package ru.ifmo.se.s267880.lab5;
+package ru.ifmo.se.s267880.lab56;
 
-import com.google.gson.stream.MalformedJsonException;
 import java.util.*;
 
 /**

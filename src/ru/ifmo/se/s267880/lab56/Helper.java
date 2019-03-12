@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab5;
+package ru.ifmo.se.s267880.lab56;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

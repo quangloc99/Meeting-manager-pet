@@ -1,6 +1,6 @@
-package ru.ifmo.se.s267880.lab5;
+package ru.ifmo.se.s267880.lab56;
 
-import ru.ifmo.se.s267880.lab5.commandControllerHelper.*;
+import ru.ifmo.se.s267880.lab56.commandControllerHelper.*;
 
 /**
  * @author Tran Quang Loc
