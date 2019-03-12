@@ -3,6 +3,7 @@ package ru.ifmo.se.s267880.lab56;
 import JuniorAndCarlson.Meeting;
 import ru.ifmo.se.s267880.lab56.commandControllerHelper.*;
 
+import java.util.Collections;
 import java.util.LinkedList;
 
 /**
@@ -65,7 +66,7 @@ public class Main {
 
         MeetingManager mm = null;
         try {
-            mm = new MeetingManager(new LinkedList<Meeting>());
+            mm = new MeetingManager(Collections.synchronizedList(new LinkedList<Meeting>()));
             mm.open(savedFileName);
             mm.save();
         } catch (Exception e) {

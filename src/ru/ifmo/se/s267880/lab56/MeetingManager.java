@@ -75,7 +75,7 @@ public class MeetingManager {
     /**
      * Save all the collection into the file with name {@link #currentFileName}.
      */
-    public void save() {
+    public synchronized void save() {
         List<String> header = new LinkedList<>();
         header.add("meeting name");
         header.add("meeting time");
@@ -105,14 +105,13 @@ public class MeetingManager {
            "The string can have this form: yyyy/MM/dd hh:mm:ss, <meeting-name>.\n" +
            "the meeting name can still have commas, but it will be trim.")
 
-    public void add(String stringForm) {
+    public synchronized void add(String stringForm) throws ParseException {
         stringForm = stringForm.trim();
         String[] parts = stringForm.split(",");
-        try {
-            add(new Meeting(stringForm.substring(parts[0].length() + 2).trim(), Helper.meetingDateFormat.parse(parts[0])));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        add(new Meeting(
+                stringForm.substring(parts[0].length() + 2).trim(),
+                Helper.meetingDateFormat.parse(parts[0])
+        ));
     }
 
     /**
@@ -121,7 +120,7 @@ public class MeetingManager {
      */
     @Command
     @Usage("add new meeting into the collection.")
-    public void add(Meeting meeting) {
+    public synchronized void add(Meeting meeting) {
         collection.add(meeting);
     }
 
@@ -130,7 +129,7 @@ public class MeetingManager {
      */
     @Command
     @Usage("List all the meetings.")
-    public void show() {
+    public synchronized void show() {
         System.out.println("# Meeting list:");
         int i = 1;
         for (Meeting meeting: collection) {
@@ -144,7 +143,7 @@ public class MeetingManager {
      */
     @Command
     @Usage("remove the meeting correspond to the argument.")
-    public void remove(Meeting meeting) {
+    public synchronized void remove(Meeting meeting) {
         collection.remove(meeting);
     }
 
@@ -154,7 +153,7 @@ public class MeetingManager {
      */
     @Command
     @Usage("remove the meeting with index given by the argument.")
-    public void remove(int num) {
+    public synchronized void remove(int num) {
         collection.remove(num - 1);
     }
 
@@ -164,7 +163,7 @@ public class MeetingManager {
      */
     @Command("add_if_min")
     @Usage("add new meeting into the collection if it's date is before every other meeting in the collection.")
-    public void addIfMin(Meeting meeting) {
+    public synchronized void addIfMin(Meeting meeting) {
         if (meeting.compareTo(Collections.min(collection)) >= 0) return;
         add(meeting);
     }
@@ -174,7 +173,7 @@ public class MeetingManager {
      */
     @Command
     @Usage("Show some basic information.")
-    public void info() {
+    public synchronized void info() {
         System.out.println("# Information");
         System.out.println("File name: " + currentFileName);
         System.out.println("Number of meeting: " + collection.size());
@@ -188,7 +187,7 @@ public class MeetingManager {
     @Command(additional = true)
     @Usage("open a file with name given by arg. The content of the collection will be replaced.\n" +
            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    public void open(String path) throws Exception {
+    public synchronized void open(String path) throws Exception {
         File file = new File(path);
         if (!file.isFile()) {
             throw new Exception(path + " must be a file.");
@@ -198,7 +197,7 @@ public class MeetingManager {
         }
         collection.clear();
         try {
-            collection = getDataFromFile(path);
+            collection.addAll(getDataFromFile(path));
         } catch (ParseException | IOException e) {
             System.err.println(e);
             System.err.println("The collection is initialized empty and still be saved into " + path);
@@ -214,7 +213,7 @@ public class MeetingManager {
     @Command(value = "save-as", additional = true)
     @Usage("change the current working file.\n" +
            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    public void saveAs(String path) {
+    public synchronized void saveAs(String path) {
         currentFileName = path;
         save();
         fileOpenSince = Calendar.getInstance().getTime();
@@ -225,7 +224,7 @@ public class MeetingManager {
      */
     @Command(additional = true)
     @Usage("sort all the meeting ascending by their date.")
-    public void sort() {
+    public synchronized void sort() {
         Collections.sort(collection);
     }
 
@@ -234,7 +233,7 @@ public class MeetingManager {
      */
     @Command(additional = true)
     @Usage("reverse the order ot the meetings.")
-    public void reverse() {
+    public synchronized void reverse() {
         Collections.reverse(collection);
     }
 
@@ -245,7 +244,7 @@ public class MeetingManager {
      */
     @Command(additional = true)
     @Usage("swap 2 meetings with the given indexes")
-    public void swap(int a, int b) {
+    public synchronized void swap(int a, int b) {
         Collections.swap(collection, a - 1, b - 1);
     }
 
@@ -254,7 +253,7 @@ public class MeetingManager {
      */
     @Command(additional = true)
     @Usage("delete all the elements from the collection")
-    public void clear() {
+    public synchronized void clear() {
         collection.clear();
     }
 }
