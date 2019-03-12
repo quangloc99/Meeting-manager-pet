@@ -1,6 +1,9 @@
 package ru.ifmo.se.s267880.lab56;
 
+import JuniorAndCarlson.Meeting;
 import ru.ifmo.se.s267880.lab56.commandControllerHelper.*;
+
+import java.util.LinkedList;
 
 /**
  * @author Tran Quang Loc
@@ -62,9 +65,12 @@ public class Main {
 
         MeetingManager mm = null;
         try {
-            mm = new MeetingManager(savedFileName);
+            mm = new MeetingManager(new LinkedList<Meeting>());
+            mm.open(savedFileName);
+            mm.save();
         } catch (Exception e) {
             System.err.println(e.getMessage());
+            System.exit(0);
         }
 
         CLIWithJSONCommandController cc = new CLIWithJSONCommandController(System.in);

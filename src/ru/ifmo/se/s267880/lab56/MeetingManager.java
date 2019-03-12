@@ -25,12 +25,13 @@ import java.util.*;
  * @see MeetingManagerInputPreprocessorJson
  */
 public class MeetingManager {
-    private List<Meeting> collection = new LinkedList<>();
+    private List<Meeting> collection = null;
     private String currentFileName;
     private Date fileOpenSince;
-    public MeetingManager(String path) throws Exception {
-        open(path);
-        save();
+
+    public MeetingManager(List<Meeting> collection) {
+        assert(collection != null);
+        this.collection = collection;
     }
 
     public String getCurrentFileName() {
