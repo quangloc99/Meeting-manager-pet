@@ -9,6 +9,7 @@ import java.lang.annotation.*;
  * @see Command
  * @see ReflectionCommandAdder
  */
+@Inherited
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Usage {

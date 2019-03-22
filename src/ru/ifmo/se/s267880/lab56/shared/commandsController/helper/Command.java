@@ -13,6 +13,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
  * @see ReflectionCommandAdder
  * @see Usage
  */
+@Inherited
 @Documented
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
