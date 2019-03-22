@@ -1,8 +1,10 @@
 package ru.ifmo.se.s267880.lab56;
 
-import JuniorAndCarlson.Meeting;
+import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.Meeting;
 import ru.ifmo.se.s267880.lab56.commandControllerHelper.*;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -14,6 +16,7 @@ public class Main {
      * Print a help message.
      */
     public static int help(Object[] args) {
+        // TODO: add more helps
         System.out.println("# Help");
         System.out.println("\tUse command \"help\" to display this message.");
         System.out.println("\tUse command \"list-commands\" for the full list of commands.");

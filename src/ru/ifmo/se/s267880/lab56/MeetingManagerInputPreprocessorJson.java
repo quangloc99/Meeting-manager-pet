@@ -1,13 +1,16 @@
 package ru.ifmo.se.s267880.lab56;
 
-import JuniorAndCarlson.Meeting;
+import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.BuildingLocation;
+import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.Meeting;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import ru.ifmo.se.s267880.lab56.commandControllerHelper.CannotPreprocessInputException;
 import ru.ifmo.se.s267880.lab56.commandControllerHelper.JsonBasicInputPreprocessor;
 
+import javax.xml.crypto.dsig.CanonicalizationMethod;
 import java.text.ParseException;
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -44,8 +47,10 @@ public class MeetingManagerInputPreprocessorJson extends JsonBasicInputPreproces
     /**
      * Transform JsonObject into Meeting
      * Json object must have 2 following field:<ul>
-     * <li>"name": String - the name of the meeting.</li>
-     * <li>"time": Date - the meeting time.</li>
+     * <li>"name": a String represents the name of the meeting. This field is required</li>
+     * <li>"time": an object/string represents the meeting time. Default value is the current moment.</li>
+     * <li>"duration": an object represents the duration of the meeting. Default is 1 hour.</li>
+     * <li>"location": an object represents the meeting's location. Default is [1, 1]</li>
      * </ul>
      *
      * @param obj the object needed to be transformed
@@ -54,7 +59,12 @@ public class MeetingManagerInputPreprocessorJson extends JsonBasicInputPreproces
      */
     public static Meeting json2Meeting(JsonObject obj) throws CannotPreprocessInputException {
         try {
-            return new Meeting(obj.get("name").getAsString(), json2Date(obj.get("time")));
+            return new Meeting(
+                    obj.get("name").getAsString(),
+                    obj.has("duration") ? json2Duration(obj.get("duration")) : Duration.ofHours(1),
+                    obj.has("location") ? json2BuildingLocation(obj.get("location")) : new BuildingLocation(1, 1),
+                    obj.has("time") ? json2Date(obj.get("time")) : new Date()
+            );
         } catch (Exception e) {
             throw new CannotPreprocessInputException(e.getMessage());
         }
@@ -97,6 +107,57 @@ public class MeetingManagerInputPreprocessorJson extends JsonBasicInputPreproces
                 return cal.getTime();
             } else {
                 return Helper.meetingDateFormat.parse(elm.getAsString());
+            }
+        } catch (Exception e) {
+            throw new CannotPreprocessInputException(e.getMessage());
+        }
+    }
+
+    /**
+     * Transform JsonElement into Duration.
+     * JsonElement can only be an integer represting the number of minutes that the meeting will last.
+     * @param elm
+     * @return
+     * @throws CanonicalizationMethod
+     */
+    public static Duration json2Duration(JsonElement elm) throws CannotPreprocessInputException {
+        try {
+            return Duration.ofMinutes(elm.getAsInt());
+        } catch (Exception e) {
+            throw new CannotPreprocessInputException(e.getMessage());
+        }
+    }
+
+    /**
+     * Transform JsonElement into location.
+     * Json element can have one of the following forms: <ul>
+     * <li>Representative object with the following properties: <ul>
+     *      <li>"building": an integer represents the building number. Default is 1.</li>
+     *      <li>"floor": an integer represents the floor number of the location. Default is 1</li>
+     * </ul>
+     * <li>Array with 2 integers. The first represents the building number and the second represents the floor number.</li>
+     *
+     * </li>
+     * </ul>
+     *
+     * @param elm
+     * @return
+     * @throws CannotPreprocessInputException
+     */
+    public static BuildingLocation json2BuildingLocation(JsonElement elm) throws CannotPreprocessInputException {
+        try {
+            if (elm.isJsonArray()) {
+                JsonArray arr = elm.getAsJsonArray();
+                while (arr.size() < 2) {
+                    arr.add(1);
+                }
+                return new BuildingLocation(arr.get(0).getAsInt(), arr.get(1).getAsInt());
+            } else {
+                JsonObject obj = elm.getAsJsonObject();
+                return new BuildingLocation(
+                        obj.has("building") ? obj.get("building").getAsInt() : 1,
+                        obj.has("floor") ? obj.get("floor").getAsInt() : 1
+                );
             }
         } catch (Exception e) {
             throw new CannotPreprocessInputException(e.getMessage());

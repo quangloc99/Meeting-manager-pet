@@ -1,6 +1,7 @@
 package ru.ifmo.se.s267880.lab56;
 
-import JuniorAndCarlson.Meeting;
+import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.BuildingLocation;
+import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.Meeting;
 import ru.ifmo.se.s267880.lab56.commandControllerHelper.Usage;
 import ru.ifmo.se.s267880.lab56.commandControllerHelper.Command;
 import ru.ifmo.se.s267880.lab56.csv.CsvReader;
@@ -8,7 +9,13 @@ import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 
 import java.io.*;
 import java.text.ParseException;
+import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static ru.ifmo.se.s267880.lab56.Helper.uncheckedConsumer;
+import static ru.ifmo.se.s267880.lab56.Helper.uncheckedFunction;
 
 /**
  * A class that manage the meeting with basic operation: add, remove, ...
@@ -60,16 +67,18 @@ public class MeetingManager {
      * @throws IOException
      */
     private List<Meeting> getDataFromFile(String path) throws ParseException, IOException {
-        CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(path)), true);
-
-        List<Meeting> newData = new LinkedList<>();
-        while (true) {
-            Map<String, String> row = reader.getNextRowWithNames();
-            if (row == null) break;
-            Meeting meeting = new Meeting(row.get("meeting name"), Helper.meetingDateFormat.parse(row.get("meeting time")));
-            newData.add(meeting);
-        }
-        return newData;
+        return new CsvReader(new BufferedInputStream(new FileInputStream(path)), true)
+            .getAllRowsWithNames().stream()
+            .map(uncheckedFunction(row -> new Meeting(
+                row.get("meeting name"),
+                Duration.ofMinutes(Long.parseLong(row.get("duration"))),
+                new BuildingLocation(
+                    Integer.parseInt(row.get("building number")),
+                    Integer.parseInt(row.get("floor number"))
+                ),
+                Helper.meetingDateFormat.parse(row.get("meeting time"))    // can throw ParseException
+            )))
+            .collect(Collectors.toList());
     }
 
     /**
@@ -79,17 +88,25 @@ public class MeetingManager {
         List<String> header = new LinkedList<>();
         header.add("meeting name");
         header.add("meeting time");
+        header.add("duration");
+        header.add("building number");
+        header.add("floor number");
         try {
             CsvRowWithNamesWriter writer = new CsvRowWithNamesWriter(
-                    new FileOutputStream(currentFileName),
-                    header
+                new FileOutputStream(currentFileName),
+                header
             );
-            for (Meeting meeting: collection) {
-                Map<String, String> row = new HashMap<>();
-                row.put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
-                row.put("meeting name", meeting.getName());
-                writer.writeRow(row);
-            }
+            collection.stream()
+                .map(meeting -> new HashMap<String, String>() {{    // Java 9 introduced Map.of, which might be more
+                                                                    // comfortable to use, but helios (the ITMO server)
+                                                                    // supports only java 8 for now.
+                    put("meeting name", meeting.getName());
+                    put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
+                    put("duration", Long.toString(meeting.getDuration().toMinutes()));
+                    put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
+                    put("floor number", Integer.toString(meeting.getLocation().getFloor()));
+                }})
+                .forEachOrdered(uncheckedConsumer(writer::writeRow));
             writer.close();
         } catch (IOException e) {
             System.err.println("Unable to write data into file " + currentFileName);
@@ -97,22 +114,22 @@ public class MeetingManager {
         }
     }
 
-    /**
-     * Add meeting into the collection
-     */
-    @Command(additional = true)
-    @Usage("add new meeting into the collection with string a string instead of an object.\n" +
-           "The string can have this form: yyyy/MM/dd hh:mm:ss, <meeting-name>.\n" +
-           "the meeting name can still have commas, but it will be trim.")
-
-    public synchronized void add(String stringForm) throws ParseException {
-        stringForm = stringForm.trim();
-        String[] parts = stringForm.split(",");
-        add(new Meeting(
-                stringForm.substring(parts[0].length() + 2).trim(),
-                Helper.meetingDateFormat.parse(parts[0])
-        ));
-    }
+//    /**
+//     * Add meeting into the collection
+//     */
+//    @Command(additional = true)
+//    @Usage("add new meeting into the collection with string a string instead of an object.\n" +
+//           "The string can have this form: yyyy/MM/dd hh:mm:ss, <meeting-name>.\n" +
+//           "the meeting name can still have commas, but it will be trim.")
+//
+//    public synchronized void add(String stringForm) throws ParseException {
+//        stringForm = stringForm.trim();
+//        String[] parts = stringForm.split(",");
+//        add(new Meeting(
+//                stringForm.substring(parts[0].length() + 2).trim(),
+//                Helper.meetingDateFormat.parse(parts[0])
+//        ));
+//    }
 
     /**
      * Add meeting into the collection
@@ -131,10 +148,10 @@ public class MeetingManager {
     @Usage("List all the meetings.")
     public synchronized void show() {
         System.out.println("# Meeting list:");
-        int i = 1;
-        for (Meeting meeting: collection) {
-            System.out.printf("%3d) %s\n", i++, meeting);
-        }
+        Iterator<Integer> counter = IntStream.rangeClosed(1, collection.size()).iterator();
+        collection.stream()
+                .map(meeting -> String.format("%3d) %s", counter.next(), meeting))
+                .forEachOrdered(System.out::println);
     }
 
     /**
@@ -189,6 +206,10 @@ public class MeetingManager {
            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
     public synchronized void open(String path) throws Exception {
         File file = new File(path);
+        if (!file.exists()) {
+            System.err.println("File " + path + " not found. Creating new file.");
+            file.createNewFile();
+        }
         if (!file.isFile()) {
             throw new Exception(path + " must be a file.");
         }
@@ -222,10 +243,16 @@ public class MeetingManager {
     /**
      * Sort all the meeting ascending by their date.
      */
-    @Command(additional = true)
+    @Command(value="sort-by-date", additional = true)
     @Usage("sort all the meeting ascending by their date.")
-    public synchronized void sort() {
-        Collections.sort(collection);
+    public synchronized void sortByDate() {
+        Collections.sort(collection, (u, v) -> u.getTime().compareTo(v.getTime()));
+    }
+
+    @Command(value="sort-by-duration", additional = true)
+    @Usage("sort all the meetings ascending by their duration")
+    public synchronized void sortBytime() {
+        Collections.sort(collection, (u, v) -> u.getDuration().compareTo(v.getDuration()));
     }
 
     /**

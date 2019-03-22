@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56.shared;
+package ru.ifmo.se.s267880.lab56.JuniorAndCarlson;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
