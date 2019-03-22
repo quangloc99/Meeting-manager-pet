@@ -2,13 +2,14 @@ package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
 import ru.ifmo.se.s267880.lab56.CLIWithJSONCommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
+import static ru.ifmo.se.s267880.lab56.shared.Helper.makePair;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * An utility class that use reflection and annotation to add commands for {@link CommandController} more easily
@@ -55,16 +56,22 @@ import java.util.Map;
  */
 public class ReflectionCommandAdder {
     /**
-     * The only method in this class, that add all commands represented by obj's methods (with annotation {@link Command}),
+     * The only method in this class, that add all commands represented by commandHandlers's methods (with annotation {@link Command}),
      * which has input preprocessed by preprocessor.
      *
      * @param cc the command controller that is
-     * @param obj the object that has methods with annotation {@link Command}
+     * @param commandHandlers the object that has methods with annotation {@link Command}
      * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
      */
-    public static void addCommand(CommandController cc, Object obj, InputPreprocessor preprocessor) {
-        filterCommands(obj.getClass()).forEach((commandName, methodList) -> {
-            cc.addCommand(commandName, generateHandler(obj, methodList, preprocessor));
+    public static void addCommand(CommandController cc, Object commandHandlers, InputPreprocessor preprocessor) {
+        filterCommands(commandHandlers.getClass()).forEach((commandName, methodList) -> {
+            cc.addCommand(commandName, generateHandler(commandHandlers, methodList, preprocessor));
+        });
+    }
+
+    public static void addCommand(CLIWithJSONCommandController cc, Object commandHandlers, InputPreprocessor preprocessor) {
+        filterCommands(commandHandlers.getClass()).forEach((commandName, methodList) -> {
+            cc.addCommand(commandName, generateUsage(methodList), generateHandler(commandHandlers, methodList, preprocessor));
         });
     }
 
@@ -79,77 +86,45 @@ public class ReflectionCommandAdder {
         return commandList;
     }
 
-    private static CommandController.Handler generateHandler(Object obj, List<Method> methodList, InputPreprocessor preprocessor) {
-        final Map<Integer, LinkedList<Method>> methodMap = new HashMap<>();
-        final String usage = generateUsage(methodList);
-        int maxNElement_ = 0;
-        for (Method med: methodList) {
-            med.setAccessible(true);           // This line is necessary, even when the method is public.
-            int nElm = med.getParameterCount();
-            methodMap.computeIfAbsent(nElm, k -> new LinkedList<>()).add(med);
-            maxNElement_ = Math.max(maxNElement_, nElm);
-        }
-
-        final int maxNElement = maxNElement_;
-        return new CLIWithJSONCommandController.HandlerWithUsage() {
-            @Override
-            public String getUsage() {
-                return usage;
-            }
-
-            @Override
-            public int process(Object[] args) throws Exception {
-                if (methodMap.containsKey(args.length)) {
-                    for (Method med : methodMap.get(args.length)) {
-                        Object[] preprocessedArgs;
-                        try {
-                            preprocessedArgs = preprocessor.preprocess(args,med.getParameterTypes());
-                        } catch (CannotPreprocessInputException e) {
-                            continue;
-                        }
-
-                        try {
-                            med.invoke(obj, preprocessedArgs);
-                            return CommandController.SUCCESS;
-                        } catch (IllegalAccessException e) {
-                            continue;
-                        } catch (InvocationTargetException e) {
-                            throw (Exception)e.getTargetException();
-                        }
-                    }
+    private static CommandController.Handler generateHandler(Object commandHandlers, List<Method> methodList, InputPreprocessor preprocessor) {
+        final int maxNElement = methodList.stream().mapToInt(Method::getParameterCount).max().getAsInt();
+        return args ->  {
+            for (Method med : methodList) {
+                if (med.getParameterCount() != args.length) {
+                    continue;
                 }
-
-                return (args.length < maxNElement) ? CommandController.NEED_MORE_INPUT : CommandController.FAIL;
+                try {
+                    Object[] preprocessedArgs = preprocessor.preprocess(args,med.getParameterTypes());
+                    med.setAccessible(true);
+                    med.invoke(commandHandlers, preprocessedArgs);
+                    return CommandController.SUCCESS;
+                } catch (CannotPreprocessInputException | IllegalAccessException e) {
+                    // ignore
+                } catch (InvocationTargetException e) {
+                    throw (Exception)e.getTargetException();
+                }
             }
+            return (args.length < maxNElement) ? CommandController.NEED_MORE_INPUT : CommandController.FAIL;
         };
     }
 
-    private static String generateUsage(List<Method> methodList) {
-        StringBuilder usageBuilder = new StringBuilder();
-        for (Method med : methodList) {
-            Usage cmdUsage = med.getAnnotation(Usage.class);
-            if (cmdUsage == null) continue;
-            if (usageBuilder.length() != 0) {
-                usageBuilder.append("\n");
-            }
-            List<String> clsnames = new LinkedList<>();
-            for (Class cls: med.getParameterTypes()) {
-                clsnames.add(cls.getSimpleName());
-            }
-            String usage = "";
-            if (clsnames.isEmpty()) {
-                usage = cmdUsage.value();
-                if (methodList.size() > 1)
-                    usage = "If there is no argument, then " + usage;
-            } else {
-                usage = String.format("If the arguments are {%s}, then %s", String.join(", ", clsnames), cmdUsage.value());
-            }
-            if (med.getAnnotation(Command.class).additional()) {
-                usageBuilder.append("[Additional] ");
-            }
-            usageBuilder.append(usage);
-        }
-        return usageBuilder.toString();
+    private static String generateUsage(List<Method> methods) {
+        methods = methods.stream().filter(med -> med.isAnnotationPresent(Usage.class)).collect(Collectors.toList());
+        List<String> params = methods.stream()
+                .map(med -> Arrays.stream(med.getParameterTypes()))
+                .map(p -> p.map(Class::getSimpleName))
+                .map(p -> p.collect(Collectors.joining(", ", "{", "}")))
+                .map(p -> p.equals("{}") ? "If there is no argument" : "If arguments are " + p)
+                .collect(Collectors.toList());
+        List<String> usages = methods.stream()
+                .map(med -> med.getAnnotation(Usage.class).value())
+                .collect(Collectors.toList());
+        List<String> additional = methods.stream()
+                .map(med -> med.getAnnotation(Command.class).additional() ? " [Additional]" : "")
+                .collect(Collectors.toList());
+        return IntStream.range(0, params.size())
+                .mapToObj(i -> String.format("%s, then %s%s", params.get(i), usages.get(i), additional.get(i)))
+                .collect(Collectors.joining("\n"));
     }
 }
 

@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.shared;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -89,5 +90,9 @@ public class Helper {
 
     public static <E extends Throwable> void sneakyThrows(Throwable e) throws E {
         throw (E) e;
+    }
+
+    public static <K, V> AbstractMap.SimpleEntry<K, V> makePair(K key, V value) {
+        return new AbstractMap.SimpleEntry<>(key, value);
     }
 }
