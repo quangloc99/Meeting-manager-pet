@@ -1,13 +1,15 @@
-package JuniorAndCarlson;
+package ru.ifmo.se.s267880.lab56.shared;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Date;
 
 /**
  * @author Tran Quang Loc
  * A class to check if a meeting is held late or not.
  */
-public class Meeting implements Comparable<Meeting> {
+public class Meeting implements Comparable<Meeting>, Serializable {
     /**
      * This exception will be thrown when a meeting was held late.
      */
@@ -17,15 +19,19 @@ public class Meeting implements Comparable<Meeting> {
         }
     }
 
-    private Date meetingTime;
-    private String meetingName;
+    private String meetingName;         // replacement for object's name
+    private Duration duration;          // replacement for size
+    private BuildingLocation location;  // replacement for location
+    private Date meetingTime;           // replacement for object's creation's time
 
     /**
      * @param meetingName The name of the meeting.
      * @param meetingTime The meeting time.
      */
-    public Meeting(String meetingName, Date meetingTime) {
+    public Meeting(String meetingName, Duration duration, BuildingLocation location, Date meetingTime) {
         this.meetingName = meetingName;
+        this.duration = duration;
+        this.location = location;
         this.meetingTime = meetingTime;
     }
 
@@ -44,6 +50,10 @@ public class Meeting implements Comparable<Meeting> {
         return meetingName;
     }
 
+    public Duration getDuration() { return duration; }
+
+    public BuildingLocation getLocation() { return location; }
+
     public Date getTime() {
         return (Date) meetingTime.clone();
     }
@@ -58,7 +68,12 @@ public class Meeting implements Comparable<Meeting> {
      * @return
      */
     public String toString(DateFormat dateFormat) {
-        return "At " + dateFormat.format(meetingTime) + ": " + meetingName;
+        return String.format("%s: at %s for %s minute(s) on %s",
+                meetingName,
+                dateFormat.format(meetingTime),
+                duration.toMinutes(),
+                location
+        );
     }
 
     @Override
@@ -73,7 +88,9 @@ public class Meeting implements Comparable<Meeting> {
 
     @Override
     public int compareTo(Meeting other) {
-        return meetingTime.compareTo(other.meetingTime);
+        int res = meetingTime.compareTo(other.meetingTime);
+        if (res == 0) res = duration.compareTo(other.duration);
+        return res;
     }
 
 }

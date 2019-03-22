@@ -5,11 +5,21 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author Tran Quang Loc
  */
 public class Helper {
+    public interface FunctionWithException<T, R> {
+        R accept(T val) throws Exception;
+    }
+
+    public interface ConsumerWithException<T> {
+        void accept(T val) throws Exception;
+    }
+
     /**
      * The default date format for <i>almost</i> Date object.
      */
@@ -54,5 +64,30 @@ public class Helper {
             str[i] = obj[i].toString();
         }
         return String.join(delimitor, str);
+    }
+
+    public static <T, R> Function<T, R> uncheckedFunction(FunctionWithException<T, R> func) {
+        return val -> {
+            try {
+                return func.accept(val);
+            } catch (Exception e) {
+                sneakyThrows(e);
+                return null;
+            }
+        };
+    }
+
+    public static <T> Consumer<T> uncheckedConsumer(ConsumerWithException<T> consumer) {
+        return val -> {
+            try {
+                consumer.accept(val);
+            } catch (Exception e) {
+                sneakyThrows(e);
+            }
+        };
+    }
+
+    public static <E extends Throwable> void sneakyThrows(Throwable e) throws E {
+        throw (E) e;
     }
 }

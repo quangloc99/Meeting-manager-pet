@@ -1,4 +1,5 @@
 *.csv
+*.png
 docs/
 lib/
 out/
@@ -8,4 +9,6 @@ out/
 .idea/tasks.xml
 .idea/uiDesigner.xml
 .idea/libraries/
+.idea/artifacts
 
+**/META-INF
