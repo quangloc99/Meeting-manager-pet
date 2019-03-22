@@ -1,4 +1,6 @@
-package ru.ifmo.se.s267880.lab56;
+package ru.ifmo.se.s267880.lab56.shared.commandsController;
+
+import ru.ifmo.se.s267880.lab56.shared.Helper;
 
 import java.util.*;
 

@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56;
+package ru.ifmo.se.s267880.lab56.shared;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -29,12 +29,12 @@ public class Helper {
      * Contains the mapping between the string representation of Calendar's fields (YEAR, MONTH) and those contansts.
      * For example {@code calendarFieldMap.get("year") == Calendar.YEAR;}
      */
-    static final Map<String, Integer> calendarFieldMap = new HashMap<>();
+    public static final Map<String, Integer> calendarFieldMap = new HashMap<>();
 
     /**
      * Contains mapping between human integer's presentation for month and Calendar.{@code <MONTH>} constants.
      */
-    static final Map<Integer, Integer> monthMap = new HashMap<>();
+    public static final Map<Integer, Integer> monthMap = new HashMap<>();
 
     static {
         calendarFieldMap.put("year", Calendar.YEAR);

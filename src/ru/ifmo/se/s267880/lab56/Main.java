@@ -1,10 +1,10 @@
 package ru.ifmo.se.s267880.lab56;
 
-import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.Meeting;
-import ru.ifmo.se.s267880.lab56.commandControllerHelper.*;
+import ru.ifmo.se.s267880.lab56.server.MeetingManager;
+import ru.ifmo.se.s267880.lab56.shared.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.LinkedList;
 

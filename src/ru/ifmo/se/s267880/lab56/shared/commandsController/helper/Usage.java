@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56.commandControllerHelper;
+package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
 import java.lang.annotation.*;
 

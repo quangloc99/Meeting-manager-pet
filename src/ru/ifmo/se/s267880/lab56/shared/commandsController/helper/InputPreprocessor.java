@@ -1,11 +1,13 @@
-package ru.ifmo.se.s267880.lab56.commandControllerHelper;
+package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
+
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 
 /**
  * Preprocess the input enter by the user into the desired type.
- * Used with {@link ru.ifmo.se.s267880.lab56.CommandController CommandController} and {@link ReflectionCommandAdder}.
+ * Used with {@link CommandController CommandController} and {@link ReflectionCommandAdder}.
  *
  * @author Tran Quang Loc
- * @see ru.ifmo.se.s267880.lab56.CommandController
+ * @see CommandController
  * @see ReflectionCommandAdder
  */
 public interface InputPreprocessor {

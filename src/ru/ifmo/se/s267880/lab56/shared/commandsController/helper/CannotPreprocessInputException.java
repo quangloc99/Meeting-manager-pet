@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56.commandControllerHelper;
+package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
 /**
  * An exeption that will be thrown when a {@link InputPreprocessor} cannot preprocess the input.

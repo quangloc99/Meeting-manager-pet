@@ -3,6 +3,7 @@ package ru.ifmo.se.s267880.lab56;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.MalformedJsonException;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import sun.misc.Unsafe;
 
 import java.io.*;

@@ -1,7 +1,7 @@
-package ru.ifmo.se.s267880.lab56.commandControllerHelper;
+package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
 import ru.ifmo.se.s267880.lab56.CLIWithJSONCommandController;
-import ru.ifmo.se.s267880.lab56.CommandController;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

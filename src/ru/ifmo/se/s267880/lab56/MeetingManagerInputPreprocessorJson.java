@@ -1,12 +1,14 @@
 package ru.ifmo.se.s267880.lab56;
 
-import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.BuildingLocation;
-import ru.ifmo.se.s267880.lab56.JuniorAndCarlson.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;
+import ru.ifmo.se.s267880.lab56.shared.Helper;
+import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import ru.ifmo.se.s267880.lab56.commandControllerHelper.CannotPreprocessInputException;
-import ru.ifmo.se.s267880.lab56.commandControllerHelper.JsonBasicInputPreprocessor;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CannotPreprocessInputException;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.JsonBasicInputPreprocessor;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import java.text.ParseException;
@@ -18,7 +20,7 @@ import java.util.*;
  *
  * @author Tran Quang Loc
  * @see JsonBasicInputPreprocessor
- * @see ru.ifmo.se.s267880.lab56.commandControllerHelper.ReflectionCommandAdder
+ * @see ReflectionCommandAdder
  */
 public class MeetingManagerInputPreprocessorJson extends JsonBasicInputPreprocessor {
     /**
