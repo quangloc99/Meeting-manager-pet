@@ -74,6 +74,15 @@ public class CsvReader {
         return new LinkedList<>(currentRow);
     }
 
+    public List<List<String>> getAllRows() throws IOException {
+        LinkedList<List<String>> res = new LinkedList<>();
+        do {
+            res.add(getNextRow());
+        } while (res.getLast() != null);
+        res.removeLast();
+        return res;
+    }
+
     /**
      * Get the next row and return its fields corresponding to the header.
      * @return
@@ -93,11 +102,20 @@ public class CsvReader {
         return res;
     }
 
+    public List<Map<String, String>> getAllRowsWithNames() throws IOException {
+        LinkedList<Map<String, String>> res = new LinkedList<>();
+        do {
+            res.add(getNextRowWithNames());
+        } while (res.getLast() != null);
+        res.removeLast();
+        return res;
+    }
+
     /**
      * Get the header row's field.
      * @return null when the reader is initialized without header.
      */
     public List<String> getHeader() {
-        return new LinkedList(header);
+        return Collections.unmodifiableList(header);
     }
 }
