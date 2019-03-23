@@ -1,6 +1,8 @@
 package ru.ifmo.se.s267880.lab56;
 
-import ru.ifmo.se.s267880.lab56.server.MeetingManager;
+import ru.ifmo.se.s267880.lab56.client.ClientCommandsHandlers;
+import ru.ifmo.se.s267880.lab56.server.ServerCommandsHandlers;
+import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
@@ -67,9 +69,9 @@ public class Main {
         }
         System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
 
-        MeetingManager mm = null;
+        ServerCommandsHandlers mm = null;
         try {
-            mm = new MeetingManager(Collections.synchronizedList(new LinkedList<Meeting>()));
+            mm = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<Meeting>()));
             mm.open(savedFileName);
             mm.save();
         } catch (Exception e) {
@@ -81,7 +83,13 @@ public class Main {
         if (!cc.removeGSONNonExecutablePrefix()) {
             System.err.println("cannot remove gson non execute prefix :(");
         }
-        ReflectionCommandAdder.addCommand(cc, mm, new MeetingManagerInputPreprocessorJson());
+
+        ReflectionCommandAdder.addCommand(
+                cc,
+                CommandHandlersWithMeeting.class,
+                new ClientCommandsHandlers(),  // testing ClientCommandsHandlers
+                new MeetingManagerInputPreprocessorJson()
+        );
         cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
             System.exit(0);
             return CommandController.SUCCESS;

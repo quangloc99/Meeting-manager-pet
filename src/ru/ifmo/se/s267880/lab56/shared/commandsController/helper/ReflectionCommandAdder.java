@@ -115,7 +115,7 @@ public class ReflectionCommandAdder {
                 }
                 try {
                     Object[] preprocessedArgs = preprocessor.preprocess(args, med.getParameterTypes());
-                    commandHandlers.setCommandInformation(commandName, args);
+                    commandHandlers.setCommandInformation(commandName, preprocessedArgs);
                     med.setAccessible(true);
                     med.invoke(commandHandlers, preprocessedArgs);
                     result = CommandController.SUCCESS;
