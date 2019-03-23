@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.server;
 
 import ru.ifmo.se.s267880.lab56.MeetingManagerInputPreprocessorJson;
 import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;
+import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
@@ -22,11 +23,9 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedConsumer;
 import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
 
 /**
- * A class that manage the meeting with basic operation: add, remove, ...
- *
- * This class also be used with {@link ReflectionCommandAdder} to add commands into {@link CommandController}.
- * Each methods with the annotation {@link Command} will be added into {@link CommandController}, and also each of them
- * also has {@link Usage} annotation, but it was not render in the dog because it will be ugly if I do so.
+ * An implementation of CommandHandersWithMeeting on server side.
+ * See {@link CommandHandlersWithMeeting} to know about which methods will be
+ * used as commands.
  *
  * @author Tran Quang Loc
  * @see ReflectionCommandAdder
@@ -35,12 +34,12 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
  * @see CommandController
  * @see MeetingManagerInputPreprocessorJson
  */
-public class MeetingManager {
+public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private List<Meeting> collection = null;
     private String currentFileName;
     private Date fileOpenSince;
 
-    public MeetingManager(List<Meeting> collection) {
+    public ServerCommandsHandlers(List<Meeting> collection) {
         assert(collection != null);
         this.collection = collection;
     }
@@ -53,8 +52,7 @@ public class MeetingManager {
      * Add all data from another file into the current collection.
      * @param path the path to the file.
      */
-    @Command("import")
-    @Usage("Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted")
+    @Override
     public void doImport(String path) {
         try {
             collection.addAll(getDataFromFile(path));
@@ -139,8 +137,7 @@ public class MeetingManager {
      * Add meeting into the collection
      * @param meeting the meeting wanted to be add.
      */
-    @Command
-    @Usage("add new meeting into the collection.")
+    @Override
     public synchronized void add(Meeting meeting) {
         collection.add(meeting);
     }
@@ -148,8 +145,7 @@ public class MeetingManager {
     /**
      * List all the meetings.
      */
-    @Command
-    @Usage("List all the meetings.")
+    @Override
     public synchronized void show() {
         System.out.println("# Meeting list:");
         Iterator<Integer> counter = IntStream.rangeClosed(1, collection.size()).iterator();
@@ -162,8 +158,7 @@ public class MeetingManager {
      * Remove a meeting from the collection by value.
      * @param meeting the meeting wanted to be removed.
      */
-    @Command
-    @Usage("remove the meeting correspond to the argument.")
+    @Override
     public synchronized void remove(Meeting meeting) {
         collection.remove(meeting);
     }
@@ -172,8 +167,7 @@ public class MeetingManager {
      * Remove a meeting from the collection by index.
      * @param num the index (base 1) of the element.
      */
-    @Command
-    @Usage("remove the meeting with index given by the argument.")
+    @Override
     public synchronized void remove(int num) {
         collection.remove(num - 1);
     }
@@ -182,8 +176,7 @@ public class MeetingManager {
      * Add new meeting into the collection if it's date is before every other meeting in the collection.
      * @param meeting the meeting wanted to be added.
      */
-    @Command("add_if_min")
-    @Usage("add new meeting into the collection if it's date is before every other meeting in the collection.")
+    @Override
     public synchronized void addIfMin(Meeting meeting) {
         if (meeting.compareTo(Collections.min(collection)) >= 0) return;
         add(meeting);
@@ -192,8 +185,7 @@ public class MeetingManager {
     /**
      * show file name, number of meeting and the time the file first open during this session.
      */
-    @Command
-    @Usage("Show some basic information.")
+    @Override
     public synchronized void info() {
         System.out.println("# Information");
         System.out.println("File name: " + currentFileName);
@@ -205,9 +197,7 @@ public class MeetingManager {
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
      */
-    @Command(additional = true)
-    @Usage("open a file with name given by arg. The content of the collection will be replaced.\n" +
-           "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
+    @Override
     public synchronized void open(String path) throws Exception {
         File file = new File(path);
         if (!file.exists()) {
@@ -235,9 +225,7 @@ public class MeetingManager {
      * Just change the current working file. The data of that file will be replaced.
      * @param path that path to the file.
      */
-    @Command(value = "save-as", additional = true)
-    @Usage("change the current working file.\n" +
-           "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
+    @Override
     public synchronized void saveAs(String path) {
         currentFileName = path;
         save();
@@ -247,14 +235,12 @@ public class MeetingManager {
     /**
      * Sort all the meeting ascending by their date.
      */
-    @Command(value="sort-by-date", additional = true)
-    @Usage("sort all the meeting ascending by their date.")
+    @Override
     public synchronized void sortByDate() {
         Collections.sort(collection, (u, v) -> u.getTime().compareTo(v.getTime()));
     }
 
-    @Command(value="sort-by-duration", additional = true)
-    @Usage("sort all the meetings ascending by their duration")
+    @Override
     public synchronized void sortBytime() {
         Collections.sort(collection, (u, v) -> u.getDuration().compareTo(v.getDuration()));
     }
@@ -262,8 +248,7 @@ public class MeetingManager {
     /**
      * Reverse the order of the meetings.
      */
-    @Command(additional = true)
-    @Usage("reverse the order ot the meetings.")
+    @Override
     public synchronized void reverse() {
         Collections.reverse(collection);
     }
@@ -273,8 +258,7 @@ public class MeetingManager {
      * @param a the index of the first meeting.
      * @param b the index of the second meeting.
      */
-    @Command(additional = true)
-    @Usage("swap 2 meetings with the given indexes")
+    @Override
     public synchronized void swap(int a, int b) {
         Collections.swap(collection, a - 1, b - 1);
     }
@@ -282,8 +266,7 @@ public class MeetingManager {
     /**
      * Clear the collection.
      */
-    @Command(additional = true)
-    @Usage("delete all the elements from the collection")
+    @Override
     public synchronized void clear() {
         collection.clear();
     }
