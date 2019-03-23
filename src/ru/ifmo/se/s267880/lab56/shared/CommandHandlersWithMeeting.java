@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.shared;
 
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 
@@ -11,7 +12,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
  * Each methods with the annotation {@link Command} will be added into {@link CommandController}, and also each of them
  * also has {@link Usage} annotation, but it was not render in the document because it will be ugly if I do so.
  */
-public interface CommandHandlersWithMeeting {
+public interface CommandHandlersWithMeeting extends CommandHandlers {
     /**
      * Add all data from another file into the current collection.
      * @param path the path to the file.

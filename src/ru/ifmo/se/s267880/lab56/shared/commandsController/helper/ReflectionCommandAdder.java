@@ -1,15 +1,12 @@
 package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
-import ru.ifmo.se.s267880.lab56.CLIWithJSONCommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
-import static ru.ifmo.se.s267880.lab56.shared.Helper.makePair;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * An utility class that use reflection and annotation to add commands for {@link CommandController} more easily
@@ -67,9 +64,13 @@ public class ReflectionCommandAdder {
      * @param commandHandlers the object that is an instance of metaDataClass
      * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
      */
-    public static void addCommand(CommandController cc, Class metaDataClass, Object commandHandlers, InputPreprocessor preprocessor) {
+    public static void addCommand(CommandController cc, Class metaDataClass, CommandHandlers commandHandlers, InputPreprocessor preprocessor) {
         filterCommands(metaDataClass).forEach((commandName, methodList) -> {
-            cc.addCommand(commandName, generateUsage(methodList), generateHandler(commandHandlers, methodList, preprocessor));
+            cc.addCommand(
+                    commandName,
+                    generateUsage(methodList),
+                    generateHandler(commandName, commandHandlers, methodList, preprocessor)
+            );
         });
 
     }
@@ -77,14 +78,14 @@ public class ReflectionCommandAdder {
      * The only method in this class, that add all commands represented by commandHandlers's methods (with annotation {@link Command}),
      * which has input preprocessed by preprocessor.
      *
-     * This method called {@link #addCommand(CommandController, Class, Object, InputPreprocessor)} with metaDataClass
+     * This method called {@link #addCommand(CommandController, Class, CommandHandlers, InputPreprocessor)} with metaDataClass
      * is commandHandlers.getClass().
      *
      * @param cc the command controller that is
      * @param commandHandlers the object that has methods with annotation {@link Command}
      * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
      */
-    public static void addCommand(CommandController cc, Object commandHandlers, InputPreprocessor preprocessor) {
+    public static void addCommand(CommandController cc, CommandHandlers commandHandlers, InputPreprocessor preprocessor) {
         addCommand(cc, commandHandlers.getClass(), commandHandlers, preprocessor);
     }
 
@@ -99,25 +100,35 @@ public class ReflectionCommandAdder {
         return commandList;
     }
 
-    private static CommandController.Handler generateHandler(Object commandHandlers, List<Method> methodList, InputPreprocessor preprocessor) {
+    private static CommandController.Handler generateHandler(
+            String commandName,
+            CommandHandlers commandHandlers,
+            List<Method> methodList,
+            InputPreprocessor preprocessor
+    ) {
         final int maxNElement = methodList.stream().mapToInt(Method::getParameterCount).max().getAsInt();
         return args ->  {
+            int result = (args.length < maxNElement) ? CommandController.NEED_MORE_INPUT : CommandController.FAIL;
             for (Method med : methodList) {
                 if (med.getParameterCount() != args.length) {
                     continue;
                 }
                 try {
-                    Object[] preprocessedArgs = preprocessor.preprocess(args,med.getParameterTypes());
+                    Object[] preprocessedArgs = preprocessor.preprocess(args, med.getParameterTypes());
+                    commandHandlers.setCommandInformation(commandName, args);
                     med.setAccessible(true);
                     med.invoke(commandHandlers, preprocessedArgs);
-                    return CommandController.SUCCESS;
+                    result = CommandController.SUCCESS;
+                    break;
                 } catch (CannotPreprocessInputException | IllegalAccessException e) {
                     // ignore
                 } catch (InvocationTargetException e) {
                     throw (Exception)e.getTargetException();
+                } finally {
+                    commandHandlers.setCommandInformation(null);
                 }
             }
-            return (args.length < maxNElement) ? CommandController.NEED_MORE_INPUT : CommandController.FAIL;
+            return result;
         };
     }
 
