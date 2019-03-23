@@ -1,5 +1,9 @@
 package ru.ifmo.se.s267880.lab56.shared;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
@@ -95,4 +99,19 @@ public class Helper {
     public static <K, V> AbstractMap.SimpleEntry<K, V> makePair(K key, V value) {
         return new AbstractMap.SimpleEntry<>(key, value);
     }
+
+    public static byte[] serializableToByteArray(Serializable obj) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(obj);
+            byte[] result = baos.toByteArray();
+            oos.close();
+            return result;
+        } catch (IOException e) {
+            assert(false);  // when creating oos with baos, IOException should not be occurs.
+        }
+        return null;
+    }
 }
+

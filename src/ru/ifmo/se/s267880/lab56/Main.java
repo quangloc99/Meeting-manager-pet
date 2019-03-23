@@ -7,6 +7,10 @@ import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.channels.SocketChannel;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -87,7 +91,12 @@ public class Main {
         ReflectionCommandAdder.addCommand(
                 cc,
                 CommandHandlersWithMeeting.class,
-                new ClientCommandsHandlers(),  // testing ClientCommandsHandlers
+                new ClientCommandsHandlers() {
+                    public SocketChannel createChannel() throws IOException  {
+                        SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", 3499));
+                        return sc;
+                    }
+                },  // testing ClientCommandsHandlers
                 new MeetingManagerInputPreprocessorJson()
         );
         cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
