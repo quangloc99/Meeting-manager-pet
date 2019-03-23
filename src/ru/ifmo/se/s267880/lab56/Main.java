@@ -3,6 +3,7 @@ package ru.ifmo.se.s267880.lab56;
 import ru.ifmo.se.s267880.lab56.client.ClientCommandsHandlers;
 import ru.ifmo.se.s267880.lab56.server.ServerCommandsHandlers;
 import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
+import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
@@ -93,7 +94,7 @@ public class Main {
                 CommandHandlersWithMeeting.class,
                 new ClientCommandsHandlers() {
                     public SocketChannel createChannel() throws IOException  {
-                        SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", 3499));
+                        SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.PORT));
                         return sc;
                     }
                 },  // testing ClientCommandsHandlers
