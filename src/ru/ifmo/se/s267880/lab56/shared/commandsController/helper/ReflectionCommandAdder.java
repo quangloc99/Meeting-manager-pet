@@ -55,18 +55,37 @@ import java.util.stream.Stream;
  * @see JsonBasicInputPreprocessor
  */
 public class ReflectionCommandAdder {
+
     /**
      * The only method in this class, that add all commands represented by commandHandlers's methods (with annotation {@link Command}),
      * which has input preprocessed by preprocessor.
+     * This class introduce metaDataClass inorder to get more freedom: the annotations can be added in the super class
+     * and the subclass does not need to add.
+     *
+     * @param cc the command controller that is
+     * @param metaDataClass the class that has methods with annotation {@link Command}
+     * @param commandHandlers the object that is an instance of metaDataClass
+     * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
+     */
+    public static void addCommand(CommandController cc, Class metaDataClass, Object commandHandlers, InputPreprocessor preprocessor) {
+        filterCommands(metaDataClass).forEach((commandName, methodList) -> {
+            cc.addCommand(commandName, generateUsage(methodList), generateHandler(commandHandlers, methodList, preprocessor));
+        });
+
+    }
+    /**
+     * The only method in this class, that add all commands represented by commandHandlers's methods (with annotation {@link Command}),
+     * which has input preprocessed by preprocessor.
+     *
+     * This method called {@link #addCommand(CommandController, Class, Object, InputPreprocessor)} with metaDataClass
+     * is commandHandlers.getClass().
      *
      * @param cc the command controller that is
      * @param commandHandlers the object that has methods with annotation {@link Command}
      * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
      */
     public static void addCommand(CommandController cc, Object commandHandlers, InputPreprocessor preprocessor) {
-        filterCommands(commandHandlers.getClass()).forEach((commandName, methodList) -> {
-            cc.addCommand(commandName, generateUsage(methodList), generateHandler(commandHandlers, methodList, preprocessor));
-        });
+        addCommand(cc, commandHandlers.getClass(), commandHandlers, preprocessor);
     }
 
     private static Map<String, List<Method>> filterCommands(Class cls) {
