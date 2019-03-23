@@ -65,12 +65,6 @@ public class ReflectionCommandAdder {
      */
     public static void addCommand(CommandController cc, Object commandHandlers, InputPreprocessor preprocessor) {
         filterCommands(commandHandlers.getClass()).forEach((commandName, methodList) -> {
-            cc.addCommand(commandName, generateHandler(commandHandlers, methodList, preprocessor));
-        });
-    }
-
-    public static void addCommand(CLIWithJSONCommandController cc, Object commandHandlers, InputPreprocessor preprocessor) {
-        filterCommands(commandHandlers.getClass()).forEach((commandName, methodList) -> {
             cc.addCommand(commandName, generateUsage(methodList), generateHandler(commandHandlers, methodList, preprocessor));
         });
     }

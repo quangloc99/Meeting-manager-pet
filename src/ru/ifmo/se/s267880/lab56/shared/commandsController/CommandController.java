@@ -22,6 +22,9 @@ abstract public class CommandController {
      */
     public interface Handler {
         int process(Object args[]) throws Exception;
+        default String getUsage() {
+            return "This command has no usage";
+        }
     }
 
     public class CommandNotFoundException extends Exception {
@@ -74,6 +77,20 @@ abstract public class CommandController {
      */
     public void addCommand(String commandName, Handler handler) {
         commandHandlers.put(commandName, handler);
+    }
+
+    public void addCommand(String commandName, String usage, CommandController.Handler handler) {
+        addCommand(commandName, new Handler() {
+            @Override
+            public int process(Object[] args) throws Exception {
+                return handler.process(args);
+            }
+
+            @Override
+            public String getUsage() {
+                return usage;
+            }
+        });
     }
 
     /**

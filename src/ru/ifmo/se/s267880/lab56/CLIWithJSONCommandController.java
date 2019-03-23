@@ -21,14 +21,6 @@ public class CLIWithJSONCommandController extends CommandController {
             super("User command must be a string. If the command's name contains special character, then it must be quoted.");
         }
     }
-    /**
-     * An interface that will contains the usage of the command to show to the user beside the handler itself.
-     */
-    public interface HandlerWithUsage extends CommandController.Handler {
-        default String getUsage() {
-            return "This command has no usage";
-        }
-    }
 
     /**
      * A method to remove <code>JsonParser.NON_EXECUTE_PREFIX</code>'s content.
@@ -114,8 +106,7 @@ public class CLIWithJSONCommandController extends CommandController {
             System.out.println("# Commands list:");
             commandHandlers.forEach((commandName, handler) -> {
                 System.out.printf("- %s\n", commandName);
-                if (!(handler instanceof HandlerWithUsage)) return;
-                for (String s : ((HandlerWithUsage) handler).getUsage().split("\n")) {
+                for (String s : handler.getUsage().split("\n")) {
                     System.out.printf("\t%s\n", s);
                 }
                 System.out.println();
@@ -130,20 +121,6 @@ public class CLIWithJSONCommandController extends CommandController {
      * @param usage - the usage of the command. It can be line separated. The command "list-commands" will split it and display nicely.
      * @param handler - the handler for this command.
      */
-    public void addCommand(String commandName, String usage, CommandController.Handler handler) {
-        super.addCommand(commandName, new HandlerWithUsage() {
-            @Override
-            public int process(Object[] args) throws Exception {
-                return handler.process(args);
-            }
-
-            @Override
-            public String getUsage() {
-                return usage;
-            }
-        });
-    }
-
     /**
      * Get the user command from the userInputStream (passed into the {@link #CLIWithJSONCommandController(InputStream) constructor}).
      *
