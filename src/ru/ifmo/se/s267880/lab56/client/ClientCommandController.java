@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56;
+package ru.ifmo.se.s267880.lab56.client;
 
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -15,7 +15,7 @@ import java.lang.reflect.Modifier;
  *
  * @author Tran Quang Loc
  */
-public class CLIWithJSONCommandController extends CommandController {
+public class ClientCommandController extends CommandController {
     public class IncorrectCommandFormatException extends RuntimeException {
         public IncorrectCommandFormatException() {
             super("User command must be a string. If the command's name contains special character, then it must be quoted.");
@@ -92,7 +92,7 @@ public class CLIWithJSONCommandController extends CommandController {
         return true;
     }
 
-    private BufferedReader userInputStream;
+    private Reader userInputStream;
     private JsonReader jreader;
 
     /**
@@ -100,8 +100,8 @@ public class CLIWithJSONCommandController extends CommandController {
      * After initialized, "list-commands" command is added to show all the commands.
      * @param userInputStream the stream that receives the user's input.
      */
-    public CLIWithJSONCommandController(InputStream userInputStream) {
-        this.userInputStream = new BufferedReader(new InputStreamReader(userInputStream));
+    public ClientCommandController(InputStream userInputStream) {
+        this.userInputStream = new InputStreamReader(userInputStream);
         addCommand("list-commands", "[Additional] List all the commands.", (Object[] args) -> {
             System.out.println("# Commands list:");
             commandHandlers.forEach((commandName, handler) -> {
@@ -122,12 +122,13 @@ public class CLIWithJSONCommandController extends CommandController {
      * @param handler - the handler for this command.
      */
     /**
-     * Get the user command from the userInputStream (passed into the {@link #CLIWithJSONCommandController(InputStream) constructor}).
+     * Get the user command from the userInputStream (passed into the {@link #ClientCommandController(InputStream) constructor}).
      *
      * <p>Note: known-bug: because this method use google's </p>
      * @return the user command.
      */
     protected String getUserCommand() throws IOException {
+        System.out.printf("> ");
         try {
             jreader = new JsonReader(userInputStream);  // always initialize a new object, so it will read from the new line.
             jreader.setLenient(true);
