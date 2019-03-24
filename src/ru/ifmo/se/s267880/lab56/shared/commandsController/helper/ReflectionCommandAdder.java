@@ -108,7 +108,6 @@ public class ReflectionCommandAdder {
     ) {
         final int maxNElement = methodList.stream().mapToInt(Method::getParameterCount).max().getAsInt();
         return args ->  {
-            int result = (args.length < maxNElement) ? CommandController.NEED_MORE_INPUT : CommandController.FAIL;
             for (Method med : methodList) {
                 if (med.getParameterCount() != args.length) {
                     continue;
@@ -117,9 +116,7 @@ public class ReflectionCommandAdder {
                     Object[] preprocessedArgs = preprocessor.preprocess(args, med.getParameterTypes());
                     commandHandlers.setCommandInformation(commandName, preprocessedArgs);
                     med.setAccessible(true);
-                    med.invoke(commandHandlers, preprocessedArgs);
-                    result = CommandController.SUCCESS;
-                    break;
+                    return med.invoke(commandHandlers, preprocessedArgs);
                 } catch (CannotPreprocessInputException | IllegalAccessException e) {
                     // ignore
                 } catch (InvocationTargetException e) {
@@ -128,7 +125,11 @@ public class ReflectionCommandAdder {
                     commandHandlers.setCommandInformation(null);
                 }
             }
-            return result;
+            if (args.length < maxNElement) {
+                throw new CommandController.NeedMoreInputException();
+            } else {
+                throw new CommandController.IncorrectInputException();
+            }
         };
     }
 

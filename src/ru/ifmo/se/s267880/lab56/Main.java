@@ -22,7 +22,7 @@ public class Main {
     /**
      * Print a help message.
      */
-    public static int help(Object[] args) {
+    public static Object help(Object[] args) {
         // TODO: add more helps
         System.out.println("# Help");
         System.out.println("\tUse command \"help\" to display this message.");
@@ -54,7 +54,7 @@ public class Main {
                 "\t\t}"
         );
         System.out.println("\tlike array representation, if a field missing, it will be filled with zero or by the current time's values.");
-        return CommandController.SUCCESS;
+        return null;
     }
 
     public static void main(String[] args) {
@@ -102,7 +102,7 @@ public class Main {
         );
         cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
             System.exit(0);
-            return CommandController.SUCCESS;
+            return null;
         });
         cc.addCommand("clrscr", "[Additional] Clear the screen. ", arg-> {
             try {
@@ -119,7 +119,7 @@ public class Main {
             } catch (final Exception e) {
                 e.printStackTrace();
             }
-            return CommandController.SUCCESS;
+            return null;
         });
         cc.addCommand("help", "[Additional] Display the help message, the arg json format.", Main::help);
         while (true) {

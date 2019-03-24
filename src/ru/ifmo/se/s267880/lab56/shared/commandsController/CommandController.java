@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.shared.commandsController;
 
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -13,37 +14,43 @@ import java.util.*;
  * @author Tran Quang Loc
  */
 abstract public class CommandController {
-    public static final int SUCCESS = 0;
-    public static final int NEED_MORE_INPUT = 1;
-    public static final int FAIL = 2;
-
     /**
      * The base interface for Handler
      */
     public interface Handler {
-        int process(Object args[]) throws Exception;
+        Object process(Object args[]) throws Exception;
         default String getUsage() {
             return "This command has no usage";
         }
     }
 
-    public class CommandNotFoundException extends Exception {
+    public static class CommandNotFoundException extends Exception {
         public CommandNotFoundException(String commandName) {
             super("Usage \"" + commandName + "\" not found. Use command \"list-commands\" for the list of usable commands.");
         }
     }
 
-    public class ErrorWhileRunningCommand extends Exception {
+    public static class ErrorWhileRunningCommand extends Exception {
         public ErrorWhileRunningCommand(String command, Exception error) {
             super(String.format("An Error orcured while running command \"%s\": %s", command, error.getMessage()));
         }
     }
 
-    public class IncorrectInput extends Exception {
-        public IncorrectInput(String command, Object[] objs) {
+    public static class IncorrectInputException extends Exception {
+        public IncorrectInputException() {
+            super();
+        }
+
+        public IncorrectInputException(String msg) {
+            super(msg);
+        }
+
+        public IncorrectInputException(String command, Object[] objs) {
             super(String.format("Command \"%s\" can not run with input: %s", command, Helper.join(", ", objs)));
         }
     }
+
+    public static class NeedMoreInputException extends Exception { }
 
     protected Map<String, Handler> commandHandlers = new TreeMap<>();  // so the commands can be alphabetized
 
@@ -51,24 +58,8 @@ abstract public class CommandController {
 
     /**
      * Add a command with no argument.
-     * <p>
-     * A lambda can be passed into this method with the following form:
-     * <pre>{@code
-     * (Object[] args) -> {
-     *     return <<status>>;
-     * }
-     * }
-     * </pre>
-     * </p>
-     *
-     * <p>
-     * The {@code <<status>>} here is one of the following value: <ul>
-     *     <li>{@link #SUCCESS}: when the command is successfully executed.</li>
-     *     <li>{@link #FAIL}: when the command is fail to executed.</li>
-     *     <li>{@link #NEED_MORE_INPUT}: ask for more input. The handler will be called again with one more input.</li>
-     * </ul>
-     * </p>
-     *
+     * If there is not enough argument for the handler to process, the handler must throw {@link NeedMoreInputException}.
+     * If the input are in the wrong order or it cannot be cast/process, the handler must throw {@link IncorrectInputException}.
      * Inorder to avoid infinity request for input, {@link #nInputLimit} - maximum number of inputs per command - is set to 10 by default.
      * But it can be config easily using the setter.
      *
@@ -82,7 +73,7 @@ abstract public class CommandController {
     public void addCommand(String commandName, String usage, CommandController.Handler handler) {
         addCommand(commandName, new Handler() {
             @Override
-            public int process(Object[] args) throws Exception {
+            public Object process(Object[] args) throws Exception {
                 return handler.process(args);
             }
 
@@ -106,7 +97,7 @@ abstract public class CommandController {
      * @throws CommandNotFoundException
      * @throws Exception
      */
-    public void execute() throws CommandNotFoundException, IncorrectInput, Exception {
+    public Object execute() throws CommandNotFoundException, IncorrectInputException, Exception {
         String userCommand = getUserCommand();
         if (!commandHandlers.containsKey(userCommand)) {
             throw new CommandNotFoundException(userCommand);
@@ -115,25 +106,21 @@ abstract public class CommandController {
         Handler handler = commandHandlers.get(userCommand);
         List<Object> argList = new LinkedList<>();
         boolean isExecuting = true;
-        for (int i = 0; i < nInputLimit && isExecuting; ++i) {
+        for (int i = 0; i <= nInputLimit && isExecuting; ++i) {
             try {
-                int status = handler.process(argList.toArray());
-                switch (status) {
-                    case CommandController.SUCCESS:
-                        isExecuting = false;
-                        break;
-                    case CommandController.NEED_MORE_INPUT:
-                        argList.add(getUserInput());
-                        break;
-                    case CommandController.FAIL:
-                        throw new IncorrectInput(userCommand, argList.toArray());
+                return handler.process(argList.toArray());
+            } catch (NeedMoreInputException e) {
+                argList.add(getUserInput());
+            } catch (IncorrectInputException e) {
+                if (e.getMessage().isEmpty()) {
+                    throw new IncorrectInputException(userCommand, argList.toArray());
                 }
-            } catch (IncorrectInput e) {
                 throw e;  // rethrow
             } catch (Exception e) {
                 throw new ErrorWhileRunningCommand(userCommand, e);
             }
         }
+        throw new IncorrectInputException(userCommand, argList.toArray());
     }
 
     /**
@@ -153,10 +140,10 @@ abstract public class CommandController {
     /**
      * Get user command.
      */
-    abstract protected String getUserCommand();
+    abstract protected String getUserCommand() throws IOException;
 
     /**
      * Get user input.
      */
-    abstract protected Object getUserInput();
+    abstract protected Object getUserInput() throws IOException;
 }

@@ -111,7 +111,7 @@ public class CLIWithJSONCommandController extends CommandController {
                 }
                 System.out.println();
             });
-            return CommandController.SUCCESS;
+            return null;
         });
     }
 
@@ -127,16 +127,13 @@ public class CLIWithJSONCommandController extends CommandController {
      * <p>Note: known-bug: because this method use google's </p>
      * @return the user command.
      */
-    protected String getUserCommand() {
+    protected String getUserCommand() throws IOException {
         try {
             jreader = new JsonReader(userInputStream);  // always initialize a new object, so it will read from the new line.
             jreader.setLenient(true);
             return jreader.nextString();
         }  catch (MalformedJsonException e) {
             throw new IncorrectCommandFormatException();
-        } catch (IOException e) {
-//            e.printStackTrace();
-            return null;
         }
     }
 
