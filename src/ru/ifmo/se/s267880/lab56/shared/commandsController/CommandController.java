@@ -117,6 +117,7 @@ abstract public class CommandController {
                 }
                 throw e;  // rethrow
             } catch (Exception e) {
+                e.printStackTrace();
                 throw new ErrorWhileRunningCommand(userCommand, e);
             }
         }

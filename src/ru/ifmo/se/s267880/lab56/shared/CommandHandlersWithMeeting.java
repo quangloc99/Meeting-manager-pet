@@ -6,6 +6,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -18,11 +19,11 @@ import java.util.Map;
 public interface CommandHandlersWithMeeting extends CommandHandlers {
     /**
      * Add all data from another file into the current collection.
-     * @param path the path to the file.
+     * @param inputStream the input stream that the data will be imported from.
      */
     @Command("import")
     @Usage("Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted")
-    void doImport(String path) throws Exception;
+    void doImport(InputStream inputStream) throws Exception;
 
     /**
      * Add meeting into the collection

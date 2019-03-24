@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56;
+package ru.ifmo.se.s267880.lab56.client;
 
 import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
@@ -11,6 +11,9 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.JsonBasicInputP
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Duration;
 import java.util.*;
@@ -22,7 +25,7 @@ import java.util.*;
  * @see JsonBasicInputPreprocessor
  * @see ReflectionCommandAdder
  */
-public class MeetingManagerInputPreprocessorJson extends JsonBasicInputPreprocessor {
+public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
     /**
      * The only function that used to transform user input.
      *
@@ -33,6 +36,14 @@ public class MeetingManagerInputPreprocessorJson extends JsonBasicInputPreproces
      */
     @Override
     protected Object preprocessJson(JsonElement elm, Class inputType) throws CannotPreprocessInputException {
+        if (inputType == InputStream.class) {
+            try {
+                String fileName = elm.getAsString();
+                return new FileInputStream(fileName);
+            } catch (FileNotFoundException e) {
+                throw new CannotPreprocessInputException(e.getMessage());
+            }
+        }
         if (inputType == Meeting.class) {
             try {
                 return json2Meeting(elm.getAsJsonObject());

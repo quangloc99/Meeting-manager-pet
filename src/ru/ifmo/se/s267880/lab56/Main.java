@@ -1,16 +1,15 @@
 package ru.ifmo.se.s267880.lab56;
 
 import ru.ifmo.se.s267880.lab56.client.ClientCommandsHandlers;
+import ru.ifmo.se.s267880.lab56.client.ClientInputPreprocessor;
 import ru.ifmo.se.s267880.lab56.server.ServerCommandsHandlers;
 import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -94,11 +93,11 @@ public class Main {
                 CommandHandlersWithMeeting.class,
                 new ClientCommandsHandlers() {
                     public SocketChannel createChannel() throws IOException  {
-                        SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.PORT));
+                        SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT));
                         return sc;
                     }
                 },  // testing ClientCommandsHandlers
-                new MeetingManagerInputPreprocessorJson()
+                new ClientInputPreprocessor()
         );
         cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
             System.exit(0);

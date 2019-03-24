@@ -4,15 +4,28 @@ import ru.ifmo.se.s267880.lab56.shared.QueryToServer;
 import ru.ifmo.se.s267880.lab56.shared.ResultToClient;
 import ru.ifmo.se.s267880.lab56.shared.ResultToClientStatus;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.Socket;
 
 public class QueryHandlerThread extends Thread {
     private Socket client;
     private ServerQueryCommandController cc;
-    public QueryHandlerThread(Socket socket, ServerQueryCommandController cc) {
+    private InputStream in;
+    private OutputStream out;
+
+    public InputStream getInputStream() {
+        return in;
+    }
+
+    public OutputStream getOutputStream() {
+        return out;
+    }
+
+    public Socket getClient() {
+        return client;
+    }
+
+    public QueryHandlerThread(Socket socket, ServerQueryCommandController cc) throws IOException {
         System.err.println("found client!");
         this.client = socket;
         this.cc = cc;
@@ -21,12 +34,10 @@ public class QueryHandlerThread extends Thread {
     @Override
     public void run() {
         try (Socket client = this.client) {
-            ObjectInputStream in = new ObjectInputStream(client.getInputStream());
-            ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
-
+            in = client.getInputStream();
             ResultToClient res = null;
             try {
-                QueryToServer qr = (QueryToServer) in.readObject();
+                QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
                 synchronized (cc) {
                     res = new ResultToClient(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
                 }
@@ -35,8 +46,8 @@ public class QueryHandlerThread extends Thread {
                 res = new ResultToClient(ResultToClientStatus.FAIL, e);
             }
 
-
-            out.writeObject(res);
+            out = client.getOutputStream();
+            new ObjectOutputStream(out).writeObject(res);
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();

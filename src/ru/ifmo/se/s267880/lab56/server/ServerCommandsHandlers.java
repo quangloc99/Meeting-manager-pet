@@ -1,6 +1,6 @@
 package ru.ifmo.se.s267880.lab56.server;
 
-import ru.ifmo.se.s267880.lab56.MeetingManagerInputPreprocessorJson;
+import ru.ifmo.se.s267880.lab56.client.ClientInputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;
 import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
@@ -31,7 +31,7 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
  * @see Command
  * @see Usage
  * @see CommandController
- * @see MeetingManagerInputPreprocessorJson
+ * @see ClientInputPreprocessor
  */
 public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private List<Meeting> collection = null;
@@ -49,15 +49,33 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
 
     /**
      * Add all data from another file into the current collection.
-     * @param path the path to the file.
+     * @param inputStream
      */
     @Override
-    public void doImport(String path) {
-        try {
-            collection.addAll(getDataFromFile(path));
-        } catch (ParseException | IOException e) {
-            System.err.println("File " + path + " does not exist or is corrupted. No data is imported");
-        }
+    public void doImport(InputStream inputStream) throws ParseException, IOException {
+        collection.addAll(getDataFrom(inputStream));
+    }
+
+    /**
+     * Get the data from another file.
+     * @param inputStream the stream of data to be transformed in to meetings.
+     * @return the data of the file.
+     * @throws ParseException
+     * @throws IOException
+     */
+    private List<Meeting> getDataFrom(InputStream inputStream) throws ParseException, IOException {
+        return new CsvReader(inputStream, true)
+                .getAllRowsWithNames().stream()
+                .map(uncheckedFunction(row -> new Meeting(
+                        row.get("meeting name"),
+                        Duration.ofMinutes(Long.parseLong(row.get("duration"))),
+                        new BuildingLocation(
+                                Integer.parseInt(row.get("building number")),
+                                Integer.parseInt(row.get("floor number"))
+                        ),
+                        Helper.meetingDateFormat.parse(row.get("meeting time"))    // can throw ParseException
+                )))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -68,18 +86,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @throws IOException
      */
     private List<Meeting> getDataFromFile(String path) throws ParseException, IOException {
-        return new CsvReader(new BufferedInputStream(new FileInputStream(path)), true)
-            .getAllRowsWithNames().stream()
-            .map(uncheckedFunction(row -> new Meeting(
-                row.get("meeting name"),
-                Duration.ofMinutes(Long.parseLong(row.get("duration"))),
-                new BuildingLocation(
-                    Integer.parseInt(row.get("building number")),
-                    Integer.parseInt(row.get("floor number"))
-                ),
-                Helper.meetingDateFormat.parse(row.get("meeting time"))    // can throw ParseException
-            )))
-            .collect(Collectors.toList());
+        return getDataFrom(new BufferedInputStream(new FileInputStream(path)));
     }
 
     /**

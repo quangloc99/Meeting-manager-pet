@@ -37,19 +37,19 @@ public class Main {
         ReflectionCommandAdder.addCommand(
                 cc, CommandHandlersWithMeeting.class,
                 mm,
-                new CastToTypeInputPreprocessor()
+                new ServerInputPreprocessor()
         );
 
         Lock commandHandlingLock = new ReentrantLock();
         Condition commandExecuted = commandHandlingLock.newCondition();
-        ServerSocket ss = null;
-        try {
-            ss = new ServerSocket(Config.PORT);
+        try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT);) {
             while (true) {
-//                mm.save();
-                new QueryHandlerThread(ss.accept(), cc).start();
+                try {
+                    new QueryHandlerThread(ss.accept(), cc).start();
+                } catch (IOException e) {
+                    System.err.println("Cannot run thread due to IOException: " + e.getMessage());
+                }
             }
-//            ss.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -27,7 +27,6 @@ public class QueryToServer implements Serializable {
         Objects.requireNonNull(name);
 
         this.parameters = Arrays.asList(args);
-        this.parameters.forEach(Objects::requireNonNull);
     }
 
     public String getName() {
