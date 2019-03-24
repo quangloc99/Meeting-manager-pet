@@ -3,8 +3,6 @@ package ru.ifmo.se.s267880.lab56.client;
 import ru.ifmo.se.s267880.lab56.shared.*;
 
 import java.io.*;
-import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
@@ -28,7 +26,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
 
     abstract public SocketChannel createChannel() throws IOException;
 
-    ResultToClient defaultCommandHandler() throws IOException {
+    ResultToClient queryToServer() throws IOException {
         try (SocketChannel sc = createChannel()) {
             ObjectOutputStream out = new ObjectOutputStream(Channels.newOutputStream(sc));
             Serializable[] castedParams = new Serializable[currentCommandParams.length];
@@ -46,7 +44,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
 
             ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(sc));
             ResultToClient res = (ResultToClient) in.readObject();
-            System.out.println(res.getStatus());  // testing
+//            System.out.println(res.getStatus());  // testing
             return res;
         } catch (EOFException | ClassNotFoundException e) {
             throw new IOException("Result sent from server has wrong format or there is a problem with connection.", e);
@@ -58,7 +56,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param path the path to the file.
      */
     public void doImport(String path) throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
@@ -66,14 +64,14 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param meeting the meeting wanted to be add.
      */
     public void add(Meeting meeting) throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
      * List all the meetings.
      */
     public List<Meeting> show() throws IOException {
-        List<Meeting> meetings = (List<Meeting>) defaultCommandHandler().getResult();
+        List<Meeting> meetings = (List<Meeting>) queryToServer().getResult();
         System.out.println("# Meeting list:");
         Iterator<Integer> counter = IntStream.rangeClosed(1, meetings.size()).iterator();
         meetings.stream()
@@ -87,7 +85,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param meeting the meeting wanted to be removed.
      */
     public void remove(Meeting meeting) throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
@@ -95,7 +93,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param num the index (base 1) of the element.
      */
     public void remove(int num) throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
@@ -103,14 +101,14 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param meeting the meeting wanted to be added.
      */
     public void addIfMin(Meeting meeting) throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
      * show file name, number of meeting and the time the file first open during this session.
      */
     public Map<String, String> info() throws IOException {
-        Map<String, String> result = (Map<String, String>) defaultCommandHandler().getResult();
+        Map<String, String> result = (Map<String, String>) queryToServer().getResult();
         System.out.println("# Information");
         System.out.println("File name: " + result.get("file"));
         System.out.println("Number of meeting: " + result.get("meeting-count"));
@@ -123,7 +121,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param path the path to the file.
      */
     public void open(String path) throws Exception {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
@@ -131,25 +129,25 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param path that path to the file.
      */
     public void saveAs(String path) throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
      * Sort all the meeting ascending by their date.
      */
     public void sortByDate() throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     public void sortBytime() throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
      * Reverse the order of the meetings.
      */
     public void reverse() throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
@@ -158,13 +156,13 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param b the index of the second meeting.
      */
     public void swap(int a, int b) throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 
     /**
      * Clear the collection.
      */
     public void clear() throws IOException {
-        defaultCommandHandler();
+        queryToServer();
     }
 }
