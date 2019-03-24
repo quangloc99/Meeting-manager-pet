@@ -6,6 +6,8 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 
+import java.util.List;
+
 
 /**
  * This interface is used with {@link ReflectionCommandAdder} to add commands into {@link CommandController}.
@@ -19,7 +21,7 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command("import")
     @Usage("Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted")
-    public void doImport(String path) throws Exception;
+    void doImport(String path) throws Exception;
 
     /**
      * Add meeting into the collection
@@ -27,14 +29,14 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command
     @Usage("add new meeting into the collection.")
-    public void add(Meeting meeting) throws Exception;
+    void add(Meeting meeting) throws Exception;
 
     /**
      * List all the meetings.
      */
     @Command
     @Usage("List all the meetings.")
-    public void show() throws Exception;
+    List<Meeting> show() throws Exception;
 
     /**
      * Remove a meeting from the collection by value.
@@ -42,7 +44,7 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command
     @Usage("remove the meeting correspond to the argument.")
-    public void remove(Meeting meeting) throws Exception;
+    void remove(Meeting meeting) throws Exception;
 
     /**
      * Remove a meeting from the collection by index.
@@ -50,7 +52,7 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command
     @Usage("remove the meeting with index given by the argument.")
-    public void remove(int num) throws Exception;
+    void remove(int num) throws Exception;
 
     /**
      * Add new meeting into the collection if it's date is before every other meeting in the collection.
@@ -58,14 +60,14 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command("add_if_min")
     @Usage("add new meeting into the collection if it's date is before every other meeting in the collection.")
-    public void addIfMin(Meeting meeting) throws Exception;
+    void addIfMin(Meeting meeting) throws Exception;
 
     /**
      * show file name, number of meeting and the time the file first open during this session.
      */
     @Command
     @Usage("Show some basic information.")
-    public void info() throws Exception;
+    void info() throws Exception;
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
@@ -74,7 +76,7 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
     @Command(additional = true)
     @Usage("open a file with name given by arg. The content of the collection will be replaced.\n" +
             "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    public void open(String path) throws Exception;
+    void open(String path) throws Exception;
 
     /**
      * Just change the current working file. The data of that file will be replaced.
@@ -83,25 +85,25 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
     @Command(value = "save-as", additional = true)
     @Usage("change the current working file.\n" +
             "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    public void saveAs(String path) throws Exception;
+    void saveAs(String path) throws Exception;
 
     /**
      * Sort all the meeting ascending by their date.
      */
     @Command(value="sort-by-date", additional = true)
     @Usage("sort all the meeting ascending by their date.")
-    public void sortByDate() throws Exception;
+    void sortByDate() throws Exception;
 
     @Command(value="sort-by-duration", additional = true)
     @Usage("sort all the meetings ascending by their duration")
-    public void sortBytime() throws Exception;
+    void sortBytime() throws Exception;
 
     /**
      * Reverse the order of the meetings.
      */
     @Command(additional = true)
     @Usage("reverse the order ot the meetings.")
-    public void reverse() throws Exception;
+    void reverse() throws Exception;
 
     /**
      * Swap 2 meeting.
@@ -110,12 +112,12 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command(additional = true)
     @Usage("swap 2 meetings with the given indexes")
-    public void swap(int a, int b) throws Exception;
+    void swap(int a, int b) throws Exception;
 
     /**
      * Clear the collection.
      */
     @Command(additional = true)
     @Usage("delete all the elements from the collection")
-    public void clear() throws Exception;
+    void clear() throws Exception;
 }

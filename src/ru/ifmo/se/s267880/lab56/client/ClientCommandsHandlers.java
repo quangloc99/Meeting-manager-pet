@@ -7,6 +7,9 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.IntStream;
 
 abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeting {
     private String currentCommandName = null;
@@ -68,8 +71,14 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
     /**
      * List all the meetings.
      */
-    public void show() throws IOException {
-        defaultCommandHandler();
+    public List<Meeting> show() throws IOException {
+        List<Meeting> meetings = (List<Meeting>) defaultCommandHandler().getResult();
+        System.out.println("# Meeting list:");
+        Iterator<Integer> counter = IntStream.rangeClosed(1, meetings.size()).iterator();
+        meetings.stream()
+                .map(meeting -> String.format("%3d) %s", counter.next(), meeting))
+                .forEachOrdered(System.out::println);
+        return meetings;
     }
 
     /**

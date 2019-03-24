@@ -17,7 +17,6 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedConsumer;
 import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
@@ -146,12 +145,10 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * List all the meetings.
      */
     @Override
-    public synchronized void show() {
-        System.out.println("# Meeting list:");
-        Iterator<Integer> counter = IntStream.rangeClosed(1, collection.size()).iterator();
-        collection.stream()
-                .map(meeting -> String.format("%3d) %s", counter.next(), meeting))
-                .forEachOrdered(System.out::println);
+    public synchronized List<Meeting> show() {
+        LinkedList<Meeting> clonedCollection = new LinkedList<>(collection);
+        clonedCollection.sort((u, v) -> u.getName().compareTo(v.getName()));
+        return clonedCollection;
     }
 
     /**
