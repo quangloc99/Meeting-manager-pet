@@ -83,24 +83,24 @@ public class Main {
      * Print a help message.
      */
     public static Object help(Object[] args) {
-        // TODO: add more helps
         System.out.println("# Help");
         System.out.println("\tUse command \"help\" to display this message.");
         System.out.println("\tUse command \"list-commands\" for the full list of commands.");
         System.out.println();
-        System.out.println("## Arg json format");
-        System.out.println("\tMostly the arg will be a json object that store the information of the meeting with the following format:");
+        System.out.println("# Argument formats");
+        System.out.println("## MeetingJson");
         System.out.println(
                 "\t\t{\n" +
-                        "\t\t\t\"name\": \"meeting name\",\n" +
-                        "\t\t\t\"time\": Date\n" +
-                        "\t\t}"
+                        "\t\t\t\"name\"    : String,                       This field is required\n" +
+                        "\t\t\t\"time\"    : DateJson,                     Default value is the current time\n" +
+                        "\t\t\t\"duration\": minutes_in_number,            Default value is 60\n" +
+                        "\t\t\t\"location\": LocationJson,                 Default value is the 1-st floor of the 1-st building [1, 1]\n" +
+                "\t\t}"
         );
-        System.out.println("\tThe Date object can have 1 of 3 following formats:");
-        System.out.println("\t1) [int, int, int, int, int, int] - This format is an array. Its elements from left to right represent");
-        System.out.println("\tthe year, the month, the date, the hour, the minute and the seconds respectively.");
-        System.out.println("\tThe array can have any size. If the size is less than 6, the other fields will be filled with");
-        System.out.println("\tzero or current time's value.");
+        System.out.println();
+        System.out.println("## DateJson");
+        System.out.println("\tDateJson can have 1 of 3 following forms:");
+        System.out.println("\t1) [int, int, int, int, int, int] - from left to right: year, month, date, hour, minute, second");
         System.out.println("\t2) String representation with the following format: \"yyyy/MM/dd HH:mm:ss\"");
         System.out.println("\t3) Object representation:");
         System.out.println(
@@ -113,7 +113,19 @@ public class Main {
                         "\t\t\t\"second\": int\n" +
                         "\t\t}"
         );
-        System.out.println("\tlike array representation, if a field missing, it will be filled with zero or by the current time's values.");
+        System.out.println("\tIn the 1-st and 3-rd form, if a field is missing, it will be filled with zero or by the current time's values");
+        System.out.println();
+        System.out.println("## LocaltionJson");
+        System.out.println("\tRight now this app supports very simple location. A location consists of only 2 value:");
+        System.out.println("\tthe building number and the floor number that the meeting will be held.");
+        System.out.println();
+        System.out.println("\tLocationJson can have 1 of 2 forms:");
+        System.out.println("\t1) [int, int] - from left to right is the building number and then the floor number.");
+        System.out.println("\t2) Object representation:");
+        System.out.println("\t\t{");
+        System.out.println("\t\t\t\"building\": int,          Default value is 1");
+        System.out.println("\t\t\t\"floor\"   : int,          Default value is 1");
+        System.out.println("\t\t}\n");
         return null;
     }
 
