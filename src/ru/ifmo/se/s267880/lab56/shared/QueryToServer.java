@@ -20,7 +20,7 @@ public class QueryToServer implements Serializable {
      * @param name - the name of the query
      * @param args - list of parameters that will be sent to the server.
      */
-    public QueryToServer(String name, Serializable... args) {
+    public QueryToServer(String name, Serializable[] args) {
         this.initialized = true;
 
         this.name = name;
@@ -35,7 +35,7 @@ public class QueryToServer implements Serializable {
     }
 
     public List<Serializable> getParameters() {
-        if (!initialized) {
+        if (initialized) {
             throw new RuntimeException("Cannot get parameters of this object because it is initialized with constructor.");
         }
         return Collections.unmodifiableList(parameters);
