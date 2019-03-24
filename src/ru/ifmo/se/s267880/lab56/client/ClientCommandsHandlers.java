@@ -9,6 +9,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeting {
@@ -108,8 +109,13 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
     /**
      * show file name, number of meeting and the time the file first open during this session.
      */
-    public void info() throws IOException {
-        defaultCommandHandler();
+    public Map<String, String> info() throws IOException {
+        Map<String, String> result = (Map<String, String>) defaultCommandHandler().getResult();
+        System.out.println("# Information");
+        System.out.println("File name: " + result.get("file"));
+        System.out.println("Number of meeting: " + result.get("meeting-count"));
+        System.out.println("File open since: " + result.get("since"));
+        return result;
     }
 
     /**

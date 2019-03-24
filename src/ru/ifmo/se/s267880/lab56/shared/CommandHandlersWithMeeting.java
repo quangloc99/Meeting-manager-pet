@@ -7,6 +7,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionComma
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -67,7 +68,7 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command
     @Usage("Show some basic information.")
-    void info() throws Exception;
+    Map<String, String> info() throws Exception;
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.

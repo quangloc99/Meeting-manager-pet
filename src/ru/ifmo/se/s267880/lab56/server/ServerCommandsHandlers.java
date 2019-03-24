@@ -183,11 +183,12 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * show file name, number of meeting and the time the file first open during this session.
      */
     @Override
-    public synchronized void info() {
-        System.out.println("# Information");
-        System.out.println("File name: " + currentFileName);
-        System.out.println("Number of meeting: " + collection.size());
-        System.out.println("File open since: " + Helper.meetingDateFormat.format(fileOpenSince));
+    public synchronized Map<String, String> info() {
+        Map<String, String> result = new HashMap<>();
+        result.put("file", currentFileName);
+        result.put("meeting-count", Integer.toString(collection.size()));
+        result.put("since", Helper.meetingDateFormat.format(fileOpenSince));
+        return result;
     }
 
     /**
