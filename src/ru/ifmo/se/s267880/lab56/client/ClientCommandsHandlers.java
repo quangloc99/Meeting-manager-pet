@@ -147,7 +147,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
     }
 
     /**
-     * show file name, number of meeting and the time the file first open during this session.
+     * show file name, number of meeting and the time the file first load during this session.
      */
     @Override
     public Map<String, String> info() throws IOException {
@@ -155,7 +155,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
         System.out.println("# Information");
         System.out.println("File name: " + result.get("file"));
         System.out.println("Number of meeting: " + result.get("meeting-count"));
-        System.out.println("File open since: " + result.get("since"));
+        System.out.println("File load since: " + result.get("since"));
         return result;
     }
 
@@ -164,7 +164,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param path the path to the file.
      */
     @Override
-    public void open(String path) throws Exception {
+    public void load(String path) throws Exception {
         queryToServer();
     }
 

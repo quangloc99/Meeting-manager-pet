@@ -20,7 +20,7 @@ public class Main {
         ServerCommandsHandlers mm = null;
         try {
             mm = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<Meeting>()));
-            mm.open(savedFileName);
+            mm.load(savedFileName);
             mm.save();
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -40,7 +40,7 @@ public class Main {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Cannot open ServerSocket due to IOException " + e.getMessage());
+            System.err.println("Cannot load ServerSocket due to IOException " + e.getMessage());
             e.printStackTrace();
         }
     }

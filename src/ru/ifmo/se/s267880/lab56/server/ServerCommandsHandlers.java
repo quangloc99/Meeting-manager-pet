@@ -187,7 +187,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     }
 
     /**
-     * show file name, number of meeting and the time the file first open during this session.
+     * show file name, number of meeting and the time the file first load during this session.
      */
     @Override
     public synchronized Map<String, String> info() {
@@ -203,7 +203,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param path the path to the file.
      */
     @Override
-    public synchronized void open(String path) throws Exception {
+    public synchronized void load(String path) throws Exception {
         File file = new File(path);
         if (!file.exists()) {
             System.err.println("File " + path + " not found. Creating new file.");

@@ -40,7 +40,7 @@ public class ClientCommandController extends CommandController {
      * </p>
      * <p>
      *     Of course the easiest solution for the above problem is to check if the first non-whitespace character is a
-     *     number or is an open brace. But the second problem is that I want the command to be execute with more than
+     *     number or is an load brace. But the second problem is that I want the command to be execute with more than
      *     one arguments. For example we want an command to insert an object into a specific place in a collection,
      *     so we need 2 arguments. And the problem now, is when using JsonReader or JsonParser, for the sake of the speed,
      *     the reader will try to read all the lines, into its buffer, so there is "almost" no way to get the next data

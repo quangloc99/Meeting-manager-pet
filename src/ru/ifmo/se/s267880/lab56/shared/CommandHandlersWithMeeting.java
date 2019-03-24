@@ -26,6 +26,15 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
     void doImport(InputStream inputStream) throws Exception;
 
     /**
+     * Replace the current collection with the ones in another file. Also change the current working file to that file.
+     * @param path the path to the file.
+     */
+    @Command(additional = true)
+    @Usage("load a file with name given by arg. The content of the collection will be replaced.\n" +
+            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
+    void load(String path) throws Exception;
+
+    /**
      * Add meeting into the collection
      * @param meeting the meeting wanted to be add.
      */
@@ -65,20 +74,11 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
     void addIfMin(Meeting meeting) throws Exception;
 
     /**
-     * show file name, number of meeting and the time the file first open during this session.
+     * show file name, number of meeting and the time the file first load during this session.
      */
     @Command
     @Usage("Show some basic information.")
     Map<String, String> info() throws Exception;
-
-    /**
-     * Replace the current collection with the ones in another file. Also change the current working file to that file.
-     * @param path the path to the file.
-     */
-    @Command(additional = true)
-    @Usage("open a file with name given by arg. The content of the collection will be replaced.\n" +
-            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    void open(String path) throws Exception;
 
     /**
      * Just change the current working file. The data of that file will be replaced.
