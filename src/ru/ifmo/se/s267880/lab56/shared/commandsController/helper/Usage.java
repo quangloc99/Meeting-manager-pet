@@ -17,4 +17,6 @@ public @interface Usage {
      * The usage of a command.
      */
     String value();
+
+    String[] params() default {};
 }

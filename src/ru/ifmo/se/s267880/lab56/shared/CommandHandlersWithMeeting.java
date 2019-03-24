@@ -22,8 +22,10 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      * @param inputStream the input stream that the data will be imported from.
      */
     @Command("import")
-    @Usage("Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted")
-    // TODO: add a way to change argument name on Usage.
+    @Usage(
+            value = "Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted",
+            params = {"String"}
+    )
     void doImport(InputStream inputStream) throws Exception;
 
     /**
@@ -56,7 +58,7 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      * @param meeting the meeting wanted to be add.
      */
     @Command
-    @Usage("add new meeting into the collection.")
+    @Usage(value = "add new meeting into the collection.", params = {"MeetingJson"})
     void add(Meeting meeting) throws Exception;
 
     /**
@@ -71,7 +73,7 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      * @param meeting the meeting wanted to be removed.
      */
     @Command
-    @Usage("remove the meeting correspond to the argument.")
+    @Usage(value = "remove the meeting correspond to the argument.", params = {"MeetingJson"})
     void remove(Meeting meeting) throws Exception;
 
     /**
@@ -87,7 +89,8 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      * @param meeting the meeting wanted to be added.
      */
     @Command("add_if_min")
-    @Usage("add new meeting into the collection if it's date is before every other meeting in the collection.")
+    @Usage(value = "add new meeting into the collection if it's date is before every other meeting in the collection.",
+            params = {"MeetingJson"})
     void addIfMin(Meeting meeting) throws Exception;
 
     /**

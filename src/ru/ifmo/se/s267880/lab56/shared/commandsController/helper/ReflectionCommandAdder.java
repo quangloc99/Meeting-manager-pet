@@ -134,22 +134,21 @@ public class ReflectionCommandAdder {
     }
 
     private static String generateUsage(List<Method> methods) {
-        methods = methods.stream().filter(med -> med.isAnnotationPresent(Usage.class)).collect(Collectors.toList());
-        List<String> params = methods.stream()
-                .map(med -> Arrays.stream(med.getParameterTypes()))
-                .map(p -> p.map(Class::getSimpleName))
-                .map(p -> p.collect(Collectors.joining(", ", "{", "}")))
-                .map(p -> p.equals("{}") ? "If there is no argument" : "If arguments are " + p)
-                .collect(Collectors.toList());
-        List<String> usages = methods.stream()
-                .map(med -> med.getAnnotation(Usage.class).value())
-                .collect(Collectors.toList());
-        List<String> additional = methods.stream()
-                .map(med -> med.getAnnotation(Command.class).additional() ? " [Additional]" : "")
-                .collect(Collectors.toList());
-        return IntStream.range(0, params.size())
-                .mapToObj(i -> String.format("%s, then %s%s", params.get(i), usages.get(i), additional.get(i)))
-                .collect(Collectors.joining("\n"));
+        List<String> usageLines = new LinkedList<>();
+        for (Method med: methods) {
+            Usage usage = med.getAnnotation(Usage.class);
+            Command command = med.getAnnotation(Command.class);
+            if (usage == null) continue;
+            String args = usage.params().length != 0
+                    ? String.join(",", usage.params())
+                    : Arrays.stream(med.getParameterTypes())
+                         .map(Class::getSimpleName).collect(Collectors.joining(","));
+            args = args.isEmpty() ? "If there is no argument" : "If the argumentes are {" + args + "}";
+            usageLines.add(String.format("%s, then %s %s",
+                    args, usage.value(), command.additional() ? "[Additional]" : ""
+            ));
+        }
+        return usageLines.stream().collect(Collectors.joining("\n"));
     }
 }
 

@@ -52,15 +52,15 @@ public class Main {
     }
 
     static void addClientOnlyCommand(CommandController cc, ClientCommandsHandlers handers) {
-        cc.addCommand("toggle-quite", "[Additional] Turn on/off printing collections after successfully executed a command", args -> {
+        cc.addCommand("toggle-quite", "Turn on/off printing collections after successfully executed a command [Additional]", args -> {
             handers.toggleQuite();
             return null;
         });
-        cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
+        cc.addCommand("exit", "I don't have to explain :) [Additional].", arg -> {
             System.exit(0);
             return null;
         });
-        cc.addCommand("clrscr", "[Additional] Clear the screen. ", arg-> {
+        cc.addCommand("clrscr", "Clear the screen. [Additional]", arg-> {
             try {
                 System.err.println("clrscr command will not work on IntelliJ IDE");
                 final String os = System.getProperty("os.name");
@@ -76,7 +76,7 @@ public class Main {
             }
             return null;
         });
-        cc.addCommand("help", "[Additional] Display the help message, the arg json format.", Main::help);
+        cc.addCommand("help", "Display the help message, the arg json format. [Additional]", Main::help);
     }
 
     /**
