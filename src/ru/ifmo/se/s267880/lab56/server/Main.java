@@ -7,21 +7,15 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Main {
-    static volatile boolean hasResult = false;
-
     public static void main(String[] args) {
         String savedFileName = "untitled.csv";
-//        if (args.length > 0) {
-//            savedFileName = args[0];
-//        } else {
-//            System.out.println("No file name passed. Data will be read and saved into " + savedFileName);
-//        }
-//        System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
+        if (args.length > 0) {
+            savedFileName = args[0];
+        } else {
+            System.out.println("No file name passed. Data will be read and saved into " + savedFileName);
+        }
 
         ServerCommandsHandlers mm = null;
         try {
@@ -33,24 +27,20 @@ public class Main {
             System.exit(0);
         }
 
-        ServerQueryCommandController cc = new ServerQueryCommandController();
-        ReflectionCommandAdder.addCommand(
-                cc, CommandHandlersWithMeeting.class,
-                mm,
-                new ServerInputPreprocessor()
-        );
+        ServerCommandController cc = new ServerCommandController();
+        ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class, mm, new ServerInputPreprocessor());
 
-        Lock commandHandlingLock = new ReentrantLock();
-        Condition commandExecuted = commandHandlingLock.newCondition();
-        try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT);) {
+        try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT)) {
             while (true) {
                 try {
                     new QueryHandlerThread(ss.accept(), cc).start();
                 } catch (IOException e) {
                     System.err.println("Cannot run thread due to IOException: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         } catch (IOException e) {
+            System.err.println("Cannot open ServerSocket due to IOException " + e.getMessage());
             e.printStackTrace();
         }
     }

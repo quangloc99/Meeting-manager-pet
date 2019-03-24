@@ -9,7 +9,7 @@ import java.net.Socket;
 
 public class QueryHandlerThread extends Thread {
     private Socket client;
-    private ServerQueryCommandController cc;
+    private ServerCommandController cc;
     private InputStream in;
     private OutputStream out;
 
@@ -25,7 +25,7 @@ public class QueryHandlerThread extends Thread {
         return client;
     }
 
-    public QueryHandlerThread(Socket socket, ServerQueryCommandController cc) throws IOException {
+    public QueryHandlerThread(Socket socket, ServerCommandController cc) throws IOException {
         System.err.println("found client!");
         this.client = socket;
         this.cc = cc;

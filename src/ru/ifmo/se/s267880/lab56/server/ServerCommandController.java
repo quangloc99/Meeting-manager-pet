@@ -6,7 +6,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import java.io.Serializable;
 import java.util.Iterator;
 
-public class ServerQueryCommandController extends CommandController {
+public class ServerCommandController extends CommandController {
     private QueryToServer query = null;
     private Iterator<Serializable> inputIterator = null;
 
