@@ -15,6 +15,10 @@ import java.util.stream.IntStream;
 abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeting {
     private String currentCommandName = null;
     private Object[] currentCommandParams;
+    private boolean isQuite = false;
+
+
+    abstract public SocketChannel createChannel() throws IOException;
 
     private class CommandExecutor {
         public CommandExecutor() {}
@@ -54,6 +58,14 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
             if (res.getStatus() == ResultToClientStatus.FAIL) {
                 throw (Exception) res.getResult();
             }
+            System.out.println("Command " + currentCommandName + " successfully executed.");
+            if (isQuite) return;
+            System.out.println("# Meeting list (sorted by name):");
+            int i = 0;
+            for (Meeting meeting: (List<Meeting>)res.getCollection()) {
+                System.out.printf("%3d) %s\n", ++i, meeting);
+            }
+            System.out.println("To get the original order (the real order), please use command `show`.");
         }
     }
 
@@ -67,7 +79,9 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
         currentCommandParams = args;
     }
 
-    abstract public SocketChannel createChannel() throws IOException;
+    public void toggleQuite() {
+        isQuite = !isQuite;
+    }
 
     /**
      * Add all data from another file into the current collection.
@@ -136,10 +150,14 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
         return (List<Meeting>) (new CommandExecutor() {
             @Override
             protected void processResult(ResultToClient res) throws Exception {
-//                super.processResult(res);
+                boolean currentQuiteState = isQuite;
+                isQuite = true;
+                super.processResult(res);
+                isQuite = currentQuiteState;
+
                 assert(res.getStatus() == ResultToClientStatus.SUCCESS);
                 List<Meeting> meetings = (List<Meeting>) res.getResult();
-                System.out.println("# Meeting list:");
+                System.out.println("# Meeting list (original order):");
                 Iterator<Integer> counter = IntStream.rangeClosed(1, meetings.size()).iterator();
                 meetings.stream()
                     .map(meeting -> String.format("%3d) %s", counter.next(), meeting))

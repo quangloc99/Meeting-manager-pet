@@ -17,21 +17,19 @@ public class Main {
         printAwesomeASCIITitle();
 
         ClientCommandController cc = new ClientCommandController(System.in);
-        addClientOnlyCommand(cc);
+        ClientCommandsHandlers handlers = new ClientCommandsHandlers() {
+            public SocketChannel createChannel() throws IOException  {
+                SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT));
+                return sc;
+            }
+        };
+        addClientOnlyCommand(cc, handlers);
         if (!cc.removeGSONNonExecutablePrefix()) {
             System.err.println("cannot remove gson non execute prefix :(. " +
                     "If the command is hanging, please try press Enter multiple times.");
         }
 
-        ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class,
-                new ClientCommandsHandlers() {
-                    public SocketChannel createChannel() throws IOException  {
-                        SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT));
-                        return sc;
-                    }
-                },
-                new ClientInputPreprocessor()
-        );
+        ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class, handlers, new ClientInputPreprocessor());
 
         while (true) {
             try {
@@ -53,7 +51,11 @@ public class Main {
         System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
     }
 
-    static void addClientOnlyCommand(CommandController cc) {
+    static void addClientOnlyCommand(CommandController cc, ClientCommandsHandlers handers) {
+        cc.addCommand("toggle-quite", "[Additional] Turn on/off printing collections after successfully executed a command", args -> {
+            handers.toggleQuite();
+            return null;
+        });
         cc.addCommand("exit", "[Additional] I don't have to explain :).", arg -> {
             System.exit(0);
             return null;
