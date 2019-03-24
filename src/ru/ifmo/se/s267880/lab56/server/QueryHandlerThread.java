@@ -7,7 +7,7 @@ import ru.ifmo.se.s267880.lab56.shared.ResultToClientStatus;
 import java.io.*;
 import java.net.Socket;
 
-public class QueryHandlerThread extends Thread {
+abstract public class QueryHandlerThread extends Thread {
     private Socket client;
     private ServerCommandController cc;
     private InputStream in;
@@ -38,12 +38,10 @@ public class QueryHandlerThread extends Thread {
             ResultToClient res = null;
             try {
                 QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
-                synchronized (cc) {
-                    res = new ResultToClient(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
-                }
+                res = generateResult(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
             } catch (Exception e) {
                 e.printStackTrace();
-                res = new ResultToClient(ResultToClientStatus.FAIL, e);
+                res = generateResult(ResultToClientStatus.FAIL, e);
             }
 
             out = client.getOutputStream();
@@ -53,4 +51,6 @@ public class QueryHandlerThread extends Thread {
             e.printStackTrace();
         }
     }
+
+    abstract ResultToClient generateResult(ResultToClientStatus status, Serializable result);
 }

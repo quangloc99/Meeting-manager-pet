@@ -9,13 +9,15 @@ import java.util.Objects;
 public class ResultToClient implements Serializable {
     private ResultToClientStatus status;
     private Serializable result;
+    private List<Meeting> collection;
     private transient boolean initialized = false;
 
-    public ResultToClient(ResultToClientStatus status, Serializable result) {
+    public ResultToClient(ResultToClientStatus status, Serializable result, List<Meeting> collection) {
         this.initialized = true;
         Objects.requireNonNull(status);
         this.status = status;
         this.result = result;
+        this.collection = collection;
     }
 
     public ResultToClientStatus getStatus() {
@@ -24,9 +26,16 @@ public class ResultToClient implements Serializable {
 
     public Object getResult() {
         if (this.initialized) {
-            throw new RuntimeException("Cannot get parameters of this object because it is initialized with constructor.");
+            throw new RuntimeException("Cannot get result of this object, which is initialized with constructor.");
         }
         return this.result;
+    }
+
+    public List<Meeting> getCollection() {
+        if (this.initialized) {
+            throw new RuntimeException("Cannot get result of this object, which is initialized with constructor.");
+        }
+        return collection;
     }
 
     public boolean isInitialized() {

@@ -10,18 +10,15 @@ import java.util.LinkedList;
 
 public class Main {
     public static void main(String[] args) {
-        String savedFileName = "untitled.csv";
+        String savedFileName = null;
+        // TODO: add better argument manager
         if (args.length > 0) {
             savedFileName = args[0];
-        } else {
-            System.out.println("No file name passed. Data will be read and saved into " + savedFileName);
         }
 
-        ServerCommandsHandlers mm = null;
+        ServerCommandsHandlers mm = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<Meeting>()));
         try {
-            mm = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<Meeting>()));
             mm.load(savedFileName);
-            mm.save();
         } catch (Exception e) {
             System.err.println(e.getMessage());
             System.exit(0);
@@ -33,7 +30,14 @@ public class Main {
         try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT)) {
             while (true) {
                 try {
-                    new QueryHandlerThread(ss.accept(), cc).start();
+                    new QueryHandlerThread(ss.accept(), cc) {
+                        @Override
+                        ResultToClient generateResult(ResultToClientStatus status, Serializable result) {
+                            LinkedList<Meeting> clonedCollection = new LinkedList<>(mm.getCollection());
+                            clonedCollection.sort((u, v) -> u.getName().compareTo(v.getName()));
+                            return new ResultToClient(status, result, clonedCollection);
+                        }
+                    }.start();
                 } catch (IOException e) {
                     System.err.println("Cannot run thread due to IOException: " + e.getMessage());
                     e.printStackTrace();
