@@ -5,6 +5,7 @@ import ru.ifmo.se.s267880.lab56.shared.ResultToClient;
 import ru.ifmo.se.s267880.lab56.shared.ResultToClientStatus;
 
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
 
@@ -19,23 +20,24 @@ public class QueryHandlerThread extends Thread {
 
     @Override
     public void run() {
-        try {
-            //        PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+        try (Socket client = this.client) {
             ObjectInputStream in = new ObjectInputStream(client.getInputStream());
-            QueryToServer qr = (QueryToServer) in.readObject();
+            ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
+
             ResultToClient res = null;
             try {
-                res = new ResultToClient(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
+                QueryToServer qr = (QueryToServer) in.readObject();
+                synchronized (cc) {
+                    res = new ResultToClient(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 res = new ResultToClient(ResultToClientStatus.FAIL, e);
             }
 
-            System.out.println(res.getStatus());  // testing
 
-            in.close();
-            //        out.close();
-            client.close();
+            out.writeObject(res);
+            out.flush();
         } catch (Exception e) {
             e.printStackTrace();
         }

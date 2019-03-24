@@ -1,14 +1,11 @@
 package ru.ifmo.se.s267880.lab56.client;
 
-import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
-import ru.ifmo.se.s267880.lab56.shared.Helper;
-import ru.ifmo.se.s267880.lab56.shared.Meeting;
-import ru.ifmo.se.s267880.lab56.shared.QueryToServer;
+import ru.ifmo.se.s267880.lab56.shared.*;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 
 abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeting {
@@ -27,19 +24,29 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
 
     abstract public SocketChannel createChannel() throws IOException;
 
-    void defaultCommandHandler() throws IOException {
-        SocketChannel sc = createChannel();
-        Serializable[] castedParams = new Serializable[currentCommandParams.length];
-        for (int i = 0; i < currentCommandParams.length; ++i) {
-            assert(currentCommandParams[i] instanceof  Serializable);
-            castedParams[i] = (Serializable) currentCommandParams[i];
-        }
+    ResultToClient defaultCommandHandler() throws IOException {
+        try (SocketChannel sc = createChannel()) {
+            ObjectOutputStream out = new ObjectOutputStream(Channels.newOutputStream(sc));
+            Serializable[] castedParams = new Serializable[currentCommandParams.length];
+            for (int i = 0; i < currentCommandParams.length; ++i) {
+                assert (currentCommandParams[i] instanceof Serializable);
+                castedParams[i] = (Serializable) currentCommandParams[i];
+            }
 
-        ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(new QueryToServer(
-                currentCommandName, castedParams
-        )));
-        sc.write(bf);
-        sc.close();
+            QueryToServer qr = new QueryToServer(currentCommandName, castedParams);
+
+//            ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(qr));
+//            sc.write(bf);
+            out.writeObject(qr);
+            out.flush();
+
+            ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(sc));
+            ResultToClient res = (ResultToClient) in.readObject();
+            System.out.println(res.getStatus());  // testing
+            return res;
+        } catch (EOFException | ClassNotFoundException e) {
+            throw new IOException("Result sent from server has wrong format or there is a problem with connection.", e);
+        }
     }
 
     /**
