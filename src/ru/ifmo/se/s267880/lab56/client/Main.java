@@ -13,15 +13,14 @@ import java.nio.channels.SocketChannel;
  * @author Tran Quang Loc
  */
 public class Main {
-
     public static void main(String[] args) {
         printAwesomeASCIITitle();
-        System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
 
         ClientCommandController cc = new ClientCommandController(System.in);
         addClientOnlyCommand(cc);
         if (!cc.removeGSONNonExecutablePrefix()) {
-            System.err.println("cannot remove gson non execute prefix :(. If the command is hanging, please try press Enter multiple times.");
+            System.err.println("cannot remove gson non execute prefix :(. " +
+                    "If the command is hanging, please try press Enter multiple times.");
         }
 
         ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class,
@@ -51,6 +50,7 @@ public class Main {
         System.out.println("_|   |   ||   [_ |   [_  |  |   |  | |  |  ||  |_ |    |   |   ||  _  ||  |  ||  _  ||  |_ ||   [_ |    \\");
         System.out.println("_|   |   ||     ||     | |  |   |  | |  |  ||     |    |   |   ||  |  ||  |  ||  |  ||     ||     ||  .  \\");
         System.out.println("_|___|___||_____||_____| |__|  |____||__|__||___,_|    |___|___||__|__||__|__||__|__||___,_||_____||__|\\_|");
+        System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
     }
 
     static void addClientOnlyCommand(CommandController cc) {

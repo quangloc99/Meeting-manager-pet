@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.csv;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.LinkedList;
  * A simple CSV writer. This writer does not have field. It just write row by row.
  * @author Tran Quang Loc
  */
-public class CsvRowWriter {
+public class CsvRowWriter implements Closeable, AutoCloseable {
     private OutputStream out;
     private int nRowFields;
     private boolean firstRowWritten = false;

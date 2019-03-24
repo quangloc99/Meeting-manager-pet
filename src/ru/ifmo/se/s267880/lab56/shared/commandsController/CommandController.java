@@ -31,8 +31,14 @@ abstract public class CommandController {
     }
 
     public static class ErrorWhileRunningCommand extends Exception {
+        private String commandName;
         public ErrorWhileRunningCommand(String command, Exception error) {
-            super(String.format("An Error orcured while running command \"%s\": %s", command, error.getMessage()));
+            super(error.getMessage(), error);
+            commandName = command;
+        }
+
+        public String getCommandName() {
+            return commandName;
         }
     }
 
@@ -117,7 +123,6 @@ abstract public class CommandController {
                 }
                 throw e;  // rethrow
             } catch (Exception e) {
-                e.printStackTrace();
                 throw new ErrorWhileRunningCommand(userCommand, e);
             }
         }

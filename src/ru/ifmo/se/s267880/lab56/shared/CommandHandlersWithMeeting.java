@@ -23,16 +23,33 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      */
     @Command("import")
     @Usage("Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted")
+    // TODO: add a way to change argument name on Usage.
     void doImport(InputStream inputStream) throws Exception;
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
      */
-    @Command(additional = true)
+    @Command
     @Usage("load a file with name given by arg. The content of the collection will be replaced.\n" +
             "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
     void load(String path) throws Exception;
+
+    @Command
+    @Usage("save current collection. Note that initially there is no file name yet, so please use `save-as {String}` first.")
+    void save() throws Exception;
+
+    /**
+     * Just change the current working file. The data of that file will be replaced.
+     * @param path that path to the file.
+     */
+    @Command("save-as")
+    @Usage(
+       "change the current working file.\n" +
+       "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted.\n" +
+       "After executing this command, the current file name changed."
+    )
+    void saveAs(String path) throws Exception;
 
     /**
      * Add meeting into the collection
@@ -80,14 +97,6 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
     @Usage("Show some basic information.")
     Map<String, String> info() throws Exception;
 
-    /**
-     * Just change the current working file. The data of that file will be replaced.
-     * @param path that path to the file.
-     */
-    @Command(value = "save-as", additional = true)
-    @Usage("change the current working file.\n" +
-            "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    void saveAs(String path) throws Exception;
 
     /**
      * Sort all the meeting ascending by their date.

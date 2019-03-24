@@ -36,11 +36,17 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
 public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private List<Meeting> collection = null;
     private String currentFileName;
-    private Date fileOpenSince;
+    private Date fileOpenSince = Calendar.getInstance().getTime();
 
     public ServerCommandsHandlers(List<Meeting> collection) {
         assert(collection != null);
         this.collection = collection;
+    }
+
+    void updateFileName(String path) {
+        if ((path == null && currentFileName == null) || path.equals(currentFileName)) return;
+        currentFileName = path;
+        fileOpenSince = Calendar.getInstance().getTime();
     }
 
     public String getCurrentFileName() {
@@ -54,6 +60,62 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     @Override
     public void doImport(InputStream inputStream) throws ParseException, IOException {
         collection.addAll(getDataFrom(inputStream));
+    }
+
+    /**
+     * Replace the current collection with the ones in another file. Also change the current working file to that file.
+     * @param path the path to the file.
+     */
+    @Override
+    public synchronized void load(String path) throws Exception {
+        if (path != null) {
+            List<Meeting> t = getDataFromFile(path);
+            collection.clear();
+            collection.addAll(t);
+        }
+        updateFileName(path);
+    }
+
+    /**
+     * Save all the collection into the file with name {@link #currentFileName}.
+     */
+    @Override
+    public synchronized void save() throws Exception {
+        if (currentFileName == null) {
+            throw new NullPointerException("Please use `save-as {String}` command to set the file name.");
+        }
+        saveAs(currentFileName);
+    }
+
+    /**
+     * Just change the current working file. The data of that file will be replaced.
+     * @param path that path to the file.
+     */
+    @Override
+    public synchronized void saveAs(String path) throws IOException {
+        List<String> header = new LinkedList<>();
+        header.add("meeting name");
+        header.add("meeting time");
+        header.add("duration");
+        header.add("building number");
+        header.add("floor number");
+        try (CsvRowWithNamesWriter writer = new CsvRowWithNamesWriter(new FileOutputStream(path), header)) {
+            collection.stream()
+                .map(meeting -> new HashMap<String, String>() {{
+                    // Java 9 introduced Map.of, which might be more
+                    // comfortable to use, but helios (the ITMO server)
+                    // supports only java 8 for now.
+                    put("meeting name", meeting.getName());
+                    put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
+                    put("duration", Long.toString(meeting.getDuration().toMinutes()));
+                    put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
+                    put("floor number", Integer.toString(meeting.getLocation().getFloor()));
+                }})
+                .forEachOrdered(uncheckedConsumer(writer::writeRow));
+                updateFileName(path);
+        } catch (IOException e) {
+            throw new IOException("Unable to write data into " + path, e);
+        }
     }
 
     /**
@@ -90,56 +152,6 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     }
 
     /**
-     * Save all the collection into the file with name {@link #currentFileName}.
-     */
-    public synchronized void save() {
-        List<String> header = new LinkedList<>();
-        header.add("meeting name");
-        header.add("meeting time");
-        header.add("duration");
-        header.add("building number");
-        header.add("floor number");
-        try {
-            CsvRowWithNamesWriter writer = new CsvRowWithNamesWriter(
-                new FileOutputStream(currentFileName),
-                header
-            );
-            collection.stream()
-                .map(meeting -> new HashMap<String, String>() {{    // Java 9 introduced Map.of, which might be more
-                                                                    // comfortable to use, but helios (the ITMO server)
-                                                                    // supports only java 8 for now.
-                    put("meeting name", meeting.getName());
-                    put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
-                    put("duration", Long.toString(meeting.getDuration().toMinutes()));
-                    put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
-                    put("floor number", Integer.toString(meeting.getLocation().getFloor()));
-                }})
-                .forEachOrdered(uncheckedConsumer(writer::writeRow));
-            writer.close();
-        } catch (IOException e) {
-            System.err.println("Unable to write data into file " + currentFileName);
-            System.err.println(e);
-        }
-    }
-
-//    /**
-//     * Add meeting into the collection
-//     */
-//    @Command(additional = true)
-//    @Usage("add new meeting into the collection with string a string instead of an object.\n" +
-//           "The string can have this form: yyyy/MM/dd hh:mm:ss, <meeting-name>.\n" +
-//           "the meeting name can still have commas, but it will be trim.")
-//
-//    public synchronized void add(String stringForm) throws ParseException {
-//        stringForm = stringForm.trim();
-//        String[] parts = stringForm.split(",");
-//        add(new Meeting(
-//                stringForm.substring(parts[0].length() + 2).trim(),
-//                Helper.meetingDateFormat.parse(parts[0])
-//        ));
-//    }
-
-    /**
      * Add meeting into the collection
      * @param meeting the meeting wanted to be add.
      */
@@ -152,10 +164,10 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * List all the meetings.
      */
     @Override
-    public synchronized List<Meeting> show() {
-        LinkedList<Meeting> clonedCollection = new LinkedList<>(collection);
-        clonedCollection.sort((u, v) -> u.getName().compareTo(v.getName()));
-        return clonedCollection;
+    public List<Meeting> show() {
+        synchronized (collection) {
+            return Collections.unmodifiableList(collection);
+        }
     }
 
     /**
@@ -199,45 +211,6 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     }
 
     /**
-     * Replace the current collection with the ones in another file. Also change the current working file to that file.
-     * @param path the path to the file.
-     */
-    @Override
-    public synchronized void load(String path) throws Exception {
-        File file = new File(path);
-        if (!file.exists()) {
-            System.err.println("File " + path + " not found. Creating new file.");
-            file.createNewFile();
-        }
-        if (!file.isFile()) {
-            throw new Exception(path + " must be a file.");
-        }
-        if (!file.canRead() || !file.canWrite()) {
-            throw new Exception(path + " can not be read or write.");
-        }
-        collection.clear();
-        try {
-            collection.addAll(getDataFromFile(path));
-        } catch (ParseException | IOException e) {
-            System.err.println(e);
-            System.err.println("The collection is initialized empty and still be saved into " + path);
-        }
-        fileOpenSince = Calendar.getInstance().getTime();
-        currentFileName = path;
-    }
-
-    /**
-     * Just change the current working file. The data of that file will be replaced.
-     * @param path that path to the file.
-     */
-    @Override
-    public synchronized void saveAs(String path) {
-        currentFileName = path;
-        save();
-        fileOpenSince = Calendar.getInstance().getTime();
-    }
-
-    /**
      * Sort all the meeting ascending by their date.
      */
     @Override
@@ -274,5 +247,11 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     @Override
     public synchronized void clear() {
         collection.clear();
+    }
+
+    public List<Meeting> getCollection() {
+        synchronized (collection) {
+            return Collections.unmodifiableList(collection);
+        }
     }
 }

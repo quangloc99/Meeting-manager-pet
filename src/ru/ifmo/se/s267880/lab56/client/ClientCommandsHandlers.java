@@ -35,12 +35,14 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
 
     abstract public SocketChannel createChannel() throws IOException;
 
-    ResultToClient queryToServer(DataWriterToSocket dataWriter) throws IOException {
+    ResultToClient queryToServer(DataWriterToSocket dataWriter) throws Exception {
         try (SocketChannel sc = createChannel()) {
             dataWriter.writeData(sc);
             ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(sc));
             ResultToClient res = (ResultToClient) in.readObject();
-//            System.out.println(res.getStatus());  // testing
+            if (res.getStatus() == ResultToClientStatus.FAIL) {
+                throw (Exception) res.getResult();
+            }
             return res;
         } catch (EOFException | ClassNotFoundException e) {
             throw new IOException("Result sent from server has wrong format or there is a problem with connection.", e);
@@ -57,7 +59,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
         return new QueryToServer(currentCommandName, castedParams);
     }
 
-    ResultToClient queryToServer() throws IOException {
+    ResultToClient queryToServer() throws Exception {
         return queryToServer(socketChannel -> {
             ObjectOutputStream out = new ObjectOutputStream(Channels.newOutputStream(socketChannel));
 
@@ -73,7 +75,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param inputStream the input stream that the data will be imported from.
      */
     @Override
-    public void doImport(InputStream inputStream) throws IOException {
+    public void doImport(InputStream inputStream) throws Exception {
         queryToServer(channel -> {
             ByteBuffer queryBuffer = ByteBuffer.wrap(Helper.serializableToByteArray(
                     new QueryToServer(currentCommandName, new Serializable[]{
@@ -97,11 +99,30 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
     }
 
     /**
+     * Replace the current collection with the ones in another file. Also change the current working file to that file.
+     * @param path the path to the file.
+     */
+    @Override
+    public void load(String path) throws Exception {
+        queryToServer();
+    }
+
+    @Override
+    public void save() throws Exception {
+        queryToServer();
+    }
+
+    @Override
+    public void saveAs(String path) throws Exception {
+        queryToServer();
+    }
+
+    /**
      * Add meeting into the collection
      * @param meeting the meeting wanted to be add.
      */
     @Override
-    public void add(Meeting meeting) throws IOException {
+    public void add(Meeting meeting) throws Exception {
         queryToServer();
     }
 
@@ -109,8 +130,10 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * List all the meetings.
      */
     @Override
-    public List<Meeting> show() throws IOException {
-        List<Meeting> meetings = (List<Meeting>) queryToServer().getResult();
+    public List<Meeting> show() throws Exception {
+        ResultToClient res= queryToServer();
+        if (res.getStatus() != ResultToClientStatus.SUCCESS) return null;
+        List<Meeting> meetings = (List<Meeting>) res.getResult();
         System.out.println("# Meeting list:");
         Iterator<Integer> counter = IntStream.rangeClosed(1, meetings.size()).iterator();
         meetings.stream()
@@ -124,7 +147,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param meeting the meeting wanted to be removed.
      */
     @Override
-    public void remove(Meeting meeting) throws IOException {
+    public void remove(Meeting meeting) throws Exception {
         queryToServer();
     }
 
@@ -133,7 +156,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param num the index (base 1) of the element.
      */
     @Override
-    public void remove(int num) throws IOException {
+    public void remove(int num) throws Exception {
         queryToServer();
     }
 
@@ -142,7 +165,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param meeting the meeting wanted to be added.
      */
     @Override
-    public void addIfMin(Meeting meeting) throws IOException {
+    public void addIfMin(Meeting meeting) throws Exception {
         queryToServer();
     }
 
@@ -150,43 +173,25 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * show file name, number of meeting and the time the file first load during this session.
      */
     @Override
-    public Map<String, String> info() throws IOException {
+    public Map<String, String> info() throws Exception {
         Map<String, String> result = (Map<String, String>) queryToServer().getResult();
         System.out.println("# Information");
-        System.out.println("File name: " + result.get("file"));
+        System.out.println("File name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
         System.out.println("Number of meeting: " + result.get("meeting-count"));
         System.out.println("File load since: " + result.get("since"));
         return result;
     }
 
     /**
-     * Replace the current collection with the ones in another file. Also change the current working file to that file.
-     * @param path the path to the file.
-     */
-    @Override
-    public void load(String path) throws Exception {
-        queryToServer();
-    }
-
-    /**
-     * Just change the current working file. The data of that file will be replaced.
-     * @param path that path to the file.
-     */
-    @Override
-    public void saveAs(String path) throws IOException {
-        queryToServer();
-    }
-
-    /**
      * Sort all the meeting ascending by their date.
      */
     @Override
-    public void sortByDate() throws IOException {
+    public void sortByDate() throws Exception {
         queryToServer();
     }
 
     @Override
-    public void sortBytime() throws IOException {
+    public void sortBytime() throws Exception {
         queryToServer();
     }
 
@@ -194,7 +199,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * Reverse the order of the meetings.
      */
     @Override
-    public void reverse() throws IOException {
+    public void reverse() throws Exception {
         queryToServer();
     }
 
@@ -204,7 +209,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * @param b the index of the second meeting.
      */
     @Override
-    public void swap(int a, int b) throws IOException {
+    public void swap(int a, int b) throws Exception {
         queryToServer();
     }
 
@@ -212,7 +217,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      * Clear the collection.
      */
     @Override
-    public void clear() throws IOException {
+    public void clear() throws Exception {
         queryToServer();
     }
 }

@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.csv;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Map;
  * A simple CSV writer with header.
  * @author Tran Quang Loc
  */
-public class CsvRowWithNamesWriter extends CsvRowWriter {
+public class CsvRowWithNamesWriter extends CsvRowWriter implements Closeable, AutoCloseable {
     private List<String> header;
 
     /**
