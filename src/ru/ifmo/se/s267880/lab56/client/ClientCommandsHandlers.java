@@ -29,8 +29,14 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
 
     void defaultCommandHandler() throws IOException {
         SocketChannel sc = createChannel();
+        Serializable[] castedParams = new Serializable[currentCommandParams.length];
+        for (int i = 0; i < currentCommandParams.length; ++i) {
+            assert(currentCommandParams[i] instanceof  Serializable);
+            castedParams[i] = (Serializable) currentCommandParams[i];
+        }
+
         ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(new QueryToServer(
-                currentCommandName, currentCommandParams
+                currentCommandName, castedParams
         )));
         sc.write(bf);
         sc.close();
