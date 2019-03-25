@@ -1,13 +1,11 @@
 package ru.ifmo.se.s267880.lab56.client;
 
 import ru.ifmo.se.s267880.lab56.shared.*;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
-import java.sql.SQLOutput;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -19,21 +17,17 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
     private boolean isQuite = false;
 
 
-    abstract public SocketChannel createChannel() throws IOException;
+    abstract public SocketChannel getChannel() throws IOException;
 
     private class CommandExecutor {
         public CommandExecutor() {}
 
         public ResultToClient run() throws Exception {
-            try (SocketChannel channel = createChannel()) {
-                sendData(channel, generateQuery());
-//                channel.shutdownOutput();
-                ResultToClient res = receiveData(channel);
-                processResult(res);
-                return res;
-            } catch (EOFException | ClassNotFoundException e) {
-                throw new IOException("Result sent from server has wrong format or there is a problem with connection.", e);
-            }
+            SocketChannel channel = getChannel();
+            sendData(channel, generateQuery());
+            ResultToClient res = receiveData(channel);
+            processResult(res);
+            return res;
         }
 
         protected QueryToServer generateQuery() throws Exception {
@@ -46,13 +40,23 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
         }
 
         protected void sendData(SocketChannel channel, QueryToServer qr) throws Exception {
-            ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(qr));
-            channel.write(bf);
+            try {
+                ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(qr));
+                channel.write(bf);
+            } catch (IOException e) {
+                throw new CommunicationIOException("Data cannot be sent to server.", e);
+            }
         }
 
         protected ResultToClient receiveData(SocketChannel channel) throws Exception {
-            ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(channel));
-            return (ResultToClient) in.readObject();
+            try {
+                ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(channel));
+                return (ResultToClient) in.readObject();
+            } catch (IOException e) {
+                throw new CommunicationIOException("Cannot read data sent from server.", e);
+            } catch(ClassNotFoundException e) {
+                throw new CommunicationIOException("Data sent from server broken/may not be fully sent.", e);
+            }
         }
 
         protected void processResult(ResultToClient res) throws Exception {
@@ -98,7 +102,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                 // the ServerInputPreprocessor will get the data from Socket and pass to the
                 // command's handler on server.
                 return new QueryToServer(currentCommandName, new Serializable[]{
-                        Long.valueOf(((FileInputStream) inputStream).getChannel().size())
+                        ((FileInputStream) inputStream).getChannel().size()
                 });
             }
 
@@ -112,7 +116,11 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                     dataBuffer.clear();
                     dataBuffer.put(data, 0, numRead);
                     dataBuffer.flip();
-                    channel.write(dataBuffer);
+                    try {
+                        channel.write(dataBuffer);
+                    } catch (IOException e) {
+                        throw new CommunicationIOException("Cannot sent data to server.", e);
+                    }
                 }
             }
         }.run();
@@ -151,7 +159,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      */
     @Override
     public List<Meeting> show() throws Exception {
-        return (List<Meeting>) (new CommandExecutor() {
+        Object result = new CommandExecutor() {
             @Override
             protected void processResult(ResultToClient res) throws Exception {
                 boolean currentQuiteState = isQuite;
@@ -167,7 +175,8 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                     .map(meeting -> String.format("%3d) %s", counter.next(), meeting))
                     .forEachOrdered(System.out::println);
             }
-        }.run().getResult());
+        }.run().getResult();
+        return (List<Meeting>) result;
     }
 
     /**
@@ -202,7 +211,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      */
     @Override
     public Map<String, String> info() throws Exception {
-        return (Map<String, String>) new CommandExecutor() {
+        Object result = new CommandExecutor() {
             @Override
             protected void processResult(ResultToClient res) throws Exception {
                 boolean currentQuiteState = isQuite;
@@ -219,6 +228,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                 System.out.println("Is quite: " + currentQuiteState);
             }
         }.run().getResult();
+        return (Map<String, String>) result;
     }
 
     /**

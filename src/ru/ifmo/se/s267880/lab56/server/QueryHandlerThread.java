@@ -34,19 +34,22 @@ abstract public class QueryHandlerThread extends Thread {
     @Override
     public void run() {
         try (Socket client = this.client) {
-            in = client.getInputStream();
-            ResultToClient res = null;
-            try {
-                QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
-                res = generateResult(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
-            } catch (Exception e) {
-                e.printStackTrace();
-                res = generateResult(ResultToClientStatus.FAIL, e);
-            }
 
-            out = client.getOutputStream();
-            new ObjectOutputStream(out).writeObject(res);
-            out.flush();
+            while (true) {
+                ResultToClient res = null;
+                try {
+                    in = client.getInputStream();
+                    QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
+                    res = generateResult(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    res = generateResult(ResultToClientStatus.FAIL, e);
+                }
+
+                out = client.getOutputStream();
+                new ObjectOutputStream(out).writeObject(res);
+                out.flush();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

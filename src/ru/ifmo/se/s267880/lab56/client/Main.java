@@ -1,6 +1,7 @@
 package ru.ifmo.se.s267880.lab56.client;
 
 import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
+import ru.ifmo.se.s267880.lab56.shared.CommunicationIOException;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
@@ -8,18 +9,19 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionComma
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 
 /**
  * @author Tran Quang Loc
  */
 public class Main {
+    public static SocketChannel sc = null;
     public static void main(String[] args) {
         printAwesomeASCIITitle();
 
         ClientCommandController cc = new ClientCommandController(System.in);
         ClientCommandsHandlers handlers = new ClientCommandsHandlers() {
-            public SocketChannel createChannel() throws IOException  {
-                SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT));
+            public SocketChannel getChannel() throws IOException  {
                 return sc;
             }
         };
@@ -32,10 +34,22 @@ public class Main {
         ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class, handlers, new ClientInputPreprocessor());
 
         while (true) {
-            try {
-                cc.execute();
-            } catch (Exception e) {
-                System.err.printf("Error: %s\n", e.getMessage());
+            try (SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT))) {
+                Main.sc = sc;
+                while (true) {
+                    try {
+                        cc.execute();
+                    } catch (Exception e) {
+                        System.err.printf("Error: %s\n", e.getMessage());
+                        Throwable cause = e.getCause();
+                        if (cause instanceof CommunicationIOException) {
+                            System.err.println("Disconnected to server");
+                            break;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Error with connection: " + e.getMessage());
             }
         }
     }
@@ -83,49 +97,46 @@ public class Main {
      * Print a help message.
      */
     public static Object help(Object[] args) {
-        System.out.println("# Help");
-        System.out.println("\tUse command \"help\" to display this message.");
-        System.out.println("\tUse command \"list-commands\" for the full list of commands.");
-        System.out.println();
-        System.out.println("# Argument formats");
-        System.out.println("## MeetingJson");
-        System.out.println(
-                "\t\t{\n" +
-                        "\t\t\t\"name\"    : String,                       This field is required\n" +
-                        "\t\t\t\"time\"    : DateJson,                     Default value is the current time\n" +
-                        "\t\t\t\"duration\": minutes_in_number,            Default value is 60\n" +
-                        "\t\t\t\"location\": LocationJson,                 Default value is the 1-st floor of the 1-st building [1, 1]\n" +
-                "\t\t}"
-        );
-        System.out.println();
-        System.out.println("## DateJson");
-        System.out.println("\tDateJson can have 1 of 3 following forms:");
-        System.out.println("\t1) [int, int, int, int, int, int] - from left to right: year, month, date, hour, minute, second");
-        System.out.println("\t2) String representation with the following format: \"yyyy/MM/dd HH:mm:ss\"");
-        System.out.println("\t3) Object representation:");
-        System.out.println(
-                "\t\t{\n" +
-                        "\t\t\t\"year\": int,\n" +
-                        "\t\t\t\"month\": int,\n" +
-                        "\t\t\t\"date\": int,\n" +
-                        "\t\t\t\"hour\": int,\n" +
-                        "\t\t\t\"minute\": int,\n" +
-                        "\t\t\t\"second\": int\n" +
-                        "\t\t}"
-        );
-        System.out.println("\tIn the 1-st and 3-rd form, if a field is missing, it will be filled with zero or by the current time's values");
-        System.out.println();
-        System.out.println("## LocaltionJson");
-        System.out.println("\tRight now this app supports very simple location. A location consists of only 2 value:");
-        System.out.println("\tthe building number and the floor number that the meeting will be held.");
-        System.out.println();
-        System.out.println("\tLocationJson can have 1 of 2 forms:");
-        System.out.println("\t1) [int, int] - from left to right is the building number and then the floor number.");
-        System.out.println("\t2) Object representation:");
-        System.out.println("\t\t{");
-        System.out.println("\t\t\t\"building\": int,          Default value is 1");
-        System.out.println("\t\t\t\"floor\"   : int,          Default value is 1");
-        System.out.println("\t\t}\n");
+        String[] helps = {
+                "# Help",
+                "\tUse command \"help\" to display this message.",
+                "\tUse command \"list-commands\" for the full list of commands.",
+                "# Argument formats",
+                "## MeetingJson",
+                "\t{",
+                "\t\t\"name\"    : String,                This field is required",
+                "\t\t\"time\"    : DateJson,              Default value is the current time",
+                "\t\t\"duration\": minutes_in_number,     Default value is 60",
+                "\t\t\"location\": LocationJson,          Default value is the 1-st floor of the 1-st building [1, 1]",
+                "\t}",
+                "",
+                "## DateJson",
+                "\tDateJson can have 1 of 3 following forms:",
+                "\t1) [int, int, int, int, int, int] - from left to right: year, month, date, hour, minute, second",
+                "\t2) String representation with the following format: \"yyyy/MM/dd HH:mm:ss\"",
+                "\t3) Object representation:",
+                "\t{",
+                "\t\t\"year\": int,",
+                "\t\t\"month\": int,",
+                "\t\t\"date\": int,",
+                "\t\t\"hour\": int,",
+                "\t\t\"minute\": int,",
+                "\t\t\"second\": int",
+                "\t}",
+                "\tIn the 1-st and 3-rd form, if a field is missing, it will be filled with zero or by the current time's values",
+                "",
+                "## LocaltionJson",
+                "\tRight now this app supports very simple location. A location consists of only 2 value:",
+                "\tthe building number and the floor number that the meeting will be held.",
+                "\tLocationJson can have 1 of 2 forms:",
+                "\t1) [int, int] - from left to right is the building number and then the floor number.",
+                "\t2) Object representation:",
+                "\t{",
+                "\t\t\"building\": int,                   Default value is 1",
+                "\t\t\"floor\"   : int,                   Default value is 1",
+                "\t}",
+        };
+        Arrays.stream(helps).forEach(System.out::println);
         return null;
     }
 
