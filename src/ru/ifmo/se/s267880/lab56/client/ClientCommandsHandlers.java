@@ -27,7 +27,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
         public ResultToClient run() throws Exception {
             try (SocketChannel channel = createChannel()) {
                 sendData(channel, generateQuery());
-                channel.shutdownOutput();
+//                channel.shutdownOutput();
                 ResultToClient res = receiveData(channel);
                 processResult(res);
                 return res;
@@ -90,13 +90,16 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      */
     @Override
     public void doImport(InputStream inputStream) throws Exception {
+        assert(inputStream instanceof FileInputStream);
         new CommandExecutor() {
             @Override
-            protected QueryToServer generateQuery() {
+            protected QueryToServer generateQuery() throws Exception {
                 // because there is a least 1 element we cannot sent InputStream to server.
                 // the ServerInputPreprocessor will get the data from Socket and pass to the
                 // command's handler on server.
-                return new QueryToServer(currentCommandName, new Serializable[]{null});
+                return new QueryToServer(currentCommandName, new Serializable[]{
+                        Long.valueOf(((FileInputStream) inputStream).getChannel().size())
+                });
             }
 
             @Override
