@@ -5,9 +5,9 @@ import ru.ifmo.se.s267880.lab56.shared.CommunicationIOException;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
+import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -17,6 +17,7 @@ import java.util.Arrays;
  */
 public class Main {
     public static SocketChannel sc = null;
+    public static InetSocketAddress address = null;
     public static void main(String[] args) {
         printAwesomeASCIITitle();
 
@@ -34,15 +35,23 @@ public class Main {
 
         ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class, handlers, new ClientInputPreprocessor());
 
-        InetSocketAddress address = new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT);
+        if (address == null) {
+            address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);
+        }
 
         try {
             while (true) {
                 sc = tryConnectTo(address, 5, 1500);
                 if (sc == null) {
                     System.err.printf("Unable to connect to %s.\n", address);
-                    break;
+                    if (!confirm("Reenter address?")) {
+                        break;
+                    } else {
+                        address = getInitSocketAddressFromUserInput(address.getHostName(), address.getPort());
+                        continue;
+                    }
                 }
+
                 while (true) {
                     try {
                         cc.execute();
@@ -65,10 +74,11 @@ public class Main {
         SocketChannel result = null;
         for (int i = 0; i < time; ++i) {
             try {
+                Thread.sleep(100);
                 result = SocketChannel.open(address);
                 break;
             } catch (IOException e) {
-                System.err.printf("Unable to connect to %s. Try %d more times.\n", address, time - i - 1);
+                System.err.printf("Unable to connect to %s. Trying to connect %d more times.\n", address, time - i - 1);
                 Thread.sleep(delayTime);
             }
         }

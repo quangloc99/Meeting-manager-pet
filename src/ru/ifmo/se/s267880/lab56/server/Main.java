@@ -11,7 +11,6 @@ import java.util.LinkedList;
 public class Main {
     public static void main(String[] args) {
         String savedFileName = null;
-        // TODO: add better argument manager
         if (args.length > 0) {
             savedFileName = args[0];
         }

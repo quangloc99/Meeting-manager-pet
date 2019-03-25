@@ -13,6 +13,7 @@ import java.util.*;
  * this class can be extends more.
  * @author Tran Quang Loc
  */
+// TODO: add method "addCommand" to add command's hander without return value.
 abstract public class CommandController {
     /**
      * The base interface for Handler

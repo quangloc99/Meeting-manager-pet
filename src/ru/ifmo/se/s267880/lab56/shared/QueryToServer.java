@@ -9,7 +9,7 @@ import java.util.Collections;
 /**
  * A query to the server.
  * Note that if this object is initialized with constructur (that is, it is not sented to the server), method
- * QueryToServer#getParameters() will throw RuntimeException for immutation purpose.
+ * QueryToServer#getParameters() will throw RuntimeException for immutability purpose.
  */
 public class QueryToServer implements Serializable {
     private String name;
