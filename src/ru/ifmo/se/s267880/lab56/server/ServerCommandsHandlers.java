@@ -33,6 +33,7 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
  * @see CommandController
  * @see ClientInputPreprocessor
  */
+// TODO: rewrite the synchronized part.
 public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private List<Meeting> collection = null;
     private String currentFileName;

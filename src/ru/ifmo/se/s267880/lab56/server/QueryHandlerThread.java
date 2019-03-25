@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.server;
 
+import ru.ifmo.se.s267880.lab56.shared.CommunicationIOException;
 import ru.ifmo.se.s267880.lab56.shared.QueryToServer;
 import ru.ifmo.se.s267880.lab56.shared.ResultToClient;
 import ru.ifmo.se.s267880.lab56.shared.ResultToClientStatus;
@@ -26,33 +27,48 @@ abstract public class QueryHandlerThread extends Thread {
     }
 
     public QueryHandlerThread(Socket socket, ServerCommandController cc) throws IOException {
-        System.err.println("found client!");
+        System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
         this.cc = cc;
     }
 
     @Override
     public void run() {
-        try (Socket client = this.client) {
-
+        try {
+            getClientIOStreams();
             while (true) {
                 ResultToClient res = null;
                 try {
-                    in = client.getInputStream();
                     QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
                     res = generateResult(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
+                } catch (EOFException | ClassNotFoundException e) {
+                    throw new CommunicationIOException("Cannot read data sent from client.", e);
                 } catch (Exception e) {
                     e.printStackTrace();
                     res = generateResult(ResultToClientStatus.FAIL, e);
                 }
 
-                out = client.getOutputStream();
-                new ObjectOutputStream(out).writeObject(res);
-                out.flush();
+                try {
+                    new ObjectOutputStream(out).writeObject(res);
+                    out.flush();
+                } catch (IOException e) {
+                    throw new CommunicationIOException("Cannot send data to client.", e);
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (CommunicationIOException e) {
+            System.err.println(e.getMessage());
+            System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
         }
+    }
+
+    private void getClientIOStreams() throws CommunicationIOException {
+        try {
+            in = client.getInputStream();
+            out = client.getOutputStream();
+        } catch (IOException e) {
+            throw new CommunicationIOException("Cannot get I/O stream from client socket.", e);
+        }
+
     }
 
     abstract ResultToClient generateResult(ResultToClientStatus status, Serializable result);

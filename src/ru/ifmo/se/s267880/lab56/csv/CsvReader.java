@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.csv;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -69,7 +70,7 @@ public class CsvReader {
             }
         }
         if (header != null && header.size() != currentRow.size()) {
-            throw new ParsingError("The number of entries of header row and the current row are not equals");
+            throw new EOFException("The number of entries of header row and the current row are not equals");
         }
         return new LinkedList<>(currentRow);
     }
