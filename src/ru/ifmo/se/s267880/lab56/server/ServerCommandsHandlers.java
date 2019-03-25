@@ -33,7 +33,6 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
  * @see CommandController
  * @see ClientInputPreprocessor
  */
-// TODO: rewrite the synchronized part.
 public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private List<Meeting> collection = null;
     private String currentFileName;
@@ -44,13 +43,13 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
         this.collection = collection;
     }
 
-    void updateFileName(String path) {
+    private synchronized void updateFileName(String path) {
         if ((path == null && currentFileName == null) || path.equals(currentFileName)) return;
         currentFileName = path;
         fileOpenSince = Calendar.getInstance().getTime();
     }
 
-    public String getCurrentFileName() {
+    public synchronized String getCurrentFileName() {
         return currentFileName;
     }
 
@@ -68,11 +67,13 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param path the path to the file.
      */
     @Override
-    public synchronized void load(String path) throws Exception {
+    public void load(String path) throws Exception {
         if (path != null) {
             List<Meeting> t = getDataFromFile(path);
-            collection.clear();
-            collection.addAll(t);
+            synchronized (collection) {
+                collection.clear();
+                collection.addAll(t);
+            }
         }
         updateFileName(path);
     }
@@ -93,7 +94,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param path that path to the file.
      */
     @Override
-    public synchronized void saveAs(String path) throws IOException {
+    public void saveAs(String path) throws IOException {
         List<String> header = new LinkedList<>();
         header.add("meeting name");
         header.add("meeting time");
@@ -101,19 +102,21 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
         header.add("building number");
         header.add("floor number");
         try (CsvRowWithNamesWriter writer = new CsvRowWithNamesWriter(new FileOutputStream(path), header)) {
-            collection.stream()
-                .map(meeting -> new HashMap<String, String>() {{
-                    // Java 9 introduced Map.of, which might be more
-                    // comfortable to use, but helios (the ITMO server)
-                    // supports only java 8 for now.
-                    put("meeting name", meeting.getName());
-                    put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
-                    put("duration", Long.toString(meeting.getDuration().toMinutes()));
-                    put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
-                    put("floor number", Integer.toString(meeting.getLocation().getFloor()));
-                }})
-                .forEachOrdered(uncheckedConsumer(writer::writeRow));
+            synchronized (collection) {
+                collection.stream()
+                    .map(meeting -> new HashMap<String, String>() {{
+                        // Java 9 introduced Map.of, which might be more
+                        // comfortable to use, but helios (the ITMO server)
+                        // supports only java 8 for now.
+                        put("meeting name", meeting.getName());
+                        put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
+                        put("duration", Long.toString(meeting.getDuration().toMinutes()));
+                        put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
+                        put("floor number", Integer.toString(meeting.getLocation().getFloor()));
+                    }})
+                    .forEachOrdered(uncheckedConsumer(writer::writeRow));
                 updateFileName(path);
+            }
         } catch (IOException e) {
             throw new IOException("Unable to write data into " + path, e);
         }
@@ -157,7 +160,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param meeting the meeting wanted to be add.
      */
     @Override
-    public synchronized void add(Meeting meeting) {
+    public void add(Meeting meeting) {
         collection.add(meeting);
     }
 
@@ -166,9 +169,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      */
     @Override
     public List<Meeting> show() {
-        synchronized (collection) {
-            return Collections.unmodifiableList(collection);
-        }
+        return Collections.unmodifiableList(collection);
     }
 
     /**
@@ -176,7 +177,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param meeting the meeting wanted to be removed.
      */
     @Override
-    public synchronized void remove(Meeting meeting) {
+    public void remove(Meeting meeting) {
         collection.remove(meeting);
     }
 
@@ -185,7 +186,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param num the index (base 1) of the element.
      */
     @Override
-    public synchronized void remove(int num) {
+    public void remove(int num) {
         collection.remove(num - 1);
     }
 
@@ -194,9 +195,11 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param meeting the meeting wanted to be added.
      */
     @Override
-    public synchronized void addIfMin(Meeting meeting) {
-        if (meeting.compareTo(Collections.min(collection)) >= 0) return;
-        add(meeting);
+    public void addIfMin(Meeting meeting) {
+        synchronized (collection) {
+            if (meeting.compareTo(Collections.min(collection)) >= 0) return;
+            add(meeting);
+        }
     }
 
     /**
@@ -215,12 +218,12 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * Sort all the meeting ascending by their date.
      */
     @Override
-    public synchronized void sortByDate() {
+    public void sortByDate() {
         Collections.sort(collection, (u, v) -> u.getTime().compareTo(v.getTime()));
     }
 
     @Override
-    public synchronized void sortBytime() {
+    public void sortBytime() {
         Collections.sort(collection, (u, v) -> u.getDuration().compareTo(v.getDuration()));
     }
 
@@ -228,7 +231,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * Reverse the order of the meetings.
      */
     @Override
-    public synchronized void reverse() {
+    public void reverse() {
         Collections.reverse(collection);
     }
 
@@ -238,21 +241,21 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      * @param b the index of the second meeting.
      */
     @Override
-    public synchronized void swap(int a, int b) {
-        Collections.swap(collection, a - 1, b - 1);
+    public void swap(int a, int b) {
+        synchronized (collection) {
+            Collections.swap(collection, a - 1, b - 1);
+        }
     }
 
     /**
      * Clear the collection.
      */
     @Override
-    public synchronized void clear() {
+    public void clear() {
         collection.clear();
     }
 
     public List<Meeting> getCollection() {
-        synchronized (collection) {
-            return Collections.unmodifiableList(collection);
-        }
+        return Collections.unmodifiableList(collection);
     }
 }
