@@ -7,6 +7,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -33,9 +34,15 @@ public class Main {
 
         ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class, handlers, new ClientInputPreprocessor());
 
-        while (true) {
-            try (SocketChannel sc = SocketChannel.open(new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT))) {
-                Main.sc = sc;
+        InetSocketAddress address = new InetSocketAddress("127.0.0.1", Config.COMMAND_EXECUTION_PORT);
+
+        try {
+            while (true) {
+                sc = tryConnectTo(address, 5, 1500);
+                if (sc == null) {
+                    System.err.printf("Unable to connect to %s.\n", address);
+                    break;
+                }
                 while (true) {
                     try {
                         cc.execute();
@@ -48,10 +55,24 @@ public class Main {
                         }
                     }
                 }
+            }
+        } catch (InterruptedException e) {
+            onExit();
+        }
+    }
+
+    static SocketChannel tryConnectTo(InetSocketAddress address, int time, long delayTime) throws InterruptedException {
+        SocketChannel result = null;
+        for (int i = 0; i < time; ++i) {
+            try {
+                result = SocketChannel.open(address);
+                break;
             } catch (IOException e) {
-                System.err.println("Error with connection: " + e.getMessage());
+                System.err.printf("Unable to connect to %s. Try %d more times.\n", address, time - i - 1);
+                Thread.sleep(delayTime);
             }
         }
+        return result;
     }
 
     static void printAwesomeASCIITitle() {
@@ -71,6 +92,7 @@ public class Main {
             return null;
         });
         cc.addCommand("exit", "I don't have to explain :) [Additional].", arg -> {
+            onExit();
             System.exit(0);
             return null;
         });
@@ -90,13 +112,21 @@ public class Main {
             }
             return null;
         });
-        cc.addCommand("help", "Display the help message, the arg json format. [Additional]", Main::help);
+        cc.addCommand("help", "Display the help message, the arg json format. [Additional]", args -> {
+            help();
+            return null;
+        });
+    }
+
+    public static void onExit() {
+        try { sc.close(); } catch (IOException e) {}
+
     }
 
     /**
      * Print a help message.
      */
-    public static Object help(Object[] args) {
+    public static void help() {
         String[] helps = {
                 "# Help",
                 "\tUse command \"help\" to display this message.",
@@ -137,7 +167,6 @@ public class Main {
                 "\t}",
         };
         Arrays.stream(helps).forEach(System.out::println);
-        return null;
     }
 
 }
