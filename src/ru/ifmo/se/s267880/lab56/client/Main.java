@@ -10,6 +10,7 @@ import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.Arrays;
 
 /**
@@ -77,6 +78,8 @@ public class Main {
                 Thread.sleep(100);
                 result = SocketChannel.open(address);
                 break;
+            } catch (UnresolvedAddressException e) {
+                return null;
             } catch (IOException e) {
                 System.err.printf("Unable to connect to %s. Trying to connect %d more times.\n", address, time - i - 1);
                 Thread.sleep(delayTime);
