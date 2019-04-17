@@ -1,10 +1,7 @@
 package ru.ifmo.se.s267880.lab56.server;
 
 import ru.ifmo.se.s267880.lab56.client.ClientInputPreprocessor;
-import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;
-import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
-import ru.ifmo.se.s267880.lab56.shared.Helper;
-import ru.ifmo.se.s267880.lab56.shared.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
@@ -15,6 +12,8 @@ import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 import java.io.*;
 import java.text.ParseException;
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -257,5 +256,10 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
 
     public List<Meeting> getCollection() {
         return Collections.unmodifiableList(collection);
+    }
+
+    @Override
+    public Map<Integer, ZoneId> listTimeZones(int offsetHour) {
+        return ZoneUtils.getZonesBy(z -> ZoneUtils.toUTCZoneOffset(z).getTotalSeconds() / 3600 == offsetHour);
     }
 }

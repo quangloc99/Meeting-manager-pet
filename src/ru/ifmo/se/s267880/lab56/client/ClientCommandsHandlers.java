@@ -6,6 +6,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
+import java.time.ZoneId;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -268,5 +269,16 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
     @Override
     public void clear() throws Exception {
         new CommandExecutor().run();
+    }
+
+    @Override
+    public Map<Integer, ZoneId> listTimeZones(int offset) throws Exception {
+        Object res = (new CommandExecutor() {
+            @Override
+            protected void processResult(ResultToClient res) throws Exception {
+                ZoneUtils.printZonesByZoneOffset((Map<Integer, ZoneId>) res.getResult());
+            }
+        }).run();
+        return null;
     }
 }

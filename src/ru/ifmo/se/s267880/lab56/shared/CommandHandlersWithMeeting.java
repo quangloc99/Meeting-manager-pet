@@ -7,6 +7,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionComma
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 
 import java.io.InputStream;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -134,4 +135,14 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
     @Command(additional = true)
     @Usage("delete all the elements from the collection")
     void clear() throws Exception;
+
+    /**
+     * Get all the time zone with index that has ZoneOffset's hour equals to the parameter.
+     * @param offsetHour the time zone offset's hour
+     * @return a map between a representative index with a ZoneId
+     */
+    @Command(value="list-time-zones", additional = true)
+    @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-time-zone 3` will list all" +
+            " the time zone with the offset \"UTF+3\"")
+    Map<Integer, ZoneId> listTimeZones(int offsetHour) throws Exception;
 }
