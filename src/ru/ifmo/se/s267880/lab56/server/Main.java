@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 public class Main {
@@ -36,7 +37,7 @@ public class Main {
                         @Override
                         ResultToClient generateResult(ResultToClientStatus status, Serializable result) {
                             LinkedList<Meeting> clonedCollection = new LinkedList<>(mm.getCollection());
-                            clonedCollection.sort((u, v) -> u.getName().compareTo(v.getName()));
+                            clonedCollection.sort(Comparator.comparing(Meeting::getName));
                             return new ResultToClient(status, result, clonedCollection);
                         }
                     }.start();
