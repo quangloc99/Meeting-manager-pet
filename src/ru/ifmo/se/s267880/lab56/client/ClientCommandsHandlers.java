@@ -62,13 +62,13 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
 
         protected void processResult(ResultToClient res) throws Exception {
             if (res.getStatus() == ResultToClientStatus.FAIL) {
-                throw (Exception) res.getResult();
+                throw res.<Exception>getResult();
             }
             System.out.println("Command " + currentCommandName + " successfully executed.");
             if (isQuite) return;
             System.out.println("# Meeting list (sorted by name):");
             int i = 0;
-            for (Meeting meeting: (List<Meeting>)res.getCollection()) {
+            for (Meeting meeting: res.getCollection()) {
                 System.out.printf("%3d) %s\n", ++i, meeting);
             }
             System.out.println("To get the original order (the real order), please use command `show`.");
@@ -160,7 +160,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      */
     @Override
     public List<Meeting> show() throws Exception {
-        Object result = new CommandExecutor() {
+        return new CommandExecutor() {
             @Override
             protected void processResult(ResultToClient res) throws Exception {
                 boolean currentQuiteState = isQuite;
@@ -169,7 +169,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                 isQuite = currentQuiteState;
 
                 assert(res.getStatus() == ResultToClientStatus.SUCCESS);
-                List<Meeting> meetings = (List<Meeting>) res.getResult();
+                List<Meeting> meetings = res.getResult();
                 System.out.println("# Meeting list (original order):");
                 Iterator<Integer> counter = IntStream.rangeClosed(1, meetings.size()).iterator();
                 meetings.stream()
@@ -177,7 +177,6 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                     .forEachOrdered(System.out::println);
             }
         }.run().getResult();
-        return (List<Meeting>) result;
     }
 
     /**
@@ -212,7 +211,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
      */
     @Override
     public Map<String, String> info() throws Exception {
-        Object result = new CommandExecutor() {
+        return new CommandExecutor() {
             @Override
             protected void processResult(ResultToClient res) throws Exception {
                 boolean currentQuiteState = isQuite;
@@ -221,7 +220,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                 isQuite = currentQuiteState;
 
                 assert(res.getStatus() == ResultToClientStatus.SUCCESS);
-                Map<String, String> result = (Map<String, String>) res.getResult();
+                Map<String, String> result = res.getResult();
                 System.out.println("# Information");
                 System.out.println("File name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
                 System.out.println("Time zone: UTC" + result.get("time-zone"));
@@ -230,7 +229,6 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                 System.out.println("Is quite: " + currentQuiteState);
             }
         }.run().getResult();
-        return (Map<String, String>) result;
     }
 
     /**
@@ -274,13 +272,12 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
 
     @Override
     public Map<Integer, ZoneId> listTimeZones(int offset) throws Exception {
-        Object res = (new CommandExecutor() {
+        return (new CommandExecutor() {
             @Override
             protected void processResult(ResultToClient res) throws Exception {
-                ZoneUtils.printZonesByZoneOffset((Map<Integer, ZoneId>) res.getResult());
+                ZoneUtils.printZonesByZoneOffset(res.getResult());
             }
-        }).run();
-        return null;
+        }).run().getResult();
     }
 
     @Override

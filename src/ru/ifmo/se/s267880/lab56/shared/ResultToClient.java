@@ -24,11 +24,11 @@ public class ResultToClient implements Serializable {
         return this.status;
     }
 
-    public Object getResult() {
+    public <T extends Serializable> T getResult() {
         if (this.initialized) {
             throw new RuntimeException("Cannot get result of this object, which is initialized with constructor.");
         }
-        return this.result;
+        return (T)this.result;
     }
 
     public List<Meeting> getCollection() {
