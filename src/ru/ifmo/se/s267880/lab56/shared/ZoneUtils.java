@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 // An utility class for processing time zone.
 public class ZoneUtils {
-    static private Map<Integer, ZoneId> allZoneIds = Collections.unmodifiableMap(generateZonesIdWithIndex());
+    static public final Map<Integer, ZoneId> allZoneIds = Collections.unmodifiableMap(generateZonesIdWithIndex());
     static private Map<Integer, ZoneId> generateZonesIdWithIndex() {
         Map<Integer, ZoneId> zones = new HashMap<>();
         ZoneId.getAvailableZoneIds().stream()
@@ -22,6 +22,10 @@ public class ZoneUtils {
 
     public static ZoneOffset toUTCZoneOffset(ZoneId id) {
         return LocalDateTime.now().atZone(id).getOffset();
+    }
+
+    public static String toUTCZoneOffsetString(ZoneId id) {
+        return toUTCZoneOffset(id).toString().replace("Z", "+00:00");
     }
 
     public static Map<Integer, ZoneId> getZonesBy(Predicate<ZoneId> predicate) {
@@ -38,7 +42,7 @@ public class ZoneUtils {
         new TreeMap<>(
             zones.entrySet().stream().collect(Collectors.groupingBy(e -> toUTCZoneOffset(e.getValue())))
         ) .forEach((k, v) -> {
-            System.out.printf("UTC%s%n", k.toString().replace("Z", "+00:00"));
+            System.out.printf("UTC%s%n", toUTCZoneOffsetString(k));
             v.forEach(e -> System.out.printf("\t%d) %s%n", e.getKey(), e.getValue()));
         }) ;
     }

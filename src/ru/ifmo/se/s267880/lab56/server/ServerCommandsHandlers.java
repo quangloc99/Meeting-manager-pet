@@ -13,7 +13,7 @@ import java.io.*;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,6 +36,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private List<Meeting> collection = null;
     private String currentFileName;
     private Date fileOpenSince = Calendar.getInstance().getTime();
+    private ZoneId zoneId = ZonedDateTime.now().getZone();
 
     public ServerCommandsHandlers(List<Meeting> collection) {
         assert(collection != null);
@@ -210,6 +211,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
         result.put("file", currentFileName);
         result.put("meeting-count", Integer.toString(collection.size()));
         result.put("since", Helper.meetingDateFormat.format(fileOpenSince));
+        result.put("time-zone", zoneId.toString() + " " + ZoneUtils.toUTCZoneOffsetString(zoneId));
         return result;
     }
 
@@ -261,5 +263,15 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     @Override
     public Map<Integer, ZoneId> listTimeZones(int offsetHour) {
         return ZoneUtils.getZonesBy(z -> ZoneUtils.toUTCZoneOffset(z).getTotalSeconds() / 3600 == offsetHour);
+    }
+
+    @Override
+    public void setTimeZone(int timeZoneKey) throws Exception {
+        if (!ZoneUtils.allZoneIds.containsKey(timeZoneKey)) {
+            throw new NoSuchFieldException(String.format(
+                    "There is no time zones with index %d. " +
+                    "Please use command `list-time-zones` for the list of time zones", timeZoneKey));
+        }
+        zoneId = ZoneUtils.allZoneIds.get(timeZoneKey);
     }
 }

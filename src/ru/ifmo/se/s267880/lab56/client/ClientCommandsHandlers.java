@@ -224,6 +224,7 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
                 Map<String, String> result = (Map<String, String>) res.getResult();
                 System.out.println("# Information");
                 System.out.println("File name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
+                System.out.println("Time zone: UTC" + result.get("time-zone"));
                 System.out.println("Number of meeting: " + result.get("meeting-count"));
                 System.out.println("File load since: " + result.get("since"));
                 System.out.println("Is quite: " + currentQuiteState);
@@ -280,5 +281,10 @@ abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeti
             }
         }).run();
         return null;
+    }
+
+    @Override
+    public void setTimeZone(int timeZoneKey) throws Exception {
+        new CommandExecutor().run();
     }
 }

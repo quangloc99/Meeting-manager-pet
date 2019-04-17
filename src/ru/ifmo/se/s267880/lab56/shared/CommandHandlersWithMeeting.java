@@ -142,7 +142,15 @@ public interface CommandHandlersWithMeeting extends CommandHandlers {
      * @return a map between a representative index with a ZoneId
      */
     @Command(value="list-time-zones", additional = true)
-    @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-time-zone 3` will list all" +
+    @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-time-zones 3` will list all" +
             " the time zone with the offset \"UTF+3\"")
     Map<Integer, ZoneId> listTimeZones(int offsetHour) throws Exception;
+
+    /**
+     * Set the current time zone corresponding to to the key in {@link ZoneUtils#allZoneIds}
+     * @param timeZoneKey the time zone's key in {@link ZoneUtils#allZoneIds}
+     */
+    @Command(value="set-time-zone", additional = true)
+    @Usage("Set the time zone by index. Use command `list-time-zones` for the list of time zones with indexes.")
+    void setTimeZone(int timeZoneKey) throws Exception;
 }
