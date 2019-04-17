@@ -1,9 +1,8 @@
 package ru.ifmo.se.s267880.lab56.shared;
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author Tran Quang Loc
@@ -22,13 +21,13 @@ public class Meeting implements Comparable<Meeting>, Serializable {
     private String meetingName;         // replacement for object's name
     private Duration duration;          // replacement for size
     private BuildingLocation location;  // replacement for location
-    private Date meetingTime;           // replacement for object's creation's time
+    private ZonedDateTime meetingTime;           // replacement for object's creation's time
 
     /**
      * @param meetingName The name of the meeting.
      * @param meetingTime The meeting time.
      */
-    public Meeting(String meetingName, Duration duration, BuildingLocation location, Date meetingTime) {
+    public Meeting(String meetingName, Duration duration, BuildingLocation location, ZonedDateTime meetingTime) {
         this.meetingName = meetingName;
         this.duration = duration;
         this.location = location;
@@ -39,8 +38,8 @@ public class Meeting implements Comparable<Meeting>, Serializable {
      * Held the meeting.
      * @throws LateException
      */
-    public void held(Date heldTime) {
-        if (heldTime.after(meetingTime)) {
+    public void held(ZonedDateTime heldTime) {
+        if (heldTime.isAfter(meetingTime)) {
             throw new LateException();
         }
         System.out.println("Встреча " + meetingName + " вовремя");
@@ -54,23 +53,28 @@ public class Meeting implements Comparable<Meeting>, Serializable {
 
     public BuildingLocation getLocation() { return location; }
 
-    public Date getTime() {
-        return (Date) meetingTime.clone();
+    public ZonedDateTime getTime() {
+        return meetingTime;  // because it is immutable.
     }
+
+    public Meeting withName(String name) { return new Meeting(name, duration, location, meetingTime); }
+    public Meeting withDuration(Duration dur) { return new Meeting(meetingName, dur, location, meetingTime); }
+    public Meeting withLocation(BuildingLocation loc) { return new Meeting(meetingName, duration, location, meetingTime); }
+    public Meeting withTime(ZonedDateTime time) { return new Meeting(meetingName, duration, location, time); }
 
     @Override
     public String toString() {
-        return toString(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"));
+        return toString(Helper.meetingDateFormat);
     }
 
     /**
      * Generate string representation with custom date format.
      * @return
      */
-    public String toString(DateFormat dateFormat) {
+    public String toString(DateTimeFormatter formatter) {
         return String.format("%s: at %s for %s minute(s) on %s",
                 meetingName,
-                dateFormat.format(meetingTime),
+                formatter.format(meetingTime),
                 duration.toMinutes(),
                 location
         );

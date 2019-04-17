@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -28,7 +29,7 @@ public class Helper {
     /**
      * The default date format for <i>almost</i> Date object.
      */
-    public static final DateFormat meetingDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    public static final DateTimeFormatter meetingDateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss z");
 
     /**
      * Contains the mapping between the string representation of Calendar's fields (YEAR, MONTH) and those contansts.

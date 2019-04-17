@@ -35,7 +35,7 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
 public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private List<Meeting> collection = null;
     private String currentFileName;
-    private Date fileOpenSince = Calendar.getInstance().getTime();
+    private ZonedDateTime fileOpenSince = ZonedDateTime.now();
     private ZoneId zoneId = ZonedDateTime.now().getZone();
 
     public ServerCommandsHandlers(List<Meeting> collection) {
@@ -46,7 +46,15 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
     private synchronized void updateFileName(String path) {
         if ((path == null && currentFileName == null) || path.equals(currentFileName)) return;
         currentFileName = path;
-        fileOpenSince = Calendar.getInstance().getTime();
+        fileOpenSince = ZonedDateTime.now();
+    }
+
+    private Meeting transformMeetingTimeSameInstant(Meeting meeting) {
+        return meeting.withTime(meeting.getTime().withZoneSameInstant(zoneId));
+    }
+
+    private Meeting transformMeetingTimeSameLocal(Meeting meeting) {
+        return meeting.withTime(meeting.getTime().withZoneSameLocal(zoneId));
     }
 
     public synchronized String getCurrentFileName() {
@@ -139,7 +147,7 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
                                 Integer.parseInt(row.get("building number")),
                                 Integer.parseInt(row.get("floor number"))
                         ),
-                        Helper.meetingDateFormat.parse(row.get("meeting time"))    // can throw ParseException
+                        ZonedDateTime.parse(row.get("meeting time"), Helper.meetingDateFormat)    // can throw ParseException
                 )))
                 .collect(Collectors.toList());
     }
@@ -157,28 +165,34 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
 
     /**
      * Add meeting into the collection
+     * Note: Because the meeting is from the client so this method will transform meeting's time to have the same zone
+     * on the server but with same <b>local</b>.
      * @param meeting the meeting wanted to be add.
      */
     @Override
     public void add(Meeting meeting) {
-        collection.add(meeting);
+        collection.add(transformMeetingTimeSameLocal(meeting));
     }
 
     /**
      * List all the meetings.
+     * Note: Because the method will pass a list of object to the client so every meeting's must be transformed
+     * to the current zone with same <b>instant</b>.
      */
     @Override
     public List<Meeting> show() {
-        return Collections.unmodifiableList(collection);
+        return this.getCollection();
     }
 
     /**
      * Remove a meeting from the collection by value.
+     * Note: Because the meeting is from the client so this method will transform meeting's time to have the same zone
+     * on the server but with same <b>local</b>.
      * @param meeting the meeting wanted to be removed.
      */
     @Override
     public void remove(Meeting meeting) {
-        collection.remove(meeting);
+        collection.remove(transformMeetingTimeSameLocal(meeting));
     }
 
     /**
@@ -192,10 +206,13 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
 
     /**
      * Add new meeting into the collection if it's date is before every other meeting in the collection.
+     * Note: Because the meeting is from the client so this method will transform meeting's time to have the same zone
+     * on the server but with same <b>local</b>.
      * @param meeting the meeting wanted to be added.
      */
     @Override
     public void addIfMin(Meeting meeting) {
+        meeting = transformMeetingTimeSameLocal(meeting);
         synchronized (collection) {
             if (meeting.compareTo(Collections.min(collection)) >= 0) return;
             add(meeting);
@@ -220,12 +237,12 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
      */
     @Override
     public void sortByDate() {
-        Collections.sort(collection, (u, v) -> u.getTime().compareTo(v.getTime()));
+        Collections.sort(collection, Comparator.comparing(Meeting::getTime));
     }
 
     @Override
     public void sortBytime() {
-        Collections.sort(collection, (u, v) -> u.getDuration().compareTo(v.getDuration()));
+        Collections.sort(collection, Comparator.comparing(Meeting::getDuration));
     }
 
     /**
@@ -256,8 +273,16 @@ public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
         collection.clear();
     }
 
+    /**
+     * List all the meetings.
+     * Note: The method will transform every meeting's time to the current zone with same <b>instant</b>.
+     */
     public List<Meeting> getCollection() {
-        return Collections.unmodifiableList(collection);
+        synchronized (collection) {
+            return collection.stream()
+                    .map(this::transformMeetingTimeSameInstant)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override

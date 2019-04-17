@@ -16,6 +16,8 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -52,7 +54,7 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
             }
         }
         if (inputType == Date.class) {
-            return json2Date(elm);
+            return json2ZonedDateTime(elm);
         }
         return super.preprocessJson(elm, inputType);
     }
@@ -68,7 +70,7 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
      *
      * @param obj the object needed to be transformed
      * @throws ParseException
-     * @see #json2Date(JsonElement)
+     * @see #json2ZonedDateTime(JsonElement)
      */
     public static Meeting json2Meeting(JsonObject obj) throws CannotPreprocessInputException {
         try {
@@ -76,7 +78,7 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
                     obj.get("name").getAsString(),
                     obj.has("duration") ? json2Duration(obj.get("duration")) : Duration.ofHours(1),
                     obj.has("location") ? json2BuildingLocation(obj.get("location")) : new BuildingLocation(1, 1),
-                    obj.has("time") ? json2Date(obj.get("time")) : new Date()
+                    obj.has("time") ? json2ZonedDateTime(obj.get("time")) : ZonedDateTime.now()
             );
         } catch (Exception e) {
             throw new CannotPreprocessInputException(e.getMessage());
@@ -97,30 +99,31 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
      * @return
      * @throws ParseException
      */
-    public static Date json2Date(JsonElement elm) throws CannotPreprocessInputException {
+    public static ZonedDateTime json2ZonedDateTime(JsonElement elm) throws CannotPreprocessInputException {
         try {
+            ZonedDateTime ans = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS);
             if (elm.isJsonArray()) {
                 JsonArray arr = elm.getAsJsonArray();
-                int[] fields = {0, 0, 0, 0, 0, 0};
-                for (int i = 0; i < fields.length && i < arr.size(); ++i) {
-                    fields[i] = arr.get(i).getAsInt();
+                switch (arr.size()) {
+                    case 1: ans = ans.withYear(arr.get(0).getAsInt());          // fall through
+                    case 2: ans = ans.withMonth(arr.get(1).getAsInt());         // fall through
+                    case 3: ans = ans.withDayOfMonth(arr.get(2).getAsInt());    // fall through
+                    case 4: ans = ans.withHour(arr.get(3).getAsInt());          // fall through
+                    case 5: ans = ans.withMinute(arr.get(4).getAsInt());        // fall through
+                    case 6: ans = ans.withSecond(arr.get(5).getAsInt());        // fall through
                 }
-                return new GregorianCalendar(fields[0], Helper.monthMap.get(fields[1]), fields[2], fields[3], fields[4], fields[5]).getTime();
             } else if (elm.isJsonObject()) {
                 JsonObject obj = elm.getAsJsonObject();
-                GregorianCalendar cal = new GregorianCalendar();
-                Helper.calendarFieldMap.forEach((k, v) -> {
-                    if (obj.has(k)) {
-                        if (k.equals("month"))
-                            cal.set(v, Helper.monthMap.get(obj.get(k).getAsInt()));
-                        else
-                            cal.set(v, obj.get(k).getAsInt());
-                    } else cal.set(v, 0);
-                });
-                return cal.getTime();
+                if (obj.has("year")) ans = ans.withYear(obj.get("year").getAsInt());
+                if (obj.has("month")) ans = ans.withMinute(obj.get("month").getAsInt());
+                if (obj.has("date")) ans = ans.withDayOfMonth(obj.get("date").getAsInt());
+                if (obj.has("hour")) ans = ans.withHour(obj.get("hour").getAsInt());
+                if (obj.has("minute")) ans = ans.withMinute(obj.get("minute").getAsInt());
+                if (obj.has("second")) ans = ans.withSecond(obj.get("second").getAsInt());
             } else {
-                return Helper.meetingDateFormat.parse(elm.getAsString());
+                return ZonedDateTime.parse(elm.getAsString(), Helper.meetingDateFormat);
             }
+            return ans;
         } catch (Exception e) {
             throw new CannotPreprocessInputException(e.getMessage());
         }
