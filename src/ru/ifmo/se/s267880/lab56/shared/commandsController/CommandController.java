@@ -1,9 +1,12 @@
 package ru.ifmo.se.s267880.lab56.shared.commandsController;
 
+import ru.ifmo.se.s267880.lab56.shared.EventEmitter;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 /**
  * A class for reading user input (both command and arguments) and execute the correspond command.
@@ -15,6 +18,8 @@ import java.util.*;
  */
 // TODO: add method "addCommand" to add command's hander without return value.
 abstract public class CommandController {
+    public final EventEmitter<Object> commandSuccefulExecutedEvent = new EventEmitter<>();
+    public final EventEmitter<Exception> errorEvent = new EventEmitter<>();
     /**
      * The base interface for Handler
      */
@@ -104,30 +109,37 @@ abstract public class CommandController {
      * @throws CommandNotFoundException
      * @throws Exception
      */
-    public Object execute() throws CommandNotFoundException, IncorrectInputException, Exception {
-        String userCommand = getUserCommand();
-        if (!commandHandlers.containsKey(userCommand)) {
-            throw new CommandNotFoundException(userCommand);
-        }
-
-        Handler handler = commandHandlers.get(userCommand);
-        List<Object> argList = new LinkedList<>();
-        boolean isExecuting = true;
-        for (int i = 0; i <= nInputLimit && isExecuting; ++i) {
-            try {
-                return handler.process(argList.toArray());
-            } catch (NeedMoreInputException e) {
-                argList.add(getUserInput());
-            } catch (IncorrectInputException e) {
-                if (e.getMessage().isEmpty()) {
-                    throw new IncorrectInputException(userCommand, argList.toArray());
-                }
-                throw e;  // rethrow
-            } catch (Exception e) {
-                throw new ErrorWhileRunningCommand(userCommand, e);
+    public Object execute() {
+        try {
+            String userCommand = getUserCommand();
+            if (!commandHandlers.containsKey(userCommand)) {
+                throw new CommandNotFoundException(userCommand);
             }
+
+            Handler handler = commandHandlers.get(userCommand);
+            List<Object> argList = new LinkedList<>();
+            boolean isExecuting = true;
+            for (int i = 0; i <= nInputLimit && isExecuting; ++i) {
+                try {
+                    Object res = handler.process(argList.toArray());
+                    commandSuccefulExecutedEvent.emit(res);
+                    return res;
+                } catch (NeedMoreInputException e) {
+                    argList.add(getUserInput());
+                } catch (IncorrectInputException e) {
+                    if (e.getMessage().isEmpty()) {
+                        throw new IncorrectInputException(userCommand, argList.toArray());
+                    }
+                    throw e;
+                } catch (Exception e) {
+                    throw new ErrorWhileRunningCommand(userCommand, e);
+                }
+            }
+            throw new IncorrectInputException(userCommand, argList.toArray());
+        } catch (Exception e) {
+            errorEvent.emit(e);
+            return null;
         }
-        throw new IncorrectInputException(userCommand, argList.toArray());
     }
 
     /**

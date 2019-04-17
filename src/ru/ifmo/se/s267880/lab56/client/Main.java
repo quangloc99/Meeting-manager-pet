@@ -45,7 +45,7 @@ public class Main {
             Main.sc = sc;
             MainREPL repl = new MainREPL(cc);
             repl.disconnectedToServerEvent.listen(e -> socketConnector.tryConnectTo(address));
-            repl.start();
+            repl.run();
         });
         socketConnector.errorEvent.listen(e -> {
             if (e instanceof InterruptedException) {
