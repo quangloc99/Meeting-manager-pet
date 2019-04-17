@@ -40,52 +40,31 @@ public class Main {
             address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);
         }
 
-        try {
-            while (true) {
-                sc = tryConnectTo(address, 5, 1500);
-                if (sc == null) {
-                    System.err.printf("Unable to connect to %s.\n", address);
-                    if (!confirm("Reenter address?")) {
-                        break;
-                    } else {
-                        address = getInitSocketAddressFromUserInput(address.getHostName(), address.getPort());
-                        continue;
-                    }
-                }
-
-                while (true) {
-                    try {
-                        cc.execute();
-                    } catch (Exception e) {
-                        System.err.printf("Error: %s\n", e.getMessage());
-                        Throwable cause = e.getCause();
-                        if (cause instanceof CommunicationIOException) {
-                            System.err.println("Disconnected to server");
-                            break;
-                        }
-                    }
-                }
+        SocketConnector socketConnector = new SocketConnector(5, 1500);
+        socketConnector.connectSucessfulEvent.listen(sc -> {
+            Main.sc = sc;
+            MainREPL repl = new MainREPL(cc);
+            repl.disconnectedToServerEvent.listen(e -> socketConnector.tryConnectTo(address));
+            repl.start();
+        });
+        socketConnector.errorEvent.listen(e -> {
+            if (e instanceof InterruptedException) {
+                onExit();
+                System.exit(0);
             }
-        } catch (InterruptedException e) {
-            onExit();
-        }
-    }
-
-    static SocketChannel tryConnectTo(InetSocketAddress address, int time, long delayTime) throws InterruptedException {
-        SocketChannel result = null;
-        for (int i = 0; i < time; ++i) {
-            try {
-                Thread.sleep(100);
-                result = SocketChannel.open(address);
-                break;
-            } catch (UnresolvedAddressException e) {
-                return null;
-            } catch (IOException e) {
-                System.err.printf("Unable to connect to %s. Trying to connect %d more times.\n", address, time - i - 1);
-                Thread.sleep(delayTime);
+            if (e instanceof UnresolvedAddressException) {
+                System.err.printf("Address %s can not be resolved\n", address);
+            } else {
+                System.err.printf("Unable to connect to %s.\n", address);
             }
-        }
-        return result;
+            if (!confirm("Reenter address?")) {
+                System.exit(0);
+            } else {
+                address = getInitSocketAddressFromUserInput(address.getHostName(), address.getPort());
+                socketConnector.tryConnectTo(address);
+            }
+        });
+        socketConnector.tryConnectTo(address);
     }
 
     static void printAwesomeASCIITitle() {
