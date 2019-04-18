@@ -40,33 +40,35 @@ public class Main {
             address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);
         }
 
-        SocketConnector socketConnector = new SocketConnector(5, 1500);
-        socketConnector.connectSucessfulEvent.listen(sc -> {
-            Main.sc = sc;
-            new MainREPL(cc) {
-                @Override
-                public void onDisconnectedToServer(Throwable e) {
-                    socketConnector.tryConnectTo(address);
+        SocketConnector socketConnector = new SocketConnector(5, 1300) {
+            @Override
+            public void onConnectSuccessfulEvent(SocketChannel sc) {
+                Main.sc = sc;
+                new MainREPL(cc) {
+                    @Override
+                    public void onDisconnectedToServer(Throwable e) {
+                        tryConnectTo(address);
+                    }
+                }.start();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (e instanceof InterruptedException) {
+                    onExit();
+                    System.exit(0);
                 }
-            }.start();
-        });
-        socketConnector.errorEvent.listen(e -> {
-            if (e instanceof InterruptedException) {
-                onExit();
-                System.exit(0);
+                System.err.printf(e instanceof  UnresolvedAddressException
+                        ? "Address %s can not be resolved%n"
+                        : "Unable to connect to %s%n", address);
+                if (!confirm("Reenter address?")) {
+                    System.exit(0);
+                } else {
+                    address = getInitSocketAddressFromUserInput(address.getHostName(), address.getPort());
+                    tryConnectTo(address);
+                }
             }
-            if (e instanceof UnresolvedAddressException) {
-                System.err.printf("Address %s can not be resolved\n", address);
-            } else {
-                System.err.printf("Unable to connect to %s.\n", address);
-            }
-            if (!confirm("Reenter address?")) {
-                System.exit(0);
-            } else {
-                address = getInitSocketAddressFromUserInput(address.getHostName(), address.getPort());
-                socketConnector.tryConnectTo(address);
-            }
-        });
+        };
         socketConnector.tryConnectTo(address);
     }
 

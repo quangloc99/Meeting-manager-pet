@@ -1,7 +1,5 @@
 package ru.ifmo.se.s267880.lab56.client;
 
-import ru.ifmo.se.s267880.lab56.shared.EventEmitter;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -11,8 +9,6 @@ import java.nio.channels.UnresolvedAddressException;
  * A class that handle stuffs related to Socket.
  */
 public class SocketConnector {
-    public final EventEmitter<SocketChannel> connectSucessfulEvent = new EventEmitter<>();
-    public final EventEmitter<Exception> errorEvent = new EventEmitter<>();
     private int time;
     private long delayTime;
 
@@ -28,18 +24,19 @@ public class SocketConnector {
                     try {
                         Thread.sleep(100);
                         SocketChannel result = SocketChannel.open(address);
-                        connectSucessfulEvent.emit(result);
+                        onConnectSuccessfulEvent(result);
                         return ;
                     } catch (UnresolvedAddressException e) {
-                        errorEvent.emit(e);
+                        onError(e);
+                        return ;
                     } catch (IOException e) {
                         System.err.printf("Unable to connect to %s. Trying to connect %d more times.\n", address, i);
                         Thread.sleep(delayTime);
                     }
                 }
-                errorEvent.emit(new NullPointerException());
+                onError(new NullPointerException());
             } catch (InterruptedException e) {
-                errorEvent.emit(e);
+                onError(e);
             }
         }).start();
     }
@@ -49,4 +46,12 @@ public class SocketConnector {
 
     public void setTime(int time) { this.time = time; }
     public void setDelayTime(long delayTime) { this.delayTime = delayTime; }
+
+    public void onConnectSuccessfulEvent(SocketChannel sc) {
+        // nothing. Can be extended
+    }
+
+    public void onError(Exception e) {
+        // nothing. Can be extended
+    }
 }
