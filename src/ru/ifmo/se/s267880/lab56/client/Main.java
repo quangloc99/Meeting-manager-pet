@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client;
 
+import ru.ifmo.se.s267880.lab56.client.repl.MainLoop;
 import ru.ifmo.se.s267880.lab56.shared.SharedCommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
@@ -43,7 +44,7 @@ public class Main {
             @Override
             public void onConnectSuccessfulEvent(SocketChannel sc) {
                 Main.sc = sc;
-                new MainREPL(cc) {
+                new MainLoop(cc) {
                     @Override
                     public void onDisconnectedToServer(Throwable e) {
                         tryConnectTo(address);

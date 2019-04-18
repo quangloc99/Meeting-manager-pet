@@ -1,12 +1,12 @@
-package ru.ifmo.se.s267880.lab56.client;
+package ru.ifmo.se.s267880.lab56.client.repl;
 
 import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 
-abstract public class MainREPL extends Thread {
+abstract public class MainLoop extends Thread {
     private CommandController cc;
 
-    public MainREPL(CommandController cc) {
+    public MainLoop(CommandController cc) {
         this.cc = cc;
     }
 
