@@ -1,6 +1,10 @@
 package ru.ifmo.se.s267880.lab56.client;
 
 import ru.ifmo.se.s267880.lab56.client.repl.MainLoop;
+import ru.ifmo.se.s267880.lab56.client.repl.input.DefaultUserInputArgumentParser;
+import ru.ifmo.se.s267880.lab56.client.repl.input.JsonUserInputArgumentParser;
+import ru.ifmo.se.s267880.lab56.client.repl.input.UserInputProvider;
+import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.SharedCommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
@@ -8,6 +12,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionComma
 import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
@@ -19,57 +24,50 @@ import java.util.Arrays;
 public class Main {
     public static SocketChannel sc = null;
     public static InetSocketAddress address = null;
+    private static HandlerCallback<SocketChannel> socketConnectorCallback;
     public static void main(String[] args) {
         printAwesomeASCIITitle();
 
-        ClientCommandController cc = new ClientCommandController(System.in);
+        CommandController cc = new CommandController();
+        UserInputProvider inputProvider = new UserInputProvider(new InputStreamReader(System.in),
+                new JsonUserInputArgumentParser(),
+                new DefaultUserInputArgumentParser()
+        );
         ClientCommandsHandlers handlers = new ClientCommandsHandlers() {
             public SocketChannel getChannel() throws IOException  {
                 return sc;
             }
         };
         addClientOnlyCommand(cc, handlers);
-        if (!cc.removeGSONNonExecutablePrefix()) {
-            System.err.println("cannot remove gson non execute prefix :(. " +
-                    "If the command is hanging, please try press Enter multiple times.");
-        }
-
         ReflectionCommandAdder.addCommand(cc, SharedCommandHandlers.class, handlers, new ClientInputPreprocessor());
 
         if (address == null) {
             address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);
         }
 
-        SocketConnector socketConnector = new SocketConnector(5, 1300) {
-            @Override
-            public void onConnectSuccessfulEvent(SocketChannel sc) {
+        SocketConnector socketConnector = new SocketConnector(5, 1300);
+        socketConnectorCallback = new HandlerCallback<>(
+            sc -> {
                 Main.sc = sc;
-                new MainLoop(cc) {
-                    @Override
-                    public void onDisconnectedToServer(Throwable e) {
-                        tryConnectTo(address);
-                    }
-                }.start();
-            }
-
-            @Override
-            public void onError(Exception e) {
+                new MainLoop(cc, inputProvider).run(HandlerCallback.ofErrorHandler(
+                        e -> socketConnector.tryConnectTo(address, socketConnectorCallback)
+                ));
+            },
+            e -> {
                 if (e instanceof InterruptedException) {
                     onExit();
-                    System.exit(0);
+                    return ;
                 }
                 System.err.printf(e instanceof  UnresolvedAddressException
                         ? "Address %s can not be resolved%n"
                         : "Unable to connect to %s%n", address);
-                if (!confirm("Reenter address?")) {
-                    System.exit(0);
-                } else {
+                if (confirm("Reenter address?")) {
                     address = getInitSocketAddressFromUserInput(address.getHostName(), address.getPort());
-                    tryConnectTo(address);
+                    socketConnector.tryConnectTo(address, socketConnectorCallback);
                 }
             }
-        };
-        socketConnector.tryConnectTo(address);
+        );
+        socketConnector.tryConnectTo(address, socketConnectorCallback);
     }
 
     static void printAwesomeASCIITitle() {
@@ -111,6 +109,18 @@ public class Main {
         });
         cc.addCommand("help", "Display the help message, the arg json format. [Additional]", args -> {
             help();
+            return null;
+        });
+
+        cc.addCommand("list-commands", "[Additional] List all the commands.", (Object[] args) -> {
+            System.out.println("# Commands list:");
+            cc.getCommandHandlers().forEach((commandName, handler) -> {
+                System.out.printf("- %s\n", commandName);
+                for (String s : handler.getUsage().split("\n")) {
+                    System.out.printf("\t%s\n", s);
+                }
+                System.out.println();
+            });
             return null;
         });
     }

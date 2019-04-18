@@ -1,5 +1,7 @@
 package ru.ifmo.se.s267880.lab56.client;
 
+import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -17,26 +19,26 @@ public class SocketConnector {
         this.delayTime = delayTime;
     }
 
-    public void tryConnectTo(InetSocketAddress address) {
+    public void tryConnectTo(InetSocketAddress address, HandlerCallback<SocketChannel> callback) {
         new Thread(() -> {
             try {
                 for (int i = time; i > 0; --i) {
                     try {
                         Thread.sleep(100);
                         SocketChannel result = SocketChannel.open(address);
-                        onConnectSuccessfulEvent(result);
+                        callback.onSuccess(result);
                         return ;
                     } catch (UnresolvedAddressException e) {
-                        onError(e);
+                        callback.onError(e);
                         return ;
                     } catch (IOException e) {
                         System.err.printf("Unable to connect to %s. Trying to connect %d more times.\n", address, i);
                         Thread.sleep(delayTime);
                     }
                 }
-                onError(new NullPointerException());
+                callback.onError(new NullPointerException());
             } catch (InterruptedException e) {
-                onError(e);
+                callback.onError(e);
             }
         }).start();
     }
@@ -46,12 +48,4 @@ public class SocketConnector {
 
     public void setTime(int time) { this.time = time; }
     public void setDelayTime(long delayTime) { this.delayTime = delayTime; }
-
-    public void onConnectSuccessfulEvent(SocketChannel sc) {
-        // nothing. Can be extended
-    }
-
-    public void onError(Exception e) {
-        // nothing. Can be extended
-    }
 }

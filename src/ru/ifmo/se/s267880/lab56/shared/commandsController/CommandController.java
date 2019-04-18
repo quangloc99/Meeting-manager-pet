@@ -1,11 +1,10 @@
 package ru.ifmo.se.s267880.lab56.shared.commandsController;
 
+import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * A class for reading user input (both command and arguments) and execute the correspond command.
@@ -16,7 +15,7 @@ import java.util.function.Consumer;
  * @author Tran Quang Loc
  */
 // TODO: add method "addCommand" to add command's handler without return value.
-abstract public class CommandController {
+public class CommandController {
     /**
      * The base interface for Handler
      */
@@ -59,18 +58,11 @@ abstract public class CommandController {
         }
     }
 
-    public static class NeedMoreInputException extends Exception { }
-
-    protected Map<String, Handler> commandHandlers = new TreeMap<>();  // so the commands can be alphabetized
-
-    private int nInputLimit = 10;
+    private Map<String, Handler> commandHandlers = Collections.synchronizedMap(new TreeMap<>());
 
     /**
      * Add a command with no argument.
-     * If there is not enough argument for the handler to process, the handler must throw {@link NeedMoreInputException}.
      * If the input are in the wrong order or it cannot be cast/process, the handler must throw {@link IncorrectInputException}.
-     * Inorder to avoid infinity request for input, {@link #nInputLimit} - maximum number of inputs per command - is set to 10 by default.
-     * But it can be config easily using the setter.
      *
      * @param commandName the name of the command
      * @param handler the handler for the command.
@@ -106,59 +98,29 @@ abstract public class CommandController {
      * @throws CommandNotFoundException
      * @throws Exception
      */
-    public void execute(Consumer<Object> onSuccessfulExecuted, Consumer<Exception> onError) {
+    public void execute(String userCommand, List<Object> argList, HandlerCallback<Object> callback) {
         try {
-            String userCommand = getUserCommand();
             if (!commandHandlers.containsKey(userCommand)) {
                 throw new CommandNotFoundException(userCommand);
             }
-
-            Handler handler = commandHandlers.get(userCommand);
-            List<Object> argList = new LinkedList<>();
-            boolean isExecuting = true;
-            for (int i = 0; i <= nInputLimit && isExecuting; ++i) {
-                try {
-                    Object res = handler.process(argList.toArray());
-                    onSuccessfulExecuted.accept(res);
-                    return ;
-                } catch (NeedMoreInputException e) {
-                    argList.add(getUserInput());
-                } catch (IncorrectInputException e) {
-                    if (e.getMessage().isEmpty()) {
-                        throw new IncorrectInputException(userCommand, argList.toArray());
-                    }
-                    throw e;
-                } catch (Exception e) {
-                    throw new ErrorWhileRunningCommand(userCommand, e);
+            try {
+                Handler handler = commandHandlers.get(userCommand);
+                Object res = handler.process(argList.toArray());
+                callback.onSuccess(res);
+            } catch (IncorrectInputException e) {
+                if (e.getMessage().isEmpty()) {
+                    throw new IncorrectInputException(userCommand, argList.toArray());
                 }
+                throw e;
+            } catch (Exception e) {
+                throw new ErrorWhileRunningCommand(userCommand, e);
             }
-            throw new IncorrectInputException(userCommand, argList.toArray());
         } catch (Exception e) {
-            onError.accept(e);
+            callback.onError(e);
         }
     }
 
-    /**
-     * Get the number of input limit.
-     */
-    public int getNInputLimit() {
-        return nInputLimit;
+    public Map<String, Handler> getCommandHandlers() {
+        return Collections.unmodifiableMap(commandHandlers);
     }
-
-    /**
-     * Set the number of input limit.
-     */
-    public void setNInputLimit(int nInputLimit) {
-        this.nInputLimit = nInputLimit;
-    }
-
-    /**
-     * Get user command.
-     */
-    abstract protected String getUserCommand() throws IOException;
-
-    /**
-     * Get user input.
-     */
-    abstract protected Object getUserInput() throws IOException;
 }

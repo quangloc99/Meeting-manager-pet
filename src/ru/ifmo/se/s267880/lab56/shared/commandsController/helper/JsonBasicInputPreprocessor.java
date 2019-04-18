@@ -11,7 +11,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 public class JsonBasicInputPreprocessor implements InputPreprocessor {
     /**
      * This method is used without generic, so it can extends easily, and beside it is used only with
-     * {@link ReflectionCommandAdder#addCommand(CommandController, Object, InputPreprocessor)}
+     * {@link ReflectionCommandAdder#addCommand(CommandController, Class, CommandHandlers, InputPreprocessor)}
      *
      * @param obj the object that was entered by the user.
      * @param inputType the desired class of the output.

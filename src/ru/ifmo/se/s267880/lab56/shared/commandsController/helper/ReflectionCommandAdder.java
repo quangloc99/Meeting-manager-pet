@@ -106,7 +106,6 @@ public class ReflectionCommandAdder {
             List<Method> methodList,
             InputPreprocessor preprocessor
     ) {
-        final int maxNElement = methodList.stream().mapToInt(Method::getParameterCount).max().getAsInt();
         return args ->  {
             for (Method med : methodList) {
                 if (med.getParameterCount() != args.length) {
@@ -125,11 +124,7 @@ public class ReflectionCommandAdder {
                     commandHandlers.setCommandInformation(null);
                 }
             }
-            if (args.length < maxNElement) {
-                throw new CommandController.NeedMoreInputException();
-            } else {
-                throw new CommandController.IncorrectInputException();
-            }
+            throw new CommandController.IncorrectInputException();
         };
     }
 

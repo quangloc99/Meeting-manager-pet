@@ -28,6 +28,18 @@ import java.util.*;
  * @see ReflectionCommandAdder
  */
 public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
+    @Override
+    public Object preprocess(Object obj, Class inputType) throws CannotPreprocessInputException {
+        if (obj instanceof  String) {
+            if (inputType == String.class) return obj;
+            Class wrapped = Helper.toWrapper(inputType);
+            if (wrapped == Integer.class) return Integer.parseInt((String) obj);
+            else if (wrapped == Long.class) return Long.parseLong((String) obj);
+            else if (wrapped == Boolean.class) return Boolean.parseBoolean((String) obj);
+        }
+        return super.preprocess(obj, inputType);
+    }
+
     /**
      * The only function that used to transform user input.
      *

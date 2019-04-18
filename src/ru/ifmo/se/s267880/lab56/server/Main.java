@@ -1,6 +1,7 @@
 package ru.ifmo.se.s267880.lab56.server;
 
 import ru.ifmo.se.s267880.lab56.shared.*;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
 import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
 import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
@@ -26,7 +27,7 @@ public class Main {
             System.exit(0);
         }
 
-        ServerCommandController cc = new ServerCommandController();
+        CommandController cc = new CommandController();
         ReflectionCommandAdder.addCommand(cc, SharedCommandHandlers.class, mm, new ServerInputPreprocessor());
 
 

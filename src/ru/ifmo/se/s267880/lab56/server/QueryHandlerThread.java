@@ -1,5 +1,7 @@
 package ru.ifmo.se.s267880.lab56.server;
 
+import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
 import ru.ifmo.se.s267880.lab56.shared.communication.QueryToServer;
 import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
@@ -11,7 +13,7 @@ import java.util.function.Consumer;
 
 abstract public class QueryHandlerThread extends Thread {
     private Socket client;
-    private ServerCommandController cc;
+    private CommandController cc;
     private InputStream in;
     private OutputStream out;
 
@@ -27,7 +29,7 @@ abstract public class QueryHandlerThread extends Thread {
         return client;
     }
 
-    public QueryHandlerThread(Socket socket, ServerCommandController cc) throws IOException {
+    public QueryHandlerThread(Socket socket, CommandController cc) throws IOException {
         System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
         this.cc = cc;
@@ -39,7 +41,7 @@ abstract public class QueryHandlerThread extends Thread {
     public void run() {
         try {
             QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
-            cc.execute(qr, this::onCommandSuccessfulExecuted, this::onErrorWhenExecutingCommand);
+            cc.execute(qr.getName(), qr.getParameters(), new HandlerCallback<>(this::onCommandSuccessfulExecuted, this::onErrorWhenExecutingCommand));
         } catch (IOException | ClassNotFoundException e) {
             onDisconnectedToClient(new CommunicationIOException("Cannot read data sent from client.", e));
         }

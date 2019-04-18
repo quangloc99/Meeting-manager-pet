@@ -33,7 +33,7 @@ public class QueryToServer implements Serializable {
         return name;
     }
 
-    public List<Serializable> getParameters() {
+    public List<Object> getParameters() {
         if (initialized) {
             throw new RuntimeException("Cannot get parameters of this object because it is initialized with constructor.");
         }

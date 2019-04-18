@@ -1,5 +1,7 @@
 package ru.ifmo.se.s267880.lab56.client.repl.input;
 
+import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -10,7 +12,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 public class UserInputProvider {
     private BufferedReader userInputReader;
@@ -18,8 +19,7 @@ public class UserInputProvider {
     private CharacterIterator currentLineIterator = null;
     private List<Object> args;
     private final Lock processingLock = new ReentrantLock();
-    private Consumer<List<Object>> onCompleteCallBack;
-    private Consumer<Exception> onErrorCallBack;
+    private HandlerCallback<List<Object>> getInputCallback;
 
     public UserInputProvider(Reader userInputReader, UserInputArgumentParser ... userInputProviders) {
         this.userInputReader = new BufferedReader(userInputReader);
@@ -38,10 +38,9 @@ public class UserInputProvider {
         public void close() throws IOException { }
     };
 
-    public void getInput(Consumer<List<Object>> onCompleteCallBack, Consumer<Exception> onErrorCallback) {
+    public void getInput(HandlerCallback<List<Object>> getInputCallback) {
         processingLock.lock();
-        this.onCompleteCallBack = onCompleteCallBack;
-        this.onErrorCallBack = onErrorCallback;
+        this.getInputCallback = getInputCallback;
         try {
             getNewLine();
             args = new LinkedList<>();
@@ -83,10 +82,11 @@ public class UserInputProvider {
     }
 
     private void onComplete() {
-        onCompleteCallBack.accept(args);
+        getInputCallback.onSuccess(args);
         processingLock.unlock();
     }
     private void onError(Exception e) {
-        onErrorCallBack.accept(e);
+        getInputCallback.onError(e);
+        processingLock.unlock();
     }
 }
