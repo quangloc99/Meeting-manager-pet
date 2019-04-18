@@ -1,6 +1,10 @@
 package ru.ifmo.se.s267880.lab56.client;
 
 import ru.ifmo.se.s267880.lab56.shared.*;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
+import ru.ifmo.se.s267880.lab56.shared.communication.QueryToServer;
+import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
+import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -12,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-abstract public class ClientCommandsHandlers implements CommandHandlersWithMeeting {
+abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
     private String currentCommandName = null;
     private Object[] currentCommandParams;
     private boolean isQuite = false;

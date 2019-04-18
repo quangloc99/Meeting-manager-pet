@@ -1,9 +1,9 @@
 package ru.ifmo.se.s267880.lab56.server;
 
-import ru.ifmo.se.s267880.lab56.shared.CommunicationIOException;
-import ru.ifmo.se.s267880.lab56.shared.QueryToServer;
-import ru.ifmo.se.s267880.lab56.shared.ResultToClient;
-import ru.ifmo.se.s267880.lab56.shared.ResultToClientStatus;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
+import ru.ifmo.se.s267880.lab56.shared.communication.QueryToServer;
+import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
+import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
 
 import java.io.*;
 import java.net.Socket;

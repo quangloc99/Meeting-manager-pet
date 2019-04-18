@@ -2,9 +2,10 @@ package ru.ifmo.se.s267880.lab56.server;
 
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
+import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
+import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,7 +27,7 @@ public class Main {
         }
 
         ServerCommandController cc = new ServerCommandController();
-        ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class, mm, new ServerInputPreprocessor());
+        ReflectionCommandAdder.addCommand(cc, SharedCommandHandlers.class, mm, new ServerInputPreprocessor());
 
 
         try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT)) {

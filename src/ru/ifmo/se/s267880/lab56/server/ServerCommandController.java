@@ -1,6 +1,6 @@
 package ru.ifmo.se.s267880.lab56.server;
 
-import ru.ifmo.se.s267880.lab56.shared.QueryToServer;
+import ru.ifmo.se.s267880.lab56.shared.communication.QueryToServer;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 
 import java.io.Serializable;

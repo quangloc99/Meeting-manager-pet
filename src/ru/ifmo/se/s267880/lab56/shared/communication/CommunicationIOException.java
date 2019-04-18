@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56.shared;
+package ru.ifmo.se.s267880.lab56.shared.communication;
 
 import java.io.IOException;
 

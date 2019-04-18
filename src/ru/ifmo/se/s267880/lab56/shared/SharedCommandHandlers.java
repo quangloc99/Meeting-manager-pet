@@ -17,7 +17,7 @@ import java.util.Map;
  * Each methods with the annotation {@link Command} will be added into {@link CommandController}, and also each of them
  * also has {@link Usage} annotation, but it was not render in the document because it will be ugly if I do so.
  */
-public interface CommandHandlersWithMeeting extends CommandHandlers {
+public interface SharedCommandHandlers extends CommandHandlers {
     /**
      * Add all data from another file into the current collection.
      * @param inputStream the input stream that the data will be imported from.

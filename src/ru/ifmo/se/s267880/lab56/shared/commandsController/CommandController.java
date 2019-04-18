@@ -10,12 +10,12 @@ import java.util.function.Consumer;
 /**
  * A class for reading user input (both command and arguments) and execute the correspond command.
  * It look like a Commands manager, but the commands's implementations will be independent to this class.
- * Because of the scope of this lab, and the limitation of Google's gson library (and other's too, because they did not designed
+ * Because of the scope of this lab, and the limitation of Google's GSON library (and other's too, because they did not designed
  * to read input from stdin), this class only manages commands with the number of arguments not more than 1. But still
  * this class can be extends more.
  * @author Tran Quang Loc
  */
-// TODO: add method "addCommand" to add command's hander without return value.
+// TODO: add method "addCommand" to add command's handler without return value.
 abstract public class CommandController {
     /**
      * The base interface for Handler

@@ -1,8 +1,8 @@
-package ru.ifmo.se.s267880.lab56.shared;
+package ru.ifmo.se.s267880.lab56.shared.communication;
+
+import ru.ifmo.se.s267880.lab56.shared.Meeting;
 
 import java.io.Serializable;
-import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 

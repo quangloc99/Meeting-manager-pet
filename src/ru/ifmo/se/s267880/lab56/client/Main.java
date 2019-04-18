@@ -1,7 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client;
 
-import ru.ifmo.se.s267880.lab56.shared.CommandHandlersWithMeeting;
-import ru.ifmo.se.s267880.lab56.shared.CommunicationIOException;
+import ru.ifmo.se.s267880.lab56.shared.SharedCommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
@@ -34,7 +33,7 @@ public class Main {
                     "If the command is hanging, please try press Enter multiple times.");
         }
 
-        ReflectionCommandAdder.addCommand(cc, CommandHandlersWithMeeting.class, handlers, new ClientInputPreprocessor());
+        ReflectionCommandAdder.addCommand(cc, SharedCommandHandlers.class, handlers, new ClientInputPreprocessor());
 
         if (address == null) {
             address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);

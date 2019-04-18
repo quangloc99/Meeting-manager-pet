@@ -1,6 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client;
 
-import ru.ifmo.se.s267880.lab56.shared.CommunicationIOException;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 
 abstract public class MainREPL extends Thread {

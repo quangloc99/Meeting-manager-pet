@@ -22,7 +22,7 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
 
 /**
  * An implementation of CommandHandersWithMeeting on server side.
- * See {@link CommandHandlersWithMeeting} to know about which methods will be
+ * See {@link SharedCommandHandlers} to know about which methods will be
  * used as commands.
  *
  * @author Tran Quang Loc
@@ -32,7 +32,7 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
  * @see CommandController
  * @see ClientInputPreprocessor
  */
-public class ServerCommandsHandlers implements CommandHandlersWithMeeting {
+public class ServerCommandsHandlers implements SharedCommandHandlers {
     private List<Meeting> collection = null;
     private String currentFileName;
     private ZonedDateTime fileOpenSince = ZonedDateTime.now();
