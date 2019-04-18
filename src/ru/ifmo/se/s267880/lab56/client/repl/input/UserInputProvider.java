@@ -1,7 +1,5 @@
 package ru.ifmo.se.s267880.lab56.client.repl.input;
 
-import ru.ifmo.se.s267880.lab56.client.repl.input.UserInputArgumentParser;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -10,12 +8,18 @@ import java.text.StringCharacterIterator;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 public class UserInputProvider {
     private BufferedReader userInputReader;
     private List<UserInputArgumentParser> argumentParsers;
     private CharacterIterator currentLineIterator = null;
     private List<Object> args;
+    private final Lock processingLock = new ReentrantLock();
+    private Consumer<List<Object>> onCompleteCallBack;
+    private Consumer<Exception> onErrorCallBack;
 
     public UserInputProvider(Reader userInputReader, UserInputArgumentParser ... userInputProviders) {
         this.userInputReader = new BufferedReader(userInputReader);
@@ -34,7 +38,10 @@ public class UserInputProvider {
         public void close() throws IOException { }
     };
 
-    public void getInput() {
+    public void getInput(Consumer<List<Object>> onCompleteCallBack, Consumer<Exception> onErrorCallback) {
+        processingLock.lock();
+        this.onCompleteCallBack = onCompleteCallBack;
+        this.onErrorCallBack = onErrorCallback;
         try {
             getNewLine();
             args = new LinkedList<>();
@@ -59,7 +66,7 @@ public class UserInputProvider {
                 return ;
             }
         }
-        onComplete(args);
+        onComplete();
     }
 
     private char pollCharacter() throws IOException {
@@ -75,6 +82,11 @@ public class UserInputProvider {
         currentLineIterator = new StringCharacterIterator(userInputReader.readLine() + '\n');
     }
 
-    public void onComplete(List<Object> args) {}
-    public void onError(Exception e) {}
+    private void onComplete() {
+        onCompleteCallBack.accept(args);
+        processingLock.unlock();
+    }
+    private void onError(Exception e) {
+        onErrorCallBack.accept(e);
+    }
 }
