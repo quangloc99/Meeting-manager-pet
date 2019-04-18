@@ -7,6 +7,7 @@ import ru.ifmo.se.s267880.lab56.shared.ResultToClientStatus;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.function.Consumer;
 
 abstract public class QueryHandlerThread extends Thread {
     private Socket client;
@@ -30,45 +31,41 @@ abstract public class QueryHandlerThread extends Thread {
         System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
         this.cc = cc;
+        this.in = socket.getInputStream();
+        this.out = socket.getOutputStream();
     }
 
     @Override
     public void run() {
         try {
-            getClientIOStreams();
-            while (true) {
-                ResultToClient res = null;
-                try {
-                    QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
-                    res = generateResult(ResultToClientStatus.SUCCESS, (Serializable) cc.execute(qr));
-                } catch (EOFException | ClassNotFoundException e) {
-                    throw new CommunicationIOException("Cannot read data sent from client.", e);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    res = generateResult(ResultToClientStatus.FAIL, e);
-                }
-
-                try {
-                    new ObjectOutputStream(out).writeObject(res);
-                    out.flush();
-                } catch (IOException e) {
-                    throw new CommunicationIOException("Cannot send data to client.", e);
-                }
-            }
-        } catch (CommunicationIOException e) {
-            System.err.println(e.getMessage());
-            System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
+            QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
+            cc.execute(qr, this::onCommandSuccessfulExecuted, this::onErrorWhenExecutingCommand);
+        } catch (IOException | ClassNotFoundException e) {
+            onDisconnectedToClient(new CommunicationIOException("Cannot read data sent from client.", e));
         }
     }
 
-    private void getClientIOStreams() throws CommunicationIOException {
-        try {
-            in = client.getInputStream();
-            out = client.getOutputStream();
-        } catch (IOException e) {
-            throw new CommunicationIOException("Cannot get I/O stream from client socket.", e);
-        }
+    private void onCommandSuccessfulExecuted(Object o) {
+        sendDataToClient(generateResult(ResultToClientStatus.SUCCESS, (Serializable) o), this, this::onDisconnectedToClient);
+    }
 
+    private void onErrorWhenExecutingCommand(Exception e) {
+        sendDataToClient(generateResult(ResultToClientStatus.FAIL, (Serializable) e), this, this::onDisconnectedToClient);
+    }
+
+    private void sendDataToClient(ResultToClient res, Runnable onSuccess, Consumer<Exception> onError) {
+        try {
+            new ObjectOutputStream(out).writeObject(res);
+            out.flush();
+            new Thread(onSuccess).start();
+        } catch (IOException e) {
+            onError.accept(new CommunicationIOException("Cannot send data to client.", e));
+        }
+    }
+
+    private void onDisconnectedToClient(Exception e) {
+        System.err.println(e.getMessage());
+        System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
     }
 
     abstract ResultToClient generateResult(ResultToClientStatus status, Serializable result);

@@ -7,6 +7,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A class for reading user input (both command and arguments) and execute the correspond command.
@@ -18,8 +19,6 @@ import java.util.List;
  */
 // TODO: add method "addCommand" to add command's hander without return value.
 abstract public class CommandController {
-    public final EventEmitter<Object> commandSuccefulExecutedEvent = new EventEmitter<>();
-    public final EventEmitter<Exception> errorEvent = new EventEmitter<>();
     /**
      * The base interface for Handler
      */
@@ -109,7 +108,7 @@ abstract public class CommandController {
      * @throws CommandNotFoundException
      * @throws Exception
      */
-    public Object execute() {
+    public void execute(Consumer<Object> onSuccessfulExecuted, Consumer<Exception> onError) {
         try {
             String userCommand = getUserCommand();
             if (!commandHandlers.containsKey(userCommand)) {
@@ -122,8 +121,8 @@ abstract public class CommandController {
             for (int i = 0; i <= nInputLimit && isExecuting; ++i) {
                 try {
                     Object res = handler.process(argList.toArray());
-                    commandSuccefulExecutedEvent.emit(res);
-                    return res;
+                    onSuccessfulExecuted.accept(res);
+                    return ;
                 } catch (NeedMoreInputException e) {
                     argList.add(getUserInput());
                 } catch (IncorrectInputException e) {
@@ -137,8 +136,7 @@ abstract public class CommandController {
             }
             throw new IncorrectInputException(userCommand, argList.toArray());
         } catch (Exception e) {
-            errorEvent.emit(e);
-            return null;
+            onError.accept(e);
         }
     }
 

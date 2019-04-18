@@ -43,9 +43,12 @@ public class Main {
         SocketConnector socketConnector = new SocketConnector(5, 1500);
         socketConnector.connectSucessfulEvent.listen(sc -> {
             Main.sc = sc;
-            MainREPL repl = new MainREPL(cc);
-            repl.disconnectedToServerEvent.listen(e -> socketConnector.tryConnectTo(address));
-            repl.run();
+            new MainREPL(cc) {
+                @Override
+                public void onDisconnectedToServer(Throwable e) {
+                    socketConnector.tryConnectTo(address);
+                }
+            }.start();
         });
         socketConnector.errorEvent.listen(e -> {
             if (e instanceof InterruptedException) {
