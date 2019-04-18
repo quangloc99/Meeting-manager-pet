@@ -1,11 +1,12 @@
 package ru.ifmo.se.s267880.lab56.shared;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class EventEmitter <T> {
-    private List<Consumer<T>> listeners = new LinkedList<>();
+    private List<Consumer<T>> listeners = Collections.synchronizedList(new LinkedList<>());
     public EventEmitter() {}
 
     public Consumer<T> listen(Consumer<T> listener) {
