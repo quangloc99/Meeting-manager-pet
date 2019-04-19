@@ -8,7 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CannotPreprocessInputException;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.JsonBasicInputPreprocessor;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import java.io.FileInputStream;
@@ -25,7 +25,7 @@ import java.util.*;
  *
  * @author Tran Quang Loc
  * @see JsonBasicInputPreprocessor
- * @see ReflectionCommandAdder
+ * @see ReflectionCommandHandlerGenerator
  */
 public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
     @Override

@@ -2,7 +2,7 @@ package ru.ifmo.se.s267880.lab56.server;
 
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
 import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
 
@@ -28,8 +28,8 @@ public class Main {
         }
 
         CommandController cc = new CommandController();
-        ReflectionCommandAdder.addCommand(cc, SharedCommandHandlers.class, mm, new ServerInputPreprocessor());
-
+        ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, mm, new ServerInputPreprocessor())
+                .forEach(cc::addCommand);
 
         try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT)) {
             System.out.println("Server connected at " + ss.getLocalPort());

@@ -3,7 +3,7 @@ package ru.ifmo.se.s267880.lab56.shared;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 
 import java.io.InputStream;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 
 /**
- * This interface is used with {@link ReflectionCommandAdder} to add commands into {@link CommandController}.
+ * This interface is used with {@link ReflectionCommandHandlerGenerator} to add commands into {@link CommandController}.
  * Each methods with the annotation {@link Command} will be added into {@link CommandController}, and also each of them
  * also has {@link Usage} annotation, but it was not render in the document because it will be ugly if I do so.
  */

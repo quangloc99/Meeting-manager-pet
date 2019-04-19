@@ -18,7 +18,7 @@ public class HandlerCallback<T> {
         return res;
     }
 
-    private HandlerCallback() {}
+    public HandlerCallback() {}
     public HandlerCallback(Consumer<T> onSuccessCallback, Consumer<Exception> onErrorCallback) {
         this.onSuccessCallback = onSuccessCallback;
         this.onErrorCallback = onErrorCallback;

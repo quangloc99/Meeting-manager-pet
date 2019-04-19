@@ -7,7 +7,7 @@ import java.lang.annotation.*;
  *
  * @author Tran Quang Loc
  * @see Command
- * @see ReflectionCommandAdder
+ * @see ReflectionCommandHandlerGenerator
  */
 @Inherited
 @Target(ElementType.METHOD)

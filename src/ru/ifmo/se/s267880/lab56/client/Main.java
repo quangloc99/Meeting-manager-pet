@@ -8,7 +8,8 @@ import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.SharedCommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 
 import java.io.IOException;
@@ -39,7 +40,8 @@ public class Main {
             }
         };
         addClientOnlyCommand(cc, handlers);
-        ReflectionCommandAdder.addCommand(cc, SharedCommandHandlers.class, handlers, new ClientInputPreprocessor());
+        ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, handlers, new ClientInputPreprocessor())
+                .forEach(cc::addCommand);
 
         if (address == null) {
             address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);
@@ -81,17 +83,18 @@ public class Main {
         System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
     }
 
-    static void addClientOnlyCommand(CommandController cc, ClientCommandsHandlers handers) {
-        cc.addCommand("toggle-quite", "Turn on/off printing collections after successfully executed a command [Additional]", args -> {
-            handers.toggleQuite();
-            return null;
-        });
-        cc.addCommand("exit", "I don't have to explain :) [Additional].", arg -> {
-            onExit();
-            System.exit(0);
-            return null;
-        });
-        cc.addCommand("clrscr", "Clear the screen. [Additional]", arg-> {
+    static void addClientOnlyCommand(CommandController cc, ClientCommandsHandlers handlers) {
+        cc.addCommand("toggle-quite", CommandHandler.ofConsumer(
+                "Turn on/off printing collections after successfully executed a command [Additional]",
+                args -> handlers.toggleQuite()
+        ));
+        cc.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :) [Additional].",
+                arg -> {
+                    onExit();
+                    System.exit(0);
+                }
+        ));
+        cc.addCommand("clrscr", CommandHandler.ofConsumer("Clear the screen. [Additional]", arg-> {
             try {
                 System.err.println("clrscr command will not work on IntelliJ IDE");
                 final String os = System.getProperty("os.name");
@@ -105,24 +108,23 @@ public class Main {
             } catch (final Exception e) {
                 e.printStackTrace();
             }
-            return null;
-        });
-        cc.addCommand("help", "Display the help message, the arg json format. [Additional]", args -> {
-            help();
-            return null;
-        });
+        }));
+        cc.addCommand("help", CommandHandler.ofConsumer(
+                "Display the help message, the arg json format. [Additional]", args -> help()
+        ));
 
-        cc.addCommand("list-commands", "[Additional] List all the commands.", (Object[] args) -> {
-            System.out.println("# Commands list:");
-            cc.getCommandHandlers().forEach((commandName, handler) -> {
-                System.out.printf("- %s\n", commandName);
-                for (String s : handler.getUsage().split("\n")) {
-                    System.out.printf("\t%s\n", s);
+        cc.addCommand("list-commands", CommandHandler.ofConsumer(
+                "[Additional] List all the commands.", args -> {
+                    System.out.println("# Commands list:");
+                    cc.getCommandHandlers().forEach((commandName, handler) -> {
+                        System.out.printf("- ");
+                        for (String s : handler.getUsage(commandName).split("\n")) {
+                            System.out.printf("\t%s\n", s);
+                        }
+                        System.out.println();
+                    });
                 }
-                System.out.println();
-            });
-            return null;
-        });
+        ));
     }
 
     public static void onExit() {

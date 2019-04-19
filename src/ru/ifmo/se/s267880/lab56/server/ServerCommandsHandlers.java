@@ -3,7 +3,7 @@ package ru.ifmo.se.s267880.lab56.server;
 import ru.ifmo.se.s267880.lab56.client.ClientInputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandAdder;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
 import ru.ifmo.se.s267880.lab56.csv.CsvReader;
@@ -17,8 +17,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedConsumer;
-import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
+import ru.ifmo.se.s267880.lab56.shared.functional.*;
 
 /**
  * An implementation of CommandHandersWithMeeting on server side.
@@ -26,7 +25,7 @@ import static ru.ifmo.se.s267880.lab56.shared.Helper.uncheckedFunction;
  * used as commands.
  *
  * @author Tran Quang Loc
- * @see ReflectionCommandAdder
+ * @see ReflectionCommandHandlerGenerator
  * @see Command
  * @see Usage
  * @see CommandController
@@ -122,7 +121,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
                         put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
                         put("floor number", Integer.toString(meeting.getLocation().getFloor()));
                     }})
-                    .forEachOrdered(uncheckedConsumer(writer::writeRow));
+                    .forEachOrdered(ConsumerWithException.toConsumer(writer::writeRow));
                 updateFileName(path);
             }
         } catch (IOException e) {
@@ -140,7 +139,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     private List<Meeting> getDataFrom(InputStream inputStream) throws ParseException, IOException {
         return new CsvReader(inputStream, true)
                 .getAllRowsWithNames().stream()
-                .map(uncheckedFunction(row -> new Meeting(
+                .map(FunctionWithException.toFunction(row -> new Meeting(
                         row.get("meeting name"),
                         Duration.ofMinutes(Long.parseLong(row.get("duration"))),
                         new BuildingLocation(

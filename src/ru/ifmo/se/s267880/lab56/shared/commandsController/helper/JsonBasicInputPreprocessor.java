@@ -6,12 +6,12 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 /**
  * A badic input preprocessor that transform Json into some primitive types.
  * @author Tran Quang Loc
- * @see ReflectionCommandAdder
+ * @see ReflectionCommandHandlerGenerator
  */
 public class JsonBasicInputPreprocessor implements InputPreprocessor {
     /**
      * This method is used without generic, so it can extends easily, and beside it is used only with
-     * {@link ReflectionCommandAdder#addCommand(CommandController, Class, CommandHandlers, InputPreprocessor)}
+     * {@link ReflectionCommandHandlerGenerator#addCommand(CommandController, Class, CommandHandlers, InputPreprocessor)}
      *
      * @param obj the object that was entered by the user.
      * @param inputType the desired class of the output.
