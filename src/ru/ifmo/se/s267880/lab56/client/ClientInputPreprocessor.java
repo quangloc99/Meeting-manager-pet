@@ -11,6 +11,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.JsonBasicInputP
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -32,6 +33,7 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
     public Object preprocess(Object obj, Class inputType) throws CannotPreprocessInputException {
         if (obj instanceof  String) {
             if (inputType == String.class) return obj;
+            if (inputType == File.class) return new File((String) obj);
             Class wrapped = Helper.toWrapper(inputType);
             if (wrapped == Integer.class) return Integer.parseInt((String) obj);
             else if (wrapped == Long.class) return Long.parseLong((String) obj);
@@ -50,14 +52,6 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
      */
     @Override
     protected Object preprocessJson(JsonElement elm, Class inputType) throws CannotPreprocessInputException {
-        if (inputType == InputStream.class) {
-            try {
-                String fileName = elm.getAsString();
-                return new FileInputStream(fileName);
-            } catch (FileNotFoundException e) {
-                throw new CannotPreprocessInputException(e.getMessage());
-            }
-        }
         if (inputType == Meeting.class) {
             try {
                 return json2Meeting(elm.getAsJsonObject());

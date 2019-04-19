@@ -1,10 +1,7 @@
 package ru.ifmo.se.s267880.lab56.client;
 
 import ru.ifmo.se.s267880.lab56.shared.*;
-import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRequest;
-import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
-import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespond;
-import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespondStatus;
+import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -48,6 +45,7 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
             try {
                 ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(qr));
                 channel.write(bf);
+                qr.afterSent(channel);
             } catch (IOException e) {
                 throw new CommunicationIOException("Data cannot be sent to server.", e);
             }
@@ -56,7 +54,9 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
         protected CommandExecuteRespond receiveData(SocketChannel channel) throws Exception {
             try {
                 ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(channel));
-                return (CommandExecuteRespond) in.readObject();
+                CommandExecuteRespond res = (CommandExecuteRespond) in.readObject();
+                res.afterReceived(channel);
+                return res;
             } catch (IOException e) {
                 throw new CommunicationIOException("Cannot read data sent from server.", e);
             } catch(ClassNotFoundException e) {
@@ -95,11 +95,10 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
 
     /**
      * Add all data from another file into the current collection.
-     * @param inputStream the input stream that the data will be imported from.
+     * @param file the file that the data will be imported from.
      */
     @Override
-    public void doImport(InputStream inputStream) throws Exception {
-        assert(inputStream instanceof FileInputStream);
+    public void doImport(File file) throws Exception {
         new CommandExecutor() {
             @Override
             protected CommandExecuteRequest generateQuery() throws Exception {
@@ -107,27 +106,27 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
                 // the ServerInputPreprocessor will get the data from Socket and pass to the
                 // command's handler on server.
                 return new CommandExecuteRequest(currentCommandName, new Serializable[]{
-                        ((FileInputStream) inputStream).getChannel().size()
+                        new FileTransferRequest(file)
                 });
             }
-
-            @Override
-            protected void sendData(SocketChannel channel, CommandExecuteRequest qr) throws Exception {
-                super.sendData(channel, qr);
-                ByteBuffer dataBuffer = ByteBuffer.wrap(new byte[1024]);
-                byte[] data = new byte[1024];
-                int numRead;
-                while ((numRead = inputStream.read(data)) != -1) {
-                    dataBuffer.clear();
-                    dataBuffer.put(data, 0, numRead);
-                    dataBuffer.flip();
-                    try {
-                        channel.write(dataBuffer);
-                    } catch (IOException e) {
-                        throw new CommunicationIOException("Cannot sent data to server.", e);
-                    }
-                }
-            }
+//
+//            @Override
+//            protected void sendData(SocketChannel channel, CommandExecuteRequest qr) throws Exception {
+//                super.sendData(channel, qr);
+//                ByteBuffer dataBuffer = ByteBuffer.wrap(new byte[1024]);
+//                byte[] data = new byte[1024];
+//                int numRead;
+//                while ((numRead = inputStream.read(data)) != -1) {
+//                    dataBuffer.clear();
+//                    dataBuffer.put(data, 0, numRead);
+//                    dataBuffer.flip();
+//                    try {
+//                        channel.write(dataBuffer);
+//                    } catch (IOException e) {
+//                        throw new CommunicationIOException("Cannot sent data to server.", e);
+//                    }
+//                }
+//            }
         }.run();
     }
 

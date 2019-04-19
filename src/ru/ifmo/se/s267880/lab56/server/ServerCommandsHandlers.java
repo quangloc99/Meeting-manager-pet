@@ -62,11 +62,11 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
 
     /**
      * Add all data from another file into the current collection.
-     * @param inputStream
+     * @param file
      */
     @Override
-    public void doImport(InputStream inputStream) throws ParseException, IOException {
-        collection.addAll(getDataFrom(inputStream));
+    public void doImport(File file) throws ParseException, IOException {
+        collection.addAll(getDataFrom(new FileInputStream(file)));
     }
 
     /**

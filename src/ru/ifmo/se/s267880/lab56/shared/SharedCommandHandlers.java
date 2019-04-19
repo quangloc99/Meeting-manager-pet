@@ -6,7 +6,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 
-import java.io.InputStream;
+import java.io.File;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -20,14 +20,14 @@ import java.util.Map;
 public interface SharedCommandHandlers extends CommandHandlers {
     /**
      * Add all data from another file into the current collection.
-     * @param inputStream the input stream that the data will be imported from.
+     * @param file the file that the data will be imported from.
      */
     @Command("import")
     @Usage(
             value = "Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted",
             params = {"String"}
     )
-    void doImport(InputStream inputStream) throws Exception;
+    void doImport(File file) throws Exception;
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.

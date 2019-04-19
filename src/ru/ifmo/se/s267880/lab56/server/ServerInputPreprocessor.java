@@ -4,17 +4,22 @@ import ru.ifmo.se.s267880.lab56.shared.BoundedInputStream;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CannotPreprocessInputException;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
+import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
 
-import java.io.InputStream;
+import java.io.File;
+import java.io.IOException;
 
 public class ServerInputPreprocessor implements InputPreprocessor {
     @Override
     public Object preprocess(Object obj, Class cls) throws CannotPreprocessInputException {
-        if (cls == InputStream.class) {
-            // a little hacking here.
-            if (!(obj instanceof Number)) throw new CannotPreprocessInputException("" + obj + " must be a number.");
-            QueryHandlerThread thread = (QueryHandlerThread) Thread.currentThread();
-            return new BoundedInputStream(thread.getInputStream(), ((Number) obj).longValue());
+        if (cls == File.class) {
+            if (!(obj instanceof FileTransferRequest))
+                throw new CannotPreprocessInputException("uploaded object must be a FileTransferRequest");
+            try {
+                return ((FileTransferRequest) obj).getDestinationFile();
+            } catch (IOException e) {
+                throw new CannotPreprocessInputException("Error while getting file.");
+            }
         }
 
         return castToTypePreprocessor(obj, cls);
