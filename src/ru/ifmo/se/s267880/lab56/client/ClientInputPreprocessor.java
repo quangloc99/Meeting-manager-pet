@@ -117,12 +117,12 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
             if (elm.isJsonArray()) {
                 JsonArray arr = elm.getAsJsonArray();
                 switch (arr.size()) {
-                    case 1: ans = ans.withYear(arr.get(0).getAsInt());          // fall through
-                    case 2: ans = ans.withMonth(arr.get(1).getAsInt());         // fall through
-                    case 3: ans = ans.withDayOfMonth(arr.get(2).getAsInt());    // fall through
-                    case 4: ans = ans.withHour(arr.get(3).getAsInt());          // fall through
-                    case 5: ans = ans.withMinute(arr.get(4).getAsInt());        // fall through
                     case 6: ans = ans.withSecond(arr.get(5).getAsInt());        // fall through
+                    case 5: ans = ans.withMinute(arr.get(4).getAsInt());        // fall through
+                    case 4: ans = ans.withHour(arr.get(3).getAsInt());          // fall through
+                    case 3: ans = ans.withDayOfMonth(arr.get(2).getAsInt());    // fall through
+                    case 2: ans = ans.withMonth(arr.get(1).getAsInt());         // fall through
+                    case 1: ans = ans.withYear(arr.get(0).getAsInt());          // fall through
                 }
             } else if (elm.isJsonObject()) {
                 JsonObject obj = elm.getAsJsonObject();

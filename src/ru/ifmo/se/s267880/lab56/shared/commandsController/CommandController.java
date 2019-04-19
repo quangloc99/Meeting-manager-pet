@@ -42,7 +42,7 @@ public class CommandController {
         handler.process(argList.toArray(), new HandlerCallback<>(callback::onSuccess,
                 e -> {
                     if (e instanceof  IncorrectInputException) {
-                        if (e.getMessage().isEmpty()) {
+                        if (e.getMessage() == null || e.getMessage().isEmpty()) {
                             e = new IncorrectInputException(userCommand, argList.toArray());
                         }
                     } else {
