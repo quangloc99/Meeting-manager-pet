@@ -2,10 +2,10 @@ package ru.ifmo.se.s267880.lab56.server;
 
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRequest;
 import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
-import ru.ifmo.se.s267880.lab56.shared.communication.QueryToServer;
-import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
-import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespond;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespondStatus;
 
 import java.io.*;
 import java.net.Socket;
@@ -40,22 +40,22 @@ abstract public class QueryHandlerThread extends Thread {
     @Override
     public void run() {
         try {
-            QueryToServer qr = (QueryToServer) new ObjectInputStream(in).readObject();
-            cc.execute(qr.getName(), qr.getParameters(), new HandlerCallback<>(this::onCommandSuccessfulExecuted, this::onErrorWhenExecutingCommand));
+            CommandExecuteRequest qr = (CommandExecuteRequest) new ObjectInputStream(in).readObject();
+            cc.execute(qr.getCommandName(), qr.getParameters(), new HandlerCallback<>(this::onCommandSuccessfulExecuted, this::onErrorWhenExecutingCommand));
         } catch (IOException | ClassNotFoundException e) {
             onDisconnectedToClient(new CommunicationIOException("Cannot read data sent from client.", e));
         }
     }
 
     private void onCommandSuccessfulExecuted(Object o) {
-        sendDataToClient(generateResult(ResultToClientStatus.SUCCESS, (Serializable) o), this, this::onDisconnectedToClient);
+        sendDataToClient(generateResult(CommandExecuteRespondStatus.SUCCESS, (Serializable) o), this, this::onDisconnectedToClient);
     }
 
     private void onErrorWhenExecutingCommand(Exception e) {
-        sendDataToClient(generateResult(ResultToClientStatus.FAIL, (Serializable) e), this, this::onDisconnectedToClient);
+        sendDataToClient(generateResult(CommandExecuteRespondStatus.FAIL, (Serializable) e), this, this::onDisconnectedToClient);
     }
 
-    private void sendDataToClient(ResultToClient res, Runnable onSuccess, Consumer<Exception> onError) {
+    private void sendDataToClient(CommandExecuteRespond res, Runnable onSuccess, Consumer<Exception> onError) {
         try {
             new ObjectOutputStream(out).writeObject(res);
             out.flush();
@@ -70,5 +70,5 @@ abstract public class QueryHandlerThread extends Thread {
         System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
     }
 
-    abstract ResultToClient generateResult(ResultToClientStatus status, Serializable result);
+    abstract CommandExecuteRespond generateResult(CommandExecuteRespondStatus status, Serializable result);
 }

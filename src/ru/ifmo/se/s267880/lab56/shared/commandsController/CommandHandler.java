@@ -81,7 +81,7 @@ public interface CommandHandler {
         };
     }
 
-    public static CommandHandler join(CommandHandler... handlers_) {
+    static CommandHandler join(CommandHandler... handlers_) {
         assert(handlers_.length > 0);
         List<CommandHandler> handlers = Arrays.asList(handlers_);
         return new CommandHandler() {

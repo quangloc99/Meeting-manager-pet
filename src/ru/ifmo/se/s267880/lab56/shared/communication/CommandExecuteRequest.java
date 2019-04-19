@@ -8,29 +8,29 @@ import java.util.Collections;
 
 /**
  * A query to the server.
- * Note that if this object is initialized with constructur (that is, it is not sented to the server), method
- * QueryToServer#getParameters() will throw RuntimeException for immutability purpose.
+ * Note that if this object is initialized with constructor (that is, it is not sent to the server), method
+ * CommandExecuteRequest#getParameters() will throw RuntimeException for immutability purpose.
  */
-public class QueryToServer implements Serializable {
-    private String name;
+public class CommandExecuteRequest implements Serializable {
+    private String commandName;
     private List<Serializable> parameters;
-    private transient boolean initialized = false;
+    private transient boolean initialized;
 
     /**
-     * @param name - the name of the query
+     * @param commandName - the commandName of the query
      * @param args - list of parameters that will be sent to the server.
      */
-    public QueryToServer(String name, Serializable[] args) {
+    public CommandExecuteRequest(String commandName, Serializable[] args) {
         this.initialized = true;
 
-        this.name = name;
-        Objects.requireNonNull(name);
+        this.commandName = commandName;
+        Objects.requireNonNull(commandName);
 
         this.parameters = Arrays.asList(args);
     }
 
-    public String getName() {
-        return name;
+    public String getCommandName() {
+        return commandName;
     }
 
     public List<Object> getParameters() {

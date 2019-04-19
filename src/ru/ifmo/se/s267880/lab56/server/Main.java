@@ -3,8 +3,8 @@ package ru.ifmo.se.s267880.lab56.server;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
-import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
-import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespond;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespondStatus;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -37,10 +37,10 @@ public class Main {
                 try {
                     new QueryHandlerThread(ss.accept(), cc) {
                         @Override
-                        ResultToClient generateResult(ResultToClientStatus status, Serializable result) {
+                        CommandExecuteRespond generateResult(CommandExecuteRespondStatus status, Serializable result) {
                             LinkedList<Meeting> clonedCollection = new LinkedList<>(mm.getCollection());
                             clonedCollection.sort(Comparator.comparing(Meeting::getName));
-                            return new ResultToClient(status, result, clonedCollection);
+                            return new CommandExecuteRespond(status, result, clonedCollection);
                         }
                     }.start();
                 } catch (IOException e) {

@@ -6,13 +6,13 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
-public class ResultToClient implements Serializable {
-    private ResultToClientStatus status;
+public class CommandExecuteRespond implements Serializable {
+    private CommandExecuteRespondStatus status;
     private Serializable result;
     private List<Meeting> collection;
-    private transient boolean initialized = false;
+    private transient boolean initialized;
 
-    public ResultToClient(ResultToClientStatus status, Serializable result, List<Meeting> collection) {
+    public CommandExecuteRespond(CommandExecuteRespondStatus status, Serializable result, List<Meeting> collection) {
         this.initialized = true;
         Objects.requireNonNull(status);
         this.status = status;
@@ -20,7 +20,7 @@ public class ResultToClient implements Serializable {
         this.collection = collection;
     }
 
-    public ResultToClientStatus getStatus() {
+    public CommandExecuteRespondStatus getStatus() {
         return this.status;
     }
 

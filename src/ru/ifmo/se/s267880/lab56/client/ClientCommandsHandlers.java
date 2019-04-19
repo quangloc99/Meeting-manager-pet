@@ -1,10 +1,10 @@
 package ru.ifmo.se.s267880.lab56.client;
 
 import ru.ifmo.se.s267880.lab56.shared.*;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRequest;
 import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
-import ru.ifmo.se.s267880.lab56.shared.communication.QueryToServer;
-import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClient;
-import ru.ifmo.se.s267880.lab56.shared.communication.ResultToClientStatus;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespond;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRespondStatus;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -27,24 +27,24 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
     private class CommandExecutor {
         public CommandExecutor() {}
 
-        public ResultToClient run() throws Exception {
+        public CommandExecuteRespond run() throws Exception {
             SocketChannel channel = getChannel();
             sendData(channel, generateQuery());
-            ResultToClient res = receiveData(channel);
+            CommandExecuteRespond res = receiveData(channel);
             processResult(res);
             return res;
         }
 
-        protected QueryToServer generateQuery() throws Exception {
+        protected CommandExecuteRequest generateQuery() throws Exception {
             Serializable[] castedParams = new Serializable[currentCommandParams.length];
             for (int i = 0; i < currentCommandParams.length; ++i) {
                 assert (currentCommandParams[i] instanceof Serializable);
                 castedParams[i] = (Serializable) currentCommandParams[i];
             }
-            return new QueryToServer(currentCommandName, castedParams);
+            return new CommandExecuteRequest(currentCommandName, castedParams);
         }
 
-        protected void sendData(SocketChannel channel, QueryToServer qr) throws Exception {
+        protected void sendData(SocketChannel channel, CommandExecuteRequest qr) throws Exception {
             try {
                 ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(qr));
                 channel.write(bf);
@@ -53,10 +53,10 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
             }
         }
 
-        protected ResultToClient receiveData(SocketChannel channel) throws Exception {
+        protected CommandExecuteRespond receiveData(SocketChannel channel) throws Exception {
             try {
                 ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(channel));
-                return (ResultToClient) in.readObject();
+                return (CommandExecuteRespond) in.readObject();
             } catch (IOException e) {
                 throw new CommunicationIOException("Cannot read data sent from server.", e);
             } catch(ClassNotFoundException e) {
@@ -64,8 +64,8 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
             }
         }
 
-        protected void processResult(ResultToClient res) throws Exception {
-            if (res.getStatus() == ResultToClientStatus.FAIL) {
+        protected void processResult(CommandExecuteRespond res) throws Exception {
+            if (res.getStatus() == CommandExecuteRespondStatus.FAIL) {
                 throw res.<Exception>getResult();
             }
             System.out.println("Command " + currentCommandName + " successfully executed.");
@@ -102,17 +102,17 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
         assert(inputStream instanceof FileInputStream);
         new CommandExecutor() {
             @Override
-            protected QueryToServer generateQuery() throws Exception {
+            protected CommandExecuteRequest generateQuery() throws Exception {
                 // because there is a least 1 element we cannot sent InputStream to server.
                 // the ServerInputPreprocessor will get the data from Socket and pass to the
                 // command's handler on server.
-                return new QueryToServer(currentCommandName, new Serializable[]{
+                return new CommandExecuteRequest(currentCommandName, new Serializable[]{
                         ((FileInputStream) inputStream).getChannel().size()
                 });
             }
 
             @Override
-            protected void sendData(SocketChannel channel, QueryToServer qr) throws Exception {
+            protected void sendData(SocketChannel channel, CommandExecuteRequest qr) throws Exception {
                 super.sendData(channel, qr);
                 ByteBuffer dataBuffer = ByteBuffer.wrap(new byte[1024]);
                 byte[] data = new byte[1024];
@@ -166,13 +166,13 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
     public List<Meeting> show() throws Exception {
         return new CommandExecutor() {
             @Override
-            protected void processResult(ResultToClient res) throws Exception {
+            protected void processResult(CommandExecuteRespond res) throws Exception {
                 boolean currentQuiteState = isQuite;
                 isQuite = true;
                 super.processResult(res);
                 isQuite = currentQuiteState;
 
-                assert(res.getStatus() == ResultToClientStatus.SUCCESS);
+                assert(res.getStatus() == CommandExecuteRespondStatus.SUCCESS);
                 List<Meeting> meetings = res.getResult();
                 System.out.println("# Meeting list (original order):");
                 Iterator<Integer> counter = IntStream.rangeClosed(1, meetings.size()).iterator();
@@ -217,13 +217,13 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
     public Map<String, String> info() throws Exception {
         return new CommandExecutor() {
             @Override
-            protected void processResult(ResultToClient res) throws Exception {
+            protected void processResult(CommandExecuteRespond res) throws Exception {
                 boolean currentQuiteState = isQuite;
                 isQuite = true;
                 super.processResult(res);
                 isQuite = currentQuiteState;
 
-                assert(res.getStatus() == ResultToClientStatus.SUCCESS);
+                assert(res.getStatus() == CommandExecuteRespondStatus.SUCCESS);
                 Map<String, String> result = res.getResult();
                 System.out.println("# Information");
                 System.out.println("File name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
@@ -278,7 +278,7 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
     public Map<Integer, ZoneId> listTimeZones(int offset) throws Exception {
         return (new CommandExecutor() {
             @Override
-            protected void processResult(ResultToClient res) throws Exception {
+            protected void processResult(CommandExecuteRespond res) throws Exception {
                 ZoneUtils.printZonesByZoneOffset(res.getResult());
             }
         }).run().getResult();

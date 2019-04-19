@@ -16,8 +16,9 @@ public class BoundedInputStream extends InputStream {
 
     @Override
     public int read() throws IOException  {
-        if (length-- <= 0) return -1;
-        else return in.read();
+        if (length <= 0) return -1;
+        --length;
+        return in.read();
     }
 
     @Override
@@ -28,8 +29,8 @@ public class BoundedInputStream extends InputStream {
     @Override
     public int read(byte[] buffer, int offset, int size) throws IOException {
         if (length <= 0) return -1;
-        size = (int)Math.min((long)size, length);
-        int byteRead = in.read(buffer, offset, (int)Math.min((long)size, length));
+        size = (int)Long.min(size, length);
+        int byteRead = in.read(buffer, offset, size);
         if (byteRead == -1) return -1;
         length -= byteRead;
         return byteRead;
