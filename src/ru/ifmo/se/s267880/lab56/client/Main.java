@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * @author Tran Quang Loc
@@ -67,6 +68,17 @@ public class Main {
     private static CommandController createCommandController(SocketChannel sc) {
         CommandController cc = new CommandController();
         Broadcaster<MessageType> messageFromServerBroadcaster = new Broadcaster<>(Receiver.fromSocketChannel(sc));
+
+        Consumer[] listeners = new Consumer[2];
+        listeners[0] = messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).listen(m -> {
+            if (!(m instanceof UserNotification)) return;
+            System.out.printf("> %s%n>", m);
+        });
+        listeners[1] = messageFromServerBroadcaster.onError.listen(e -> {
+            messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).removeListener(listeners[0]);
+            messageFromServerBroadcaster.onError.removeListener(listeners[1]);
+        });
+
         new Thread(messageFromServerBroadcaster).start();
         Sender messageToServerSender = Sender.fromSocketChannel(sc);
         ClientCommandsHandlers handlers = new ClientCommandsHandlers(messageFromServerBroadcaster, messageToServerSender);

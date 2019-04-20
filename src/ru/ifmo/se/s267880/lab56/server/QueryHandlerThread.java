@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.server;
 
+import ru.ifmo.se.s267880.lab56.shared.EventEmitter;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.SharedCommandHandlers;
@@ -12,6 +13,7 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.function.Consumer;
 
 public class QueryHandlerThread extends Thread {
@@ -20,12 +22,14 @@ public class QueryHandlerThread extends Thread {
     private CommandController commandController;
     private Sender messageToClientSender;
     private Receiver messageFromClientReceiver;
+    private EventEmitter<UserNotification> onNotificationEvent;
+    private Consumer<UserNotification> notificationListener = notification -> {
+        try { messageToClientSender.sendWithStream(notification); } catch (IOException ignore) {}
+    };
 
-    public Socket getClient() {
-        return client;
-    }
+    private int userId = new Random().nextInt();
 
-    public QueryHandlerThread(Socket socket) {
+    public QueryHandlerThread(Socket socket, EventEmitter<UserNotification> onNotificationEvent) {
         System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
         messageToClientSender = Sender.fromSocket(socket);
@@ -35,6 +39,10 @@ public class QueryHandlerThread extends Thread {
         commandController = new CommandController();
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, commandsHandlers, new ServerInputPreprocessor())
                 .forEach(commandController::addCommand);
+
+        this.onNotificationEvent = onNotificationEvent;
+        onNotificationEvent.listen(notificationListener);
+        onNotificationEvent.emit(new UserNotification("user" + userId, "joined"));
     }
 
     @Override
@@ -70,6 +78,8 @@ public class QueryHandlerThread extends Thread {
     private void onDisconnectedToClient(Exception e) {
         System.err.println(e.getMessage());
         System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
+        onNotificationEvent.removeListener(notificationListener);
+        onNotificationEvent.emit(new UserNotification("user" + userId, "left"));
     }
 
     private CommandExecuteRespond generateResult(CommandExecuteRespondStatus status, Serializable result) {
