@@ -9,7 +9,7 @@ import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Objects;
 
-public class CommandExecuteRespond implements Serializable, MessageWithSocket, MessageWithSocketChannel {
+public class CommandExecuteRespond implements Serializable, Message {
     private CommandExecuteRespondStatus status;
     private Serializable result;
     private List<Meeting> collection;
@@ -46,30 +46,16 @@ public class CommandExecuteRespond implements Serializable, MessageWithSocket, M
     }
 
     @Override
-    public void afterSent(Socket socket) throws IOException {
+    public void afterSent(Sender sender) throws IOException {
         if (!initialized) throw new RuntimeException("This method must be call at the sender side.");
-        if (result instanceof MessageWithSocket)
-            ((MessageWithSocket) result).afterSent(socket);
+        if (result instanceof Message)
+            ((Message) result).afterSent(sender);
     }
 
     @Override
-    public void afterReceived(Socket socket) throws IOException {
+    public void afterReceived(Receiver receiver) throws IOException {
         if (initialized) throw new RuntimeException("This method must be call at the receiver side.");
-        if (result instanceof MessageWithSocket)
-            ((MessageWithSocket) result).afterReceived(socket);
-    }
-
-    @Override
-    public void afterSent(SocketChannel socketChannel) throws IOException {
-        if (!initialized) throw new RuntimeException("This method must be call at the sender side.");
-        if (result instanceof MessageWithSocketChannel)
-            ((MessageWithSocketChannel) result).afterSent(socketChannel);
-    }
-
-    @Override
-    public void afterReceived(SocketChannel socketChannel) throws IOException {
-        if (initialized) throw new RuntimeException("This method must be call at the receiver side.");
-        if (result instanceof MessageWithSocketChannel)
-            ((MessageWithSocketChannel) result).afterReceived(socketChannel);
+        if (result instanceof Message)
+            ((Message) result).afterReceived(receiver);
     }
 }

@@ -25,7 +25,7 @@ abstract public class QueryHandlerThread extends Thread {
     @Override
     public void run() {
         try {
-            CommandExecuteRequest qr = MessageWithSocket.receive(client);
+            CommandExecuteRequest qr = Message.receive(Receiver.fromSocket(client));
             cc.execute(qr.getCommandName(), qr.getParameters(), new HandlerCallback<>(this::onCommandSuccessfulExecuted, this::onErrorWhenExecutingCommand));
         } catch (IOException | ClassNotFoundException e) {
             onDisconnectedToClient(new CommunicationIOException("Cannot read data sent from client.", e));
@@ -37,12 +37,12 @@ abstract public class QueryHandlerThread extends Thread {
     }
 
     private void onErrorWhenExecutingCommand(Exception e) {
-        sendDataToClient(generateResult(CommandExecuteRespondStatus.FAIL, (Serializable) e), this, this::onDisconnectedToClient);
+        sendDataToClient(generateResult(CommandExecuteRespondStatus.FAIL, e), this, this::onDisconnectedToClient);
     }
 
     private void sendDataToClient(CommandExecuteRespond res, Runnable onSuccess, Consumer<Exception> onError) {
         try {
-            res.send(client);
+            res.send(Sender.fromSocket(client));
             new Thread(onSuccess).start();
         } catch (IOException e) {
             onError.accept(new CommunicationIOException("Cannot send data to client.", e));

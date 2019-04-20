@@ -25,8 +25,8 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
         public CommandExecuteRespond run() throws Exception {
             SocketChannel channel = getChannel();
             try {
-                generateQuery().send(channel);
-                CommandExecuteRespond res = MessageWithSocketChannel.receive(channel);
+                generateQuery().sendWithChannel(Sender.fromSocketChannel(channel));
+                CommandExecuteRespond res = Message.receive(Receiver.fromSocketChannel(channel));
                 processResult(res);
                 return res;
             } catch (IOException | ClassNotFoundException e) {

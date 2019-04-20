@@ -2,8 +2,6 @@ package ru.ifmo.se.s267880.lab56.shared.communication;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.Socket;
-import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Objects;
 import java.util.Arrays;
@@ -14,7 +12,7 @@ import java.util.Collections;
  * Note that if this object is initialized with constructor (that is, it is not sent to the server), method
  * CommandExecuteRequest#getParameters() will throw RuntimeException for immutability purpose.
  */
-public class CommandExecuteRequest implements Serializable, MessageWithSocket, MessageWithSocketChannel {
+public class CommandExecuteRequest implements Serializable, Message {
     private String commandName;
     private List<Serializable> parameters;
     private transient boolean initialized;
@@ -48,41 +46,21 @@ public class CommandExecuteRequest implements Serializable, MessageWithSocket, M
     }
 
     @Override
-    public void afterSent(Socket socket) throws IOException {
+    public void afterSent(Sender sender) throws IOException {
         if (!initialized) throw new RuntimeException("This method must be call at the sender side.");
         for (Serializable i: parameters) {
-            if (i instanceof MessageWithSocket) {
-                ((MessageWithSocket) i).afterSent(socket);
+            if (i instanceof Message) {
+                ((Message) i).afterSent(sender);
             }
         }
     }
 
     @Override
-    public void afterReceived(Socket socket) throws IOException {
+    public void afterReceived(Receiver receiver) throws IOException {
         if (initialized) throw new RuntimeException("This method must be call at the receiver side.");
         for (Serializable i: parameters) {
-            if (i instanceof MessageWithSocket) {
-                ((MessageWithSocket) i).afterReceived(socket);
-            }
-        }
-    }
-
-    @Override
-    public void afterSent(SocketChannel socketChannel) throws IOException {
-        if (!initialized) throw new RuntimeException("This method must be call at the sender side.");
-        for (Serializable i: parameters) {
-            if (i instanceof MessageWithSocketChannel) {
-                ((MessageWithSocketChannel) i).afterSent(socketChannel);
-            }
-        }
-    }
-
-    @Override
-    public void afterReceived(SocketChannel socketChannel) throws IOException {
-        if (initialized) throw new RuntimeException("This method must be call at the receiver side.");
-        for (Serializable i: parameters) {
-            if (i instanceof MessageWithSocketChannel) {
-                ((MessageWithSocketChannel) i).afterReceived(socketChannel);
+            if (i instanceof Message) {
+                ((Message) i).afterReceived(receiver);
             }
         }
     }

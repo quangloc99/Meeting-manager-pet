@@ -9,7 +9,7 @@ import java.net.Socket;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 
-public class FileTransferRequest implements Serializable, MessageWithSocket, MessageWithSocketChannel {
+public class FileTransferRequest implements Serializable, Message {
     private String destinationFileName;
     private long fileSize;
     private transient InputStream sourceFileInputStream;
@@ -48,42 +48,24 @@ public class FileTransferRequest implements Serializable, MessageWithSocket, Mes
         return res;
     }
 
-    public void afterSent(Socket socket) throws IOException {
+    @Override
+    public void afterSent(Sender sender) throws IOException {
         if (!initialized) throw new RuntimeException("This method must be call at the sender side.");
         try {
-            synchronized (socket) {
-                transfer(socket.getOutputStream(), new BoundedInputStream(sourceFileInputStream, fileSize));
+            synchronized (sender) {
+                transfer(sender.getOutputStream(), new BoundedInputStream(sourceFileInputStream, fileSize));
             }
         } finally {
             if (closeFileAfterTransfer) sourceFileInputStream.close();
         }
     }
 
-    public void afterSent(SocketChannel socketChannel) throws IOException {
-        if (!initialized) throw new RuntimeException("This method must be call at the sender side.");
-        try {
-            synchronized (socketChannel) {
-                transfer(Channels.newOutputStream(socketChannel), new BoundedInputStream(sourceFileInputStream, fileSize));
-            }
-        } finally {
-            if (closeFileAfterTransfer) sourceFileInputStream.close();
-        }
-    }
-
-    public void afterReceived(Socket socket) throws IOException{
+    @Override
+    public void afterReceived(Receiver receiver) throws IOException{
         if (initialized) throw new RuntimeException("This method must be call at the receiver side.");
         OutputStream des = new FileOutputStream(getDestinationFile());
-        synchronized (socket) {
-            transfer(des, new BoundedInputStream(socket.getInputStream(), fileSize));
-        }
-        des.close();
-    }
-
-    public void afterReceived(SocketChannel socket) throws IOException {
-        if (initialized) throw new RuntimeException("This method must be call at the receiver side.");
-        OutputStream des = new FileOutputStream(getDestinationFile());
-        synchronized (socket) {
-            transfer(des, new BoundedInputStream(Channels.newInputStream(socket), fileSize));
+        synchronized (receiver) {
+            transfer(des, new BoundedInputStream(receiver.getInputStream(), fileSize));
         }
         des.close();
     }
