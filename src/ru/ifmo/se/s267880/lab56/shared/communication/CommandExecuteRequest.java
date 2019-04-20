@@ -24,7 +24,7 @@ public class CommandExecuteRequest implements Serializable, Message<MessageType>
      * @param commandName - the commandName of the query
      * @param args - list of parameters that will be sent to the server.
      */
-    public CommandExecuteRequest(String commandName, Serializable[] args) {
+    public CommandExecuteRequest(String commandName, Serializable... args) {
         this.initialized = true;
 
         this.commandName = commandName;

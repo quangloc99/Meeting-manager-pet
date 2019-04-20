@@ -31,4 +31,15 @@ public class HandlerCallback<T> {
     public void onError(Exception e) {
         if (onErrorCallback != null) onErrorCallback.accept(e);
     }
+
+    public HandlerCallback<T> andThen(HandlerCallback<T> after) {
+        return new HandlerCallback<>(
+                onSuccessCallback == null ? after.onSuccessCallback :
+                        after.onSuccessCallback == null ? onSuccessCallback :
+                                onSuccessCallback.andThen(after.onSuccessCallback),
+                onErrorCallback == null ? after.onErrorCallback :
+                        after.onErrorCallback== null ? onErrorCallback :
+                                onErrorCallback.andThen(after.onErrorCallback)
+        );
+    }
 }

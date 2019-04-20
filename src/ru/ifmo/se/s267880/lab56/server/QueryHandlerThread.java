@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 abstract public class QueryHandlerThread extends Thread {
     private Socket client;
     private CommandController cc;
+    private Sender messageToClientSender;
+    private Receiver messageFromClientReceiver;
 
     public Socket getClient() {
         return client;
@@ -19,13 +21,15 @@ abstract public class QueryHandlerThread extends Thread {
     public QueryHandlerThread(Socket socket, CommandController cc) {
         System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
+        messageToClientSender = Sender.fromSocket(socket);
+        messageFromClientReceiver = Receiver.fromSocket(socket);
         this.cc = cc;
     }
 
     @Override
     public void run() {
         try {
-            CommandExecuteRequest qr = Message.receive(Receiver.fromSocket(client));
+            CommandExecuteRequest qr = messageFromClientReceiver.receiveWithStream();
             cc.execute(qr.getCommandName(), qr.getParameters(), new HandlerCallback<>(this::onCommandSuccessfulExecuted, this::onErrorWhenExecutingCommand));
         } catch (IOException | ClassNotFoundException e) {
             onDisconnectedToClient(new CommunicationIOException("Cannot read data sent from client.", e));
@@ -42,7 +46,7 @@ abstract public class QueryHandlerThread extends Thread {
 
     private void sendDataToClient(CommandExecuteRespond res, Runnable onSuccess, Consumer<Exception> onError) {
         try {
-            res.send(Sender.fromSocket(client));
+            messageToClientSender.send(res);
             new Thread(onSuccess).start();
         } catch (IOException e) {
             onError.accept(new CommunicationIOException("Cannot send data to client.", e));

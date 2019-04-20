@@ -27,7 +27,7 @@ public interface SharedCommandHandlers extends CommandHandlers {
             value = "Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted",
             params = {"String"}
     )
-    void doImport(File file) throws Exception;
+    void doImport(File file, HandlerCallback callback);
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
@@ -36,11 +36,11 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Command
     @Usage("load a file with name given by arg. The content of the collection will be replaced.\n" +
             "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    void load(String path) throws Exception;
+    void load(String path, HandlerCallback callback);
 
     @Command
     @Usage("save current collection. Note that initially there is no file name yet, so please use `save-as {String}` first.")
-    void save() throws Exception;
+    void save(HandlerCallback callback) ;
 
     /**
      * Just change the current working file. The data of that file will be replaced.
@@ -52,7 +52,7 @@ public interface SharedCommandHandlers extends CommandHandlers {
        "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted.\n" +
        "After executing this command, the current file name changed."
     )
-    void saveAs(String path) throws Exception;
+    void saveAs(String path, HandlerCallback callback);
 
     /**
      * Add meeting into the collection
@@ -60,14 +60,14 @@ public interface SharedCommandHandlers extends CommandHandlers {
      */
     @Command
     @Usage(value = "add new meeting into the collection.", params = {"MeetingJson"})
-    void add(Meeting meeting) throws Exception;
+    void add(Meeting meeting, HandlerCallback callback);
 
     /**
      * List all the meetings.
      */
     @Command
     @Usage("List all the meetings.")
-    List<Meeting> show() throws Exception;
+    void show(HandlerCallback<List<Meeting>> callback);
 
     /**
      * Remove a meeting from the collection by value.
@@ -75,7 +75,7 @@ public interface SharedCommandHandlers extends CommandHandlers {
      */
     @Command
     @Usage(value = "remove the meeting correspond to the argument.", params = {"MeetingJson"})
-    void remove(Meeting meeting) throws Exception;
+    void remove(Meeting meeting, HandlerCallback callback);
 
     /**
      * Remove a meeting from the collection by index.
@@ -83,7 +83,7 @@ public interface SharedCommandHandlers extends CommandHandlers {
      */
     @Command
     @Usage("remove the meeting with index given by the argument.")
-    void remove(int num) throws Exception;
+    void remove(int num, HandlerCallback callback);
 
     /**
      * Add new meeting into the collection if it's date is before every other meeting in the collection.
@@ -92,14 +92,14 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Command("add_if_min")
     @Usage(value = "add new meeting into the collection if it's date is before every other meeting in the collection.",
             params = {"MeetingJson"})
-    void addIfMin(Meeting meeting) throws Exception;
+    void addIfMin(Meeting meeting, HandlerCallback callback);
 
     /**
      * show file name, number of meeting and the time the file first load during this session.
      */
     @Command
     @Usage("Show some basic information.")
-    Map<String, String> info() throws Exception;
+    void info(HandlerCallback<Map<String, String>> callback);
 
 
     /**
@@ -107,18 +107,18 @@ public interface SharedCommandHandlers extends CommandHandlers {
      */
     @Command(value="sort-by-date", additional = true)
     @Usage("sort all the meeting ascending by their date.")
-    void sortByDate() throws Exception;
+    void sortByDate(HandlerCallback callabck);
 
     @Command(value="sort-by-duration", additional = true)
     @Usage("sort all the meetings ascending by their duration")
-    void sortBytime() throws Exception;
+    void sortBytime(HandlerCallback callback);
 
     /**
      * Reverse the order of the meetings.
      */
     @Command(additional = true)
     @Usage("reverse the order ot the meetings.")
-    void reverse() throws Exception;
+    void reverse(HandlerCallback callback);
 
     /**
      * Swap 2 meeting.
@@ -127,14 +127,14 @@ public interface SharedCommandHandlers extends CommandHandlers {
      */
     @Command(additional = true)
     @Usage("swap 2 meetings with the given indexes")
-    void swap(int a, int b) throws Exception;
+    void swap(int a, int b, HandlerCallback callback);
 
     /**
      * Clear the collection.
      */
     @Command(additional = true)
     @Usage("delete all the elements from the collection")
-    void clear() throws Exception;
+    void clear(HandlerCallback callback);
 
     /**
      * Get all the time zone with index that has ZoneOffset's hour equals to the parameter.
@@ -144,7 +144,7 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Command(value="list-time-zones", additional = true)
     @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-time-zones 3` will list all" +
             " the time zone with the offset \"UTF+3\"")
-    Map<Integer, ZoneId> listTimeZones(int offsetHour) throws Exception;
+    void listTimeZones(int offsetHour, HandlerCallback<Map<Integer, ZoneId>> callback);
 
     /**
      * Set the current time zone corresponding to to the key in {@link ZoneUtils#allZoneIds}
@@ -152,5 +152,5 @@ public interface SharedCommandHandlers extends CommandHandlers {
      */
     @Command(value="set-time-zone", additional = true)
     @Usage("Set the time zone by index. Use command `list-time-zones` for the list of time zones with indexes.")
-    void setTimeZone(int timeZoneKey) throws Exception;
+    void setTimeZone(int timeZoneKey, HandlerCallback callback);
 }

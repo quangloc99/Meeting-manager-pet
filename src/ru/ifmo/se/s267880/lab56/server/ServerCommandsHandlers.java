@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 import ru.ifmo.se.s267880.lab56.shared.functional.*;
 
 /**
- * An implementation of CommandHandersWithMeeting on server side.
+ * An implementation of CommandHandlersWithMeeting on server side.
  * See {@link SharedCommandHandlers} to know about which methods will be
  * used as commands.
  *
@@ -65,9 +65,15 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param file
      */
     @Override
-    public void doImport(File file) throws ParseException, IOException {
-        try (InputStream in = new FileInputStream(file)) {
-            collection.addAll(getDataFrom(in));
+    @SuppressWarnings("unchecked")
+    public void doImport(File file, HandlerCallback callback) {
+        try {
+            try (InputStream in = new FileInputStream(file)) {
+                collection.addAll(getDataFrom(in));
+            }
+            callback.onSuccess(null);
+        } catch (Exception e) {
+            callback.onError(e);
         }
     }
 
@@ -76,26 +82,31 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param path the path to the file.
      */
     @Override
-    public void load(String path) throws Exception {
+    @SuppressWarnings("unchecked")
+    public void load(String path, HandlerCallback callback) {
         if (path != null) {
-            List<Meeting> t = getDataFromFile(path);
-            synchronized (collection) {
-                collection.clear();
-                collection.addAll(t);
-            }
+            try {
+                List<Meeting> t = getDataFromFile(path);
+                synchronized (collection) {
+                    collection.clear();
+                    collection.addAll(t);
+                }
+            } catch (IOException | ParseException e)  { callback.onError(e); }
         }
         updateFileName(path);
+        callback.onSuccess(null);
     }
 
     /**
      * Save all the collection into the file with name {@link #currentFileName}.
      */
     @Override
-    public synchronized void save() throws Exception {
+    public synchronized void save(HandlerCallback callback) {
         if (currentFileName == null) {
-            throw new NullPointerException("Please use `save-as {String}` command to set the file name.");
+            callback.onError(new NullPointerException("Please use `save-as {String}` command to set the file name."));
+            return;
         }
-        saveAs(currentFileName);
+        saveAs(currentFileName, callback);
     }
 
     /**
@@ -103,7 +114,8 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param path that path to the file.
      */
     @Override
-    public void saveAs(String path) throws IOException {
+    @SuppressWarnings("unchecked")
+    public void saveAs(String path, HandlerCallback callback) {
         List<String> header = new LinkedList<>();
         header.add("meeting name");
         header.add("meeting time");
@@ -127,16 +139,15 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
                 updateFileName(path);
             }
         } catch (IOException e) {
-            throw new IOException("Unable to write data into " + path, e);
+            callback.onError(new IOException("Unable to write data into " + path, e));
         }
+        callback.onSuccess(null);
     }
 
     /**
      * Get the data from another file.
      * @param inputStream the stream of data to be transformed in to meetings.
      * @return the data of the file.
-     * @throws ParseException
-     * @throws IOException
      */
     private List<Meeting> getDataFrom(InputStream inputStream) throws ParseException, IOException {
         return new CsvReader(inputStream, true)
@@ -157,8 +168,6 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * Get the data from another file.
      * @param path the path to the file.
      * @return the data of the file.
-     * @throws ParseException
-     * @throws IOException
      */
     private List<Meeting> getDataFromFile(String path) throws ParseException, IOException {
         return getDataFrom(new BufferedInputStream(new FileInputStream(path)));
@@ -171,8 +180,10 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param meeting the meeting wanted to be add.
      */
     @Override
-    public void add(Meeting meeting) {
+    @SuppressWarnings("unchecked")
+    public void add(Meeting meeting, HandlerCallback callback) {
         collection.add(transformMeetingTimeSameLocal(meeting));
+        callback.onSuccess(null);
     }
 
     /**
@@ -181,8 +192,8 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * to the current zone with same <b>instant</b>.
      */
     @Override
-    public List<Meeting> show() {
-        return this.getCollection();
+    public void show(HandlerCallback<List<Meeting>> callback) {
+        callback.onSuccess(this.getCollection());
     }
 
     /**
@@ -192,8 +203,10 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param meeting the meeting wanted to be removed.
      */
     @Override
-    public void remove(Meeting meeting) {
+    @SuppressWarnings("unchecked")
+    public void remove(Meeting meeting, HandlerCallback callback) {
         collection.remove(transformMeetingTimeSameLocal(meeting));
+        callback.onSuccess(null);
     }
 
     /**
@@ -201,8 +214,10 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param num the index (base 1) of the element.
      */
     @Override
-    public void remove(int num) {
+    @SuppressWarnings("unchecked")
+    public void remove(int num, HandlerCallback callback) {
         collection.remove(num - 1);
+        callback.onSuccess(null);
     }
 
     /**
@@ -212,11 +227,11 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param meeting the meeting wanted to be added.
      */
     @Override
-    public void addIfMin(Meeting meeting) {
+    public void addIfMin(Meeting meeting, HandlerCallback callback) {
         meeting = transformMeetingTimeSameLocal(meeting);
         synchronized (collection) {
             if (meeting.compareTo(Collections.min(collection)) >= 0) return;
-            add(meeting);
+            add(meeting, callback);
         }
     }
 
@@ -224,34 +239,40 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * show file name, number of meeting and the time the file first load during this session.
      */
     @Override
-    public synchronized Map<String, String> info() {
+    public synchronized void info(HandlerCallback<Map<String, String>> callback) {
         Map<String, String> result = new HashMap<>();
         result.put("file", currentFileName);
         result.put("meeting-count", Integer.toString(collection.size()));
         result.put("since", Helper.meetingDateFormat.format(fileOpenSince));
         result.put("time-zone", zoneId.toString() + " " + ZoneUtils.toUTCZoneOffsetString(zoneId));
-        return result;
+        callback.onSuccess(result);
     }
 
     /**
      * Sort all the meeting ascending by their date.
      */
     @Override
-    public void sortByDate() {
+    @SuppressWarnings("unchecked")
+    public void sortByDate(HandlerCallback callback) {
         Collections.sort(collection, Comparator.comparing(Meeting::getTime));
+        callback.onSuccess(null);
     }
 
     @Override
-    public void sortBytime() {
+    @SuppressWarnings("unchecked")
+    public void sortBytime(HandlerCallback callback) {
         Collections.sort(collection, Comparator.comparing(Meeting::getDuration));
+        callback.onSuccess(null);
     }
 
     /**
      * Reverse the order of the meetings.
      */
     @Override
-    public void reverse() {
+    @SuppressWarnings("unchecked")
+    public void reverse(HandlerCallback callback) {
         Collections.reverse(collection);
+        callback.onSuccess(null);
     }
 
     /**
@@ -260,18 +281,22 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * @param b the index of the second meeting.
      */
     @Override
-    public void swap(int a, int b) {
+    @SuppressWarnings("unchecked")
+    public void swap(int a, int b, HandlerCallback callback) {
         synchronized (collection) {
             Collections.swap(collection, a - 1, b - 1);
         }
+        callback.onSuccess(null);
     }
 
     /**
      * Clear the collection.
      */
     @Override
-    public void clear() {
+    @SuppressWarnings("unchecked")
+    public void clear(HandlerCallback callback) {
         collection.clear();
+        callback.onSuccess(null);
     }
 
     /**
@@ -287,17 +312,20 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     }
 
     @Override
-    public Map<Integer, ZoneId> listTimeZones(int offsetHour) {
-        return ZoneUtils.getZonesBy(z -> ZoneUtils.toUTCZoneOffset(z).getTotalSeconds() / 3600 == offsetHour);
+    public void listTimeZones(int offsetHour, HandlerCallback<Map<Integer, ZoneId>> callback) {
+        callback.onSuccess(ZoneUtils.getZonesBy(z -> ZoneUtils.toUTCZoneOffset(z).getTotalSeconds() / 3600 == offsetHour));
     }
 
     @Override
-    public void setTimeZone(int timeZoneKey) throws Exception {
+    @SuppressWarnings("unchecked")
+    public void setTimeZone(int timeZoneKey, HandlerCallback callback) {
         if (!ZoneUtils.allZoneIds.containsKey(timeZoneKey)) {
-            throw new NoSuchFieldException(String.format(
+            callback.onError(new NoSuchFieldException(String.format(
                     "There is no time zones with index %d. " +
-                    "Please use command `list-time-zones` for the list of time zones", timeZoneKey));
+                    "Please use command `list-time-zones` for the list of time zones", timeZoneKey)));
+            return;
         }
         zoneId = ZoneUtils.allZoneIds.get(timeZoneKey);
+        callback.onSuccess(null);
     }
 }

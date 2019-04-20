@@ -34,10 +34,14 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
         if (obj instanceof  String) {
             if (inputType == String.class) return obj;
             if (inputType == File.class) return new File((String) obj);
-            Class wrapped = Helper.toWrapper(inputType);
-            if (wrapped == Integer.class) return Integer.parseInt((String) obj);
-            else if (wrapped == Long.class) return Long.parseLong((String) obj);
-            else if (wrapped == Boolean.class) return Boolean.parseBoolean((String) obj);
+            try {
+                Class wrapped = Helper.toWrapper(inputType);
+                if (wrapped == Integer.class) return Integer.parseInt((String) obj);
+                else if (wrapped == Long.class) return Long.parseLong((String) obj);
+                else if (wrapped == Boolean.class) return Boolean.parseBoolean((String) obj);
+            } catch (Exception e) {
+                throw new CannotPreprocessInputException("Cannot cast " + obj + " into number/boolean type.");
+            }
         }
         return super.preprocess(obj, inputType);
     }

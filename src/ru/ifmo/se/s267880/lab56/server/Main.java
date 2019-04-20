@@ -20,12 +20,10 @@ public class Main {
         }
 
         ServerCommandsHandlers mm = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<Meeting>()));
-        try {
-            mm.load(savedFileName);
-        } catch (Exception e) {
+        mm.load(savedFileName, HandlerCallback.ofErrorHandler(e -> {
             System.err.println(e.getMessage());
             System.exit(0);
-        }
+        }));
 
         CommandController cc = new CommandController();
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, mm, new ServerInputPreprocessor())

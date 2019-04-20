@@ -16,7 +16,9 @@ public class CommandExecuteRespond implements Serializable, Message<MessageType>
     private transient boolean initialized;
 
     @Override
-    public MessageType getType() { return MessageType.RESPOND; }
+    public MessageType getType() {
+        return status == CommandExecuteRespondStatus.SUCCESS ? MessageType.RESPOND_SUCCESS : MessageType.RESPOND_FAIL;
+    }
 
     public CommandExecuteRespond(CommandExecuteRespondStatus status, Serializable result, List<Meeting> collection) {
         this.initialized = true;

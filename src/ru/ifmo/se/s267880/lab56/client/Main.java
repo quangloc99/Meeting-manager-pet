@@ -10,9 +10,10 @@ import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
+import ru.ifmo.se.s267880.lab56.shared.communication.*;
+
 import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -23,41 +24,27 @@ import java.util.Arrays;
  * @author Tran Quang Loc
  */
 public class Main {
-    public static SocketChannel sc = null;
     public static InetSocketAddress address = null;
-    private static HandlerCallback<SocketChannel> socketConnectorCallback;
     public static void main(String[] args) {
         printAwesomeASCIITitle();
-
-        CommandController cc = new CommandController();
-        UserInputProvider inputProvider = new UserInputProvider(new InputStreamReader(System.in),
-                new JsonUserInputArgumentParser(),
-                new DefaultUserInputArgumentParser()
-        );
-        ClientCommandsHandlers handlers = new ClientCommandsHandlers() {
-            public SocketChannel getChannel() throws IOException  {
-                return sc;
-            }
-        };
-        addClientOnlyCommand(cc, handlers);
-        ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, handlers, new ClientInputPreprocessor())
-                .forEach(cc::addCommand);
 
         if (address == null) {
             address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);
         }
 
         SocketConnector socketConnector = new SocketConnector(5, 1300);
-        socketConnectorCallback = new HandlerCallback<>(
-            sc -> {
-                Main.sc = sc;
-                new MainLoop(cc, inputProvider).run(HandlerCallback.ofErrorHandler(
-                        e -> socketConnector.tryConnectTo(address, socketConnectorCallback)
-                ));
-            },
-            e -> {
+        HandlerCallback<SocketChannel> socketConnectorCallback = new HandlerCallback<SocketChannel>() {
+            @Override
+            public void onSuccess(SocketChannel sc) {
+                new MainLoop(createCommandController(sc), createUserInputProvider()).run(
+                    HandlerCallback.ofErrorHandler(e -> socketConnector.tryConnectTo(address, this))
+                );
+            }
+
+            @Override
+            public void onError(Exception e) {
                 if (e instanceof InterruptedException) {
-                    onExit();
+                    // because we are trying to connect to server so the socket channel is not need to be closed.
                     return ;
                 }
                 System.err.printf(e instanceof  UnresolvedAddressException
@@ -65,32 +52,28 @@ public class Main {
                         : "Unable to connect to %s%n", address);
                 if (confirm("Reenter address?")) {
                     address = getInitSocketAddressFromUserInput(address.getHostName(), address.getPort());
-                    socketConnector.tryConnectTo(address, socketConnectorCallback);
+                    socketConnector.tryConnectTo(address, this);
                 }
             }
-        );
+        };
         socketConnector.tryConnectTo(address, socketConnectorCallback);
     }
 
-    static void printAwesomeASCIITitle() {
-        System.out.println("  ___ ___    ___    ___ ______  ____  ____    ____      ___ ___   ____  ____    ____   ____    ___  ____");
-        System.out.println("_|   |   |  /  _]  /  _]      ||    ||    \\  /    |    |   |   | /    ||    \\  /    | /    |  /  _]|    \\");
-        System.out.println("_| _   _ | /  [_  /  [_|      | |  | |  _  ||   __|    | _   _ ||  o  ||  _  ||  o  ||   __| /  [_ |  D  )");
-        System.out.println("_|  \\_/  ||    _]|    _]_|  |_| |  | |  |  ||  |  |    |  \\_/  ||     ||  |  ||     ||  |  ||    _]|    /");
-        System.out.println("_|   |   ||   [_ |   [_  |  |   |  | |  |  ||  |_ |    |   |   ||  _  ||  |  ||  _  ||  |_ ||   [_ |    \\");
-        System.out.println("_|   |   ||     ||     | |  |   |  | |  |  ||     |    |   |   ||  |  ||  |  ||  |  ||     ||     ||  .  \\");
-        System.out.println("_|___|___||_____||_____| |__|  |____||__|__||___,_|    |___|___||__|__||__|__||__|__||___,_||_____||__|\\_|");
-        System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
-    }
-
-    static void addClientOnlyCommand(CommandController cc, ClientCommandsHandlers handlers) {
+    private static CommandController createCommandController(SocketChannel sc) {
+        CommandController cc = new CommandController();
+        Broadcaster<MessageType> messageFromServerBroadcaster = new Broadcaster<>(Receiver.fromSocketChannel(sc));
+        new Thread(messageFromServerBroadcaster).start();
+        Sender messageToServerSender = Sender.fromSocketChannel(sc);
+        ClientCommandsHandlers handlers = new ClientCommandsHandlers(messageFromServerBroadcaster, messageToServerSender);
+        ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, handlers, new ClientInputPreprocessor())
+                .forEach(cc::addCommand);
         cc.addCommand("toggle-quite", CommandHandler.ofConsumer(
                 "Turn on/off printing collections after successfully executed a command [Additional]",
                 args -> handlers.toggleQuite()
         ));
         cc.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :) [Additional].",
                 arg -> {
-                    onExit();
+                    try {sc.close(); } catch (Exception ignored) {}
                     System.exit(0);
                 }
         ));
@@ -117,7 +100,7 @@ public class Main {
                 "[Additional] List all the commands.", args -> {
                     System.out.println("# Commands list:");
                     cc.getCommandHandlers().forEach((commandName, handler) -> {
-                        System.out.printf("- ");
+                        System.out.print("- ");
                         for (String s : handler.getUsage(commandName).split("\n")) {
                             System.out.printf("\t%s\n", s);
                         }
@@ -125,11 +108,25 @@ public class Main {
                     });
                 }
         ));
+        return cc;
     }
 
-    public static void onExit() {
-        try { sc.close(); } catch (IOException e) {}
+    private static UserInputProvider createUserInputProvider() {
+        return new UserInputProvider(new InputStreamReader(System.in),
+                new JsonUserInputArgumentParser(),
+                new DefaultUserInputArgumentParser()
+        );
+    }
 
+    private static void printAwesomeASCIITitle() {
+        System.out.println("  ___ ___    ___    ___ ______  ____  ____    ____      ___ ___   ____  ____    ____   ____    ___  ____");
+        System.out.println("_|   |   |  /  _]  /  _]      ||    ||    \\  /    |    |   |   | /    ||    \\  /    | /    |  /  _]|    \\");
+        System.out.println("_| _   _ | /  [_  /  [_|      | |  | |  _  ||   __|    | _   _ ||  o  ||  _  ||  o  ||   __| /  [_ |  D  )");
+        System.out.println("_|  \\_/  ||    _]|    _]_|  |_| |  | |  |  ||  |  |    |  \\_/  ||     ||  |  ||     ||  |  ||    _]|    /");
+        System.out.println("_|   |   ||   [_ |   [_  |  |   |  | |  |  ||  |_ |    |   |   ||  _  ||  |  ||  _  ||  |_ ||   [_ |    \\");
+        System.out.println("_|   |   ||     ||     | |  |   |  | |  |  ||     |    |   |   ||  |  ||  |  ||  |  ||     ||     ||  .  \\");
+        System.out.println("_|___|___||_____||_____| |__|  |____||__|__||___,_|    |___|___||__|__||__|__||__|__||___,_||_____||__|\\_|");
+        System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
     }
 
     /**
