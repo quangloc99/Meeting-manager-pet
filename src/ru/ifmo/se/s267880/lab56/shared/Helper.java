@@ -64,6 +64,7 @@ public class Helper {
         return String.join(delimitor, str);
     }
 
+    @SuppressWarnings("unchecked")
     public static <E extends Throwable> void sneakyThrows(Throwable e) throws E {
         throw (E) e;
     }
@@ -81,9 +82,8 @@ public class Helper {
             oos.close();
             return result;
         } catch (IOException e) {
-            assert(false);  // when creating oos with baos, IOException should not be occurs.
+            throw new NullPointerException("ByteArrayOutputStream thrown");
         }
-        return null;
     }
 
     public static Class<?> toWrapper(Class<?> clazz) {

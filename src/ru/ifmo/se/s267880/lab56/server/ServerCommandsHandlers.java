@@ -66,7 +66,9 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     public void doImport(File file) throws ParseException, IOException {
-        collection.addAll(getDataFrom(new FileInputStream(file)));
+        try (InputStream in = new FileInputStream(file)) {
+            collection.addAll(getDataFrom(in));
+        }
     }
 
     /**

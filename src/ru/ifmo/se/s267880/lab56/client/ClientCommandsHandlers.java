@@ -4,8 +4,6 @@ import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.time.ZoneId;
 import java.util.Iterator;
@@ -26,10 +24,14 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
 
         public CommandExecuteRespond run() throws Exception {
             SocketChannel channel = getChannel();
-            sendData(channel, generateQuery());
-            CommandExecuteRespond res = receiveData(channel);
-            processResult(res);
-            return res;
+            try {
+                generateQuery().send(channel);
+                CommandExecuteRespond res = MessageWithSocketChannel.receive(channel);
+                processResult(res);
+                return res;
+            } catch (IOException | ClassNotFoundException e) {
+                throw new CommunicationIOException("Error when communicate with server", e);
+            }
         }
 
         protected CommandExecuteRequest generateQuery() throws Exception {
@@ -39,29 +41,6 @@ abstract public class ClientCommandsHandlers implements SharedCommandHandlers {
                 castedParams[i] = (Serializable) currentCommandParams[i];
             }
             return new CommandExecuteRequest(currentCommandName, castedParams);
-        }
-
-        protected void sendData(SocketChannel channel, CommandExecuteRequest qr) throws Exception {
-            try {
-                ByteBuffer bf = ByteBuffer.wrap(Helper.serializableToByteArray(qr));
-                channel.write(bf);
-                qr.afterSent(channel);
-            } catch (IOException e) {
-                throw new CommunicationIOException("Data cannot be sent to server.", e);
-            }
-        }
-
-        protected CommandExecuteRespond receiveData(SocketChannel channel) throws Exception {
-            try {
-                ObjectInputStream in = new ObjectInputStream(Channels.newInputStream(channel));
-                CommandExecuteRespond res = (CommandExecuteRespond) in.readObject();
-                res.afterReceived(channel);
-                return res;
-            } catch (IOException e) {
-                throw new CommunicationIOException("Cannot read data sent from server.", e);
-            } catch(ClassNotFoundException e) {
-                throw new CommunicationIOException("Data sent from server broken/may not be fully sent.", e);
-            }
         }
 
         protected void processResult(CommandExecuteRespond res) throws Exception {
