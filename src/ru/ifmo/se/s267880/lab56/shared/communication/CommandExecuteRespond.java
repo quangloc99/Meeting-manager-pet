@@ -9,11 +9,14 @@ import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Objects;
 
-public class CommandExecuteRespond implements Serializable, Message {
+public class CommandExecuteRespond implements Serializable, Message<MessageType> {
     private CommandExecuteRespondStatus status;
     private Serializable result;
     private List<Meeting> collection;
     private transient boolean initialized;
+
+    @Override
+    public MessageType getType() { return MessageType.RESPOND; }
 
     public CommandExecuteRespond(CommandExecuteRespondStatus status, Serializable result, List<Meeting> collection) {
         this.initialized = true;

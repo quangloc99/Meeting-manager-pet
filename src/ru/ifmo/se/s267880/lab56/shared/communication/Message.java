@@ -6,9 +6,10 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 
-public interface Message extends Serializable {
+public interface Message<MessageType> extends Serializable {
     void afterSent(Sender sender) throws IOException;
     void afterReceived(Receiver receiver) throws IOException;
+    default MessageType getType() { return null; }
 
     default void send(Sender sender) throws IOException {
         sendWithStream(sender);

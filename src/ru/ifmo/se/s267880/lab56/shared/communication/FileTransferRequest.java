@@ -1,20 +1,19 @@
 package ru.ifmo.se.s267880.lab56.shared.communication;
 
-import ru.ifmo.se.s267880.lab56.client.SocketConnector;
 import ru.ifmo.se.s267880.lab56.shared.BoundedInputStream;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 
 import java.io.*;
-import java.net.Socket;
-import java.nio.channels.Channels;
-import java.nio.channels.SocketChannel;
 
-public class FileTransferRequest implements Serializable, Message {
+public class FileTransferRequest implements Serializable, Message<MessageType> {
     private String destinationFileName;
     private long fileSize;
     private transient InputStream sourceFileInputStream;
     private transient boolean initialized;
     private transient boolean closeFileAfterTransfer;
+
+    @Override
+    public MessageType getType() { return MessageType.REQUEST; }
 
     public FileTransferRequest(String destinationFileName, File sourceFile) throws FileNotFoundException {
         this(destinationFileName, sourceFile.length(), new FileInputStream(sourceFile));

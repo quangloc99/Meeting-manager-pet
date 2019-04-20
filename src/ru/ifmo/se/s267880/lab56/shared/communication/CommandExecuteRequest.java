@@ -12,10 +12,13 @@ import java.util.Collections;
  * Note that if this object is initialized with constructor (that is, it is not sent to the server), method
  * CommandExecuteRequest#getParameters() will throw RuntimeException for immutability purpose.
  */
-public class CommandExecuteRequest implements Serializable, Message {
+public class CommandExecuteRequest implements Serializable, Message<MessageType> {
     private String commandName;
     private List<Serializable> parameters;
     private transient boolean initialized;
+
+    @Override
+    public MessageType getType() { return MessageType.REQUEST; }
 
     /**
      * @param commandName - the commandName of the query
