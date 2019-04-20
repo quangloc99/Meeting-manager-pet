@@ -62,17 +62,6 @@ public interface Sender {
             public void send(Message msg) throws IOException {
                 sendWithChannel(msg);
             }
-
-            //
-//            @Override
-//            public void sendWithChannel(Message msg) throws IOException {
-//                synchronized (socketChannel) { Sender.super.sendWithChannel(msg); }
-//            }
-//
-//            @Override
-//            public void sendWithStream(Message msg) throws IOException {
-//                synchronized (socketChannel) { Sender.super.sendWithStream(msg); }
-//            }
         };
     }
 }
