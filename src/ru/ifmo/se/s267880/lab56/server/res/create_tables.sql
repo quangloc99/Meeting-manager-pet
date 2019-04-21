@@ -10,7 +10,7 @@ $$;
 
 CREATE TABLE IF NOT EXISTS collections (
   id serial PRIMARY KEY,
-  name VARCHAR(255),    -- just like linux file system
+  name VARCHAR(255) UNIQUE,    -- just like linux file system
   sort_order meeting_collection_sort_order default 'asc-time'
 );
 

@@ -139,6 +139,16 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
         new CommandExecutor(defaultCallbackWrapper(callback)).run();
     }
 
+    @Override
+    public void save(HandlerCallback callback) {
+        new CommandExecutor(defaultCallbackWrapper(callback)).run();
+    }
+
+    @Override
+    public void save(String name, HandlerCallback callback) {
+        new CommandExecutor(defaultCallbackWrapper(callback)).run();
+    }
+
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.

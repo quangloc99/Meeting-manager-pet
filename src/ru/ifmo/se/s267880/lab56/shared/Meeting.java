@@ -53,14 +53,12 @@ public class Meeting implements Comparable<Meeting>, Serializable {
         System.out.println("Встреча " + meetingName + " вовремя");
     }
 
+    public OptionalInt getId() { return id; }
     public String getName() {
         return meetingName;
     }
-
     public Duration getDuration() { return duration; }
-
     public BuildingLocation getLocation() { return location; }
-
     public ZonedDateTime getTime() {
         return meetingTime;  // because it is immutable.
     }

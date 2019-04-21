@@ -11,10 +11,7 @@ import ru.ifmo.se.s267880.lab56.csv.CsvReader;
 import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.ZoneId;
@@ -39,10 +36,11 @@ import ru.ifmo.se.s267880.lab56.shared.functional.*;
  */
 public class ServerCommandsHandlers implements SharedCommandHandlers {
     private List<Meeting> collection = null;
-    private String storingName;
+    private String collectionStoringName;
     private ZonedDateTime fileOpenSince = ZonedDateTime.now();
     private ZoneId zoneId = ZonedDateTime.now().getZone();
     private PreparedStatements dataBaseQueryStatements;
+    private List<Meeting> removedMeeting = Collections.synchronizedList(new LinkedList<>());
 
     public ServerCommandsHandlers(@NotNull List<Meeting> collection, Connection databaseConnection) throws SQLException {
         this.collection = collection;
@@ -50,8 +48,8 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     }
 
     private synchronized void updateStoringName(String path) {
-        if ((path == null && storingName == null) || path.equals(storingName)) return;
-        storingName = path;
+        if ((path == null && collectionStoringName == null) || path.equals(collectionStoringName)) return;
+        collectionStoringName = path;
         fileOpenSince = ZonedDateTime.now();
     }
 
@@ -63,8 +61,8 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
         return meeting.withTime(meeting.getTime().withZoneSameLocal(zoneId));
     }
 
-    public synchronized String getStoringName() {
-        return storingName;
+    public synchronized String getCollectionStoringName() {
+        return collectionStoringName;
     }
 
     /**
@@ -118,6 +116,67 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
         }
     }
 
+    @Override
+    public void save(HandlerCallback callback) {
+        if (collectionStoringName == null) {
+            callback.onError(new NullPointerException("Please use `save {String}` command to set the file name."));
+            return;
+        }
+        save(collectionStoringName, false, callback);
+    }
+
+    @Override
+    public void save(String name, HandlerCallback callback) { save(name, true, callback); }
+
+    public void save(String name, boolean allNew, HandlerCallback callback) {
+        try {
+            dataBaseQueryStatements.getConnection().setAutoCommit(false);
+            PreparedStatement st = dataBaseQueryStatements.getCollectionByName;
+            st.setString(1, name);
+            ResultSet res = st.executeQuery();
+            if (!res.next()) {
+                st = dataBaseQueryStatements.insertCollectionAndGetId;
+                st.setString(1, name);
+                st.setString(2, "asc-time");   // TODO add sort order
+                res = st.executeQuery();
+                res.next();
+            }
+            int collectionId = res.getInt("id");
+            if (!allNew) {
+                removedMeeting.forEach(ConsumerWithException.toConsumer(meeting -> {
+                    PreparedStatement curSt = dataBaseQueryStatements.deleteMeeting;
+                    if (!meeting.getId().isPresent()) return;
+                    curSt.setInt(1, meeting.getId().getAsInt());
+                    curSt.executeUpdate();
+                }));
+            }
+            List<Meeting> newCollections = collection.stream()
+                    .map(FunctionWithException.toFunction(
+                            meeting -> !allNew && meeting.getId().isPresent() ? meeting : storeMeetingToDatabase(meeting, collectionId)
+                    ))
+                    .collect(Collectors.toList());
+            removedMeeting.clear();
+            collection.clear();
+            collection.addAll(newCollections);
+            dataBaseQueryStatements.getConnection().commit();
+            updateStoringName(name);
+            callback.onSuccess(null);
+        } catch (SQLException e) {
+            try {
+                dataBaseQueryStatements.getConnection().rollback();
+                callback.onError(e);
+            } catch (SQLException e1) {
+                callback.onError(e1);
+            }
+        } finally {
+            try {
+                dataBaseQueryStatements.getConnection().setAutoCommit(true);
+            } catch(SQLException e) {
+                callback.onError(e);
+            }
+        }
+    }
+
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
@@ -139,15 +198,15 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     }
 
     /**
-     * Save all the collection into the file with name {@link #storingName}.
+     * Save all the collection into the file with name {@link #collectionStoringName}.
      */
     @Override
     public synchronized void saveFile(HandlerCallback callback) {
-        if (storingName == null) {
-            callback.onError(new NullPointerException("Please use `save-as {String}` command to set the file name."));
+        if (collectionStoringName == null) {
+            callback.onError(new NullPointerException("Please use `save-file {String}` command to set the file name."));
             return;
         }
-        saveFile(storingName, callback);
+        saveFile(collectionStoringName, callback);
     }
 
     /**
@@ -214,15 +273,32 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     private List<Meeting> getDataFrom(ResultSet rs) throws SQLException {
         List<Meeting> res = new LinkedList<>();
         while (rs.next()) {
-            res.add(new Meeting(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    Duration.ofMinutes(rs.getInt("duration")),
-                    new BuildingLocation(rs.getInt("location_building"), rs.getInt("location_floor")),
-                    ZonedDateTime.ofInstant(rs.getTimestamp("time").toInstant(), zoneId)  // TODO make it display the right time on zoneId.
-            ));
+            res.add(meetingFromResultSet(rs));
         }
         return res;
+    }
+
+    private Meeting meetingFromResultSet(ResultSet rs) throws SQLException {
+        return new Meeting(
+                rs.getInt("id"),
+                rs.getString("name"),
+                Duration.ofMinutes(rs.getInt("duration")),
+                new BuildingLocation(rs.getInt("location_building"), rs.getInt("location_floor")),
+                ZonedDateTime.ofInstant(rs.getTimestamp("time").toInstant(), zoneId)  // TODO make it display the right time on zoneId.
+        );
+    }
+
+    private Meeting storeMeetingToDatabase(Meeting meeting, int collectionStoringId) throws SQLException {
+        PreparedStatement ps = dataBaseQueryStatements.insertMeetingAndGetId;
+        ps.setString(1, meeting.getName());
+        ps.setLong(2, meeting.getDuration().toMinutes());
+        ps.setInt(3, meeting.getLocation().getBuildingNumber());
+        ps.setInt(4, meeting.getLocation().getFloor());
+        ps.setTimestamp(5, Timestamp.from(meeting.getTime().toInstant()));
+        ps.setInt(6, collectionStoringId);
+        ResultSet rs = ps.executeQuery();
+        rs.next();
+        return meeting.withId(rs.getInt("id"));
     }
 
     /**
@@ -266,8 +342,9 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void remove(Meeting meeting, HandlerCallback callback) {
-        collection.remove(transformMeetingTimeSameLocal(meeting));
-        callback.onSuccess(null);
+        int num = collection.indexOf(transformMeetingTimeSameLocal(meeting));
+        if (num == -1) callback.onSuccess(null);
+        else remove(num, callback);
     }
 
     /**
@@ -277,7 +354,11 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void remove(int num, HandlerCallback callback) {
-        collection.remove(num - 1);
+        if (num < 1 || num > collection.size()) {
+            callback.onError(new IndexOutOfBoundsException("removed id must be bigger than 0 and not bigger than the the collection size."));
+            return ;
+        }
+        removedMeeting.add(collection.remove(num - 1));
         callback.onSuccess(null);
     }
 
@@ -302,7 +383,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     public synchronized void info(HandlerCallback<Map<String, String>> callback) {
         Map<String, String> result = new HashMap<>();
-        result.put("file", storingName);
+        result.put("file", collectionStoringName);
         result.put("meeting-count", Integer.toString(collection.size()));
         result.put("since", Helper.meetingDateFormat.format(fileOpenSince));
         result.put("time-zone", zoneId.toString() + " " + ZoneUtils.toUTCZoneOffsetString(zoneId));
@@ -356,6 +437,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void clear(HandlerCallback callback) {
+        removedMeeting.addAll(collection);
         collection.clear();
         callback.onSuccess(null);
     }

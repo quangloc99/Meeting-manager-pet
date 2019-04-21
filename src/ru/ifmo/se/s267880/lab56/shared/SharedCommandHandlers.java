@@ -40,6 +40,15 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Command
     @Usage("Open a collection with the given name.")
     void open(String collectionName, HandlerCallback callback);
+
+    @Command
+    @Usage("Save the collection into the database.")
+    void save(HandlerCallback callback);
+
+    @Command
+    @Usage("Save the collection into the database with the give name.")
+    void save(String name, HandlerCallback callback);
+
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
