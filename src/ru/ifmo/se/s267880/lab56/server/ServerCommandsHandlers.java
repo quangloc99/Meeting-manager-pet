@@ -17,6 +17,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
 import ru.ifmo.se.s267880.lab56.shared.functional.*;
 
 /**
@@ -77,6 +78,17 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
         }
     }
 
+    @Override
+    public void export(String name, HandlerCallback<FileTransferRequest> callback) {
+        try {
+            File f = Helper.createTempFile();
+            saveCollectionToFile(f);
+            callback.onSuccess(new FileTransferRequest(name, f));
+        } catch (IOException e) {
+            callback.onError(new IOException("Cannot create temp file for exporting.", e));
+        }
+    }
+
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
@@ -116,32 +128,38 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void saveAs(String path, HandlerCallback callback) {
+        try {
+            saveCollectionToFile(new File(path));
+            updateFileName(path);
+        } catch (IOException e) {
+            callback.onError(new IOException("Unable to write data into " + path, e));
+        }
+        callback.onSuccess(null);
+    }
+
+    private void saveCollectionToFile(File file) throws IOException {
         List<String> header = new LinkedList<>();
         header.add("meeting name");
         header.add("meeting time");
         header.add("duration");
         header.add("building number");
         header.add("floor number");
-        try (CsvRowWithNamesWriter writer = new CsvRowWithNamesWriter(new FileOutputStream(path), header)) {
+        try (CsvRowWithNamesWriter writer = new CsvRowWithNamesWriter(new FileOutputStream(file), header)) {
             synchronized (collection) {
                 collection.stream()
-                    .map(meeting -> new HashMap<String, String>() {{
-                        // Java 9 introduced Map.of, which might be more
-                        // comfortable to use, but helios (the ITMO server)
-                        // supports only java 8 for now.
-                        put("meeting name", meeting.getName());
-                        put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
-                        put("duration", Long.toString(meeting.getDuration().toMinutes()));
-                        put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
-                        put("floor number", Integer.toString(meeting.getLocation().getFloor()));
-                    }})
-                    .forEachOrdered(ConsumerWithException.toConsumer(writer::writeRow));
-                updateFileName(path);
+                        .map(meeting -> new HashMap<String, String>() {{
+                            // Java 9 introduced Map.of, which might be more
+                            // comfortable to use, but helios (the ITMO server)
+                            // supports only java 8 for now.
+                            put("meeting name", meeting.getName());
+                            put("meeting time", Helper.meetingDateFormat.format(meeting.getTime()));
+                            put("duration", Long.toString(meeting.getDuration().toMinutes()));
+                            put("building number", Integer.toString(meeting.getLocation().getBuildingNumber()));
+                            put("floor number", Integer.toString(meeting.getLocation().getFloor()));
+                        }})
+                        .forEachOrdered(ConsumerWithException.toConsumer(writer::writeRow));
             }
-        } catch (IOException e) {
-            callback.onError(new IOException("Unable to write data into " + path, e));
         }
-        callback.onSuccess(null);
     }
 
     /**

@@ -21,5 +21,5 @@ public class UserNotification implements Message<MessageType> {
     }
 
     @Override
-    public String toString() { return userName + ": " + userAction; }
+    public String toString() { return String.format("[%s]: %s", userName, userAction); }
 }

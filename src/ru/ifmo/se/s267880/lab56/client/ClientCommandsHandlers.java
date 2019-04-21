@@ -3,9 +3,7 @@ package ru.ifmo.se.s267880.lab56.client;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
-import javax.security.auth.callback.CallbackHandler;
 import java.io.*;
-import java.nio.channels.SocketChannel;
 import java.time.ZoneId;
 import java.util.Iterator;
 import java.util.List;
@@ -129,6 +127,11 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
         } catch (FileNotFoundException e) {
             callback.onError(e);
         }
+    }
+
+    @Override
+    public void export(String name, HandlerCallback<FileTransferRequest> callback) {
+        new CommandExecutor(defaultCallbackWrapper(callback)).run();
     }
 
     /**

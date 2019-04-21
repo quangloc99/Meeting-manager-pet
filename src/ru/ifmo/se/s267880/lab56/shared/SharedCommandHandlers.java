@@ -5,6 +5,7 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
+import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
 
 import java.io.File;
 import java.time.ZoneId;
@@ -28,6 +29,12 @@ public interface SharedCommandHandlers extends CommandHandlers {
             params = {"String"}
     )
     void doImport(File file, HandlerCallback callback);
+
+    @Command
+    @Usage(
+            value = "Export/download the current collection and save it with csv format."
+    )
+    void export(String name, HandlerCallback<FileTransferRequest> callback);
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.

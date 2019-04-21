@@ -1,9 +1,6 @@
 package ru.ifmo.se.s267880.lab56.shared;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -84,6 +81,12 @@ public class Helper {
         } catch (IOException e) {
             throw new NullPointerException("ByteArrayOutputStream thrown");
         }
+    }
+
+    public static File createTempFile() throws IOException {
+        File res = File.createTempFile(Config.TEMP_FILE_PREFIX, null);
+        res.deleteOnExit();
+        return res;
     }
 
     public static Class<?> toWrapper(Class<?> clazz) {

@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.shared.communication;
 
 import ru.ifmo.se.s267880.lab56.shared.BoundedInputStream;
 import ru.ifmo.se.s267880.lab56.shared.Config;
+import ru.ifmo.se.s267880.lab56.shared.Helper;
 
 import java.io.*;
 
@@ -36,13 +37,7 @@ public class FileTransferRequest implements Serializable, Message<MessageType> {
     }
 
     public File getDestinationFile() throws IOException {
-        File res;
-        if (destinationFileName == null) {
-            res = File.createTempFile(Config.TEMP_FILE_PREFIX, null);
-            res.deleteOnExit();
-        } else {
-            res = new File(destinationFileName);
-        }
+        File res = destinationFileName == null ? Helper.createTempFile() : new File(destinationFileName);
         destinationFileName = res.getCanonicalPath();
         return res;
     }
