@@ -95,7 +95,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public void load(String path, HandlerCallback callback) {
+    public void loadFile(String path, HandlerCallback callback) {
         if (path != null) {
             try {
                 List<Meeting> t = getDataFromFile(path);
@@ -113,12 +113,12 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * Save all the collection into the file with name {@link #currentFileName}.
      */
     @Override
-    public synchronized void save(HandlerCallback callback) {
+    public synchronized void saveFile(HandlerCallback callback) {
         if (currentFileName == null) {
             callback.onError(new NullPointerException("Please use `save-as {String}` command to set the file name."));
             return;
         }
-        save(currentFileName, callback);
+        saveFile(currentFileName, callback);
     }
 
     /**
@@ -127,7 +127,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public void save(String path, HandlerCallback callback) {
+    public void saveFile(String path, HandlerCallback callback) {
         try {
             saveCollectionToFile(new File(path));
             updateFileName(path);

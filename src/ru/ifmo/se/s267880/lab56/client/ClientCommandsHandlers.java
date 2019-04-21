@@ -139,17 +139,17 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
      * @param path the path to the file.
      */
     @Override
-    public void load(String path, HandlerCallback callback){
+    public void loadFile(String path, HandlerCallback callback){
         new CommandExecutor(defaultCallbackWrapper(callback)).run();
     }
 
     @Override
-    public void save(HandlerCallback callback) {
+    public void saveFile(HandlerCallback callback) {
         new CommandExecutor(defaultCallbackWrapper(callback)).run();
     }
 
     @Override
-    public void save(String path, HandlerCallback callback) {
+    public void saveFile(String path, HandlerCallback callback) {
         new CommandExecutor(defaultCallbackWrapper(callback)).run();
     }
 

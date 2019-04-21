@@ -40,26 +40,26 @@ public interface SharedCommandHandlers extends CommandHandlers {
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
      */
-    @Command
+//    @Command
     @Usage("load a file with name given by arg. The content of the collection will be replaced.\n" +
             "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    void load(String path, HandlerCallback callback);
+    void loadFile(String path, HandlerCallback callback);
 
-    @Command
+//    @Command
     @Usage("save current collection. Note that initially there is no file name yet, so please use `save-as {String}` first.")
-    void save(HandlerCallback callback) ;
+    void saveFile(HandlerCallback callback) ;
 
     /**
      * Just change the current working file. The data of that file will be replaced.
      * @param path that path to the file.
      */
-    @Command
+//    @Command
     @Usage(
        "change the current working file.\n" +
        "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted.\n" +
        "After executing this command, the current file name changed."
     )
-    void save(String path, HandlerCallback callback);
+    void saveFile(String path, HandlerCallback callback);
 
     /**
      * Add meeting into the collection
