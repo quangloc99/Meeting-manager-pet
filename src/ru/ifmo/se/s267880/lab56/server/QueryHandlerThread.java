@@ -30,7 +30,7 @@ public class QueryHandlerThread extends Thread {
     private int userId = new Random().nextInt();
 
     public QueryHandlerThread(Socket socket, EventEmitter<UserNotification> onNotificationEvent) {
-        System.out.printf("Connected to client %s!\n", socket.getInetAddress());
+//        System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
         messageToClientSender = Sender.fromSocket(socket);
         messageFromClientReceiver = Receiver.fromSocket(socket);

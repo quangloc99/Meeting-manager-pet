@@ -61,6 +61,7 @@ public class FileTransferRequest implements Serializable, Message<MessageType> {
         synchronized (receiver) {
             transfer(des, new BoundedInputStream(receiver.getInputStream(), fileSize));
         }
+        des.flush();
         des.close();
     }
 
