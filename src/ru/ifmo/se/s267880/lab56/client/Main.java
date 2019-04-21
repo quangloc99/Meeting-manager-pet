@@ -16,6 +16,8 @@ import sun.misc.Unsafe;
 
 import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -72,7 +74,7 @@ public class Main {
         Consumer[] listeners = new Consumer[2];
         listeners[0] = messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).listen(m -> {
             if (!(m instanceof UserNotification)) return;
-            System.out.printf("> %s%n>", m);
+            System.out.printf("\r>> %s%n> ", m);
         });
         listeners[1] = messageFromServerBroadcaster.onError.listen(e -> {
             messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).removeListener(listeners[0]);
@@ -150,46 +152,12 @@ public class Main {
      * Print a help message.
      */
     public static void help() {
-        String[] helps = {
-                "# Help",
-                "\tUse command \"help\" to display this message.",
-                "\tUse command \"list-commands\" for the full list of commands.",
-                "# Argument formats",
-                "## MeetingJson",
-                "\t{",
-                "\t\t\"name\"    : String,                This field is required",
-                "\t\t\"time\"    : DateJson,              Default value is the current time",
-                "\t\t\"duration\": minutes_in_number,     Default value is 60",
-                "\t\t\"location\": LocationJson,          Default value is the 1-st floor of the 1-st building [1, 1]",
-                "\t}",
-                "",
-                "## DateJson",
-                "\tDateJson can have 1 of 3 following forms:",
-                "\t1) [int, int, int, int, int, int] - from left to right: year, month, date, hour, minute, second",
-                "\t2) String representation with the following format: \"yyyy/MM/dd HH:mm:ss\"",
-                "\t3) Object representation:",
-                "\t{",
-                "\t\t\"year\": int,",
-                "\t\t\"month\": int,",
-                "\t\t\"date\": int,",
-                "\t\t\"hour\": int,",
-                "\t\t\"minute\": int,",
-                "\t\t\"second\": int",
-                "\t}",
-                "\tIn the 1-st and 3-rd form, if a field is missing, it will be filled with zero or by the current time's values",
-                "",
-                "## LocaltionJson",
-                "\tRight now this app supports very simple location. A location consists of only 2 value:",
-                "\tthe building number and the floor number that the meeting will be held.",
-                "\tLocationJson can have 1 of 2 forms:",
-                "\t1) [int, int] - from left to right is the building number and then the floor number.",
-                "\t2) Object representation:",
-                "\t{",
-                "\t\t\"building\": int,                   Default value is 1",
-                "\t\t\"floor\"   : int,                   Default value is 1",
-                "\t}",
-        };
-        Arrays.stream(helps).forEach(System.out::println);
+        InputStream help = Main.class.getResourceAsStream("res/help.md");
+        if (help == null) {
+            System.out.println("No help found");
+        } else {
+            new BufferedReader(new InputStreamReader(help)).lines().forEach(System.out::println);
+        }
     }
 
     /**
