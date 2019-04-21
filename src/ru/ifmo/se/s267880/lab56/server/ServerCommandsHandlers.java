@@ -11,6 +11,7 @@ import ru.ifmo.se.s267880.lab56.csv.CsvReader;
 import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 
 import java.io.*;
+import java.security.InvalidParameterException;
 import java.sql.*;
 import java.text.ParseException;
 import java.time.Duration;
@@ -39,18 +40,24 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     private String collectionStoringName;
     private ZonedDateTime fileOpenSince = ZonedDateTime.now();
     private ZoneId zoneId = ZonedDateTime.now().getZone();
-    private PreparedStatements dataBaseQueryStatements;
+    private SQLHelper sqlHelper;
     private List<Meeting> removedMeeting = Collections.synchronizedList(new LinkedList<>());
 
     public ServerCommandsHandlers(@NotNull List<Meeting> collection, Connection databaseConnection) throws SQLException {
         this.collection = collection;
-        this.dataBaseQueryStatements = new PreparedStatements(databaseConnection);
+        this.sqlHelper = new SQLHelper(databaseConnection);
     }
 
-    private synchronized void updateStoringName(String path) {
-        if ((path == null && collectionStoringName == null) || path.equals(collectionStoringName)) return;
-        collectionStoringName = path;
-        fileOpenSince = ZonedDateTime.now();
+    private synchronized void resetState(String restoringName, List<Meeting> meetings) {
+        if (!Objects.equals(restoringName, collectionStoringName)) {
+            collectionStoringName = restoringName;
+            fileOpenSince = ZonedDateTime.now();
+        }
+        if (meetings != null) {
+            removedMeeting.clear();
+            collection.clear();
+            collection.addAll(meetings);
+        }
     }
 
     private Meeting transformMeetingTimeSameInstant(Meeting meeting) {
@@ -96,20 +103,14 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     public synchronized void open(String collectionName, HandlerCallback callback) {
         try {
-            PreparedStatement st = dataBaseQueryStatements.getCollectionByName;
-            st.setString(1, collectionName);
-            ResultSet res = st.executeQuery();
+            ResultSet res = sqlHelper.getCollectionByName(collectionName);
             if (!res.next()) {
                 callback.onError(new Exception("Collection \"" + collectionName + "\" not found."));   // TODO (or not :p): create a class for this exception.
                 return ;
             }
             int collectionId = res.getInt("id");
-            st = dataBaseQueryStatements.getMeetingsOfCollection;
-            st.setInt(1, collectionId);
-            List<Meeting> meetings = getDataFrom(st.executeQuery());
-            collection.clear();
-            collection.addAll(meetings);
-            updateStoringName(collectionName);
+            List<Meeting> meetings = sqlHelper.getMeetingListByCollectionId(collectionId, zoneId);
+            resetState(collectionName, meetings);
             callback.onSuccess(null);
         } catch (SQLException e) {
             callback.onError(e);
@@ -128,52 +129,29 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     public void save(String name, HandlerCallback callback) { save(name, true, callback); }
 
-    public void save(String name, boolean allNew, HandlerCallback callback) {
+    public void save(String name, boolean toNewCollection, HandlerCallback callback) {
         try {
-            dataBaseQueryStatements.getConnection().setAutoCommit(false);
-            PreparedStatement st = dataBaseQueryStatements.getCollectionByName;
-            st.setString(1, name);
-            ResultSet res = st.executeQuery();
+            ResultSet res = sqlHelper.getCollectionByName(name);
             if (!res.next()) {
-                st = dataBaseQueryStatements.insertCollectionAndGetId;
-                st.setString(1, name);
-                st.setString(2, "asc-time");   // TODO add sort order
-                res = st.executeQuery();
-                res.next();
+                (res = sqlHelper.insertNewCollection(name, "asc-time")).next();
+            } else if (toNewCollection) {
+                callback.onError(new InvalidParameterException("Collection with name \"" + name + "\" existed. Please choose another name."));
+                return;
             }
             int collectionId = res.getInt("id");
-            if (!allNew) {
-                removedMeeting.forEach(ConsumerWithException.toConsumer(meeting -> {
-                    PreparedStatement curSt = dataBaseQueryStatements.deleteMeeting;
-                    if (!meeting.getId().isPresent()) return;
-                    curSt.setInt(1, meeting.getId().getAsInt());
-                    curSt.executeUpdate();
-                }));
+            if (!toNewCollection) {
+                sqlHelper.removeMeetings(removedMeeting);
             }
             List<Meeting> newCollections = collection.stream()
-                    .map(FunctionWithException.toFunction(
-                            meeting -> !allNew && meeting.getId().isPresent() ? meeting : storeMeetingToDatabase(meeting, collectionId)
+                    .map(FunctionWithException.toFunction(meeting -> !toNewCollection && meeting.getId().isPresent()
+                            ? meeting
+                            : sqlHelper.storeMeetingToDatabase(meeting, collectionId)
                     ))
                     .collect(Collectors.toList());
-            removedMeeting.clear();
-            collection.clear();
-            collection.addAll(newCollections);
-            dataBaseQueryStatements.getConnection().commit();
-            updateStoringName(name);
+            resetState(name, newCollections);
             callback.onSuccess(null);
         } catch (SQLException e) {
-            try {
-                dataBaseQueryStatements.getConnection().rollback();
-                callback.onError(e);
-            } catch (SQLException e1) {
-                callback.onError(e1);
-            }
-        } finally {
-            try {
-                dataBaseQueryStatements.getConnection().setAutoCommit(true);
-            } catch(SQLException e) {
-                callback.onError(e);
-            }
+            callback.onError(e);
         }
     }
 
@@ -193,7 +171,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
                 }
             } catch (IOException | ParseException e)  { callback.onError(e); }
         }
-        updateStoringName(path);
+        resetState(path, null);
         callback.onSuccess(null);
     }
 
@@ -218,7 +196,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     public void saveFile(String path, HandlerCallback callback) {
         try {
             saveCollectionToFile(new File(path));
-            updateStoringName(path);
+            resetState(path, null);
         } catch (IOException e) {
             callback.onError(new IOException("Unable to write data into " + path, e));
         }
@@ -268,37 +246,6 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
                         ZonedDateTime.parse(row.get("meeting time"), Helper.meetingDateFormat)    // can throw ParseException
                 )))
                 .collect(Collectors.toList());
-    }
-
-    private List<Meeting> getDataFrom(ResultSet rs) throws SQLException {
-        List<Meeting> res = new LinkedList<>();
-        while (rs.next()) {
-            res.add(meetingFromResultSet(rs));
-        }
-        return res;
-    }
-
-    private Meeting meetingFromResultSet(ResultSet rs) throws SQLException {
-        return new Meeting(
-                rs.getInt("id"),
-                rs.getString("name"),
-                Duration.ofMinutes(rs.getInt("duration")),
-                new BuildingLocation(rs.getInt("location_building"), rs.getInt("location_floor")),
-                ZonedDateTime.ofInstant(rs.getTimestamp("time").toInstant(), zoneId)  // TODO make it display the right time on zoneId.
-        );
-    }
-
-    private Meeting storeMeetingToDatabase(Meeting meeting, int collectionStoringId) throws SQLException {
-        PreparedStatement ps = dataBaseQueryStatements.insertMeetingAndGetId;
-        ps.setString(1, meeting.getName());
-        ps.setLong(2, meeting.getDuration().toMinutes());
-        ps.setInt(3, meeting.getLocation().getBuildingNumber());
-        ps.setInt(4, meeting.getLocation().getFloor());
-        ps.setTimestamp(5, Timestamp.from(meeting.getTime().toInstant()));
-        ps.setInt(6, collectionStoringId);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        return meeting.withId(rs.getInt("id"));
     }
 
     /**
