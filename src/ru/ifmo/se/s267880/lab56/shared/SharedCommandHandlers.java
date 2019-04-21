@@ -53,13 +53,13 @@ public interface SharedCommandHandlers extends CommandHandlers {
      * Just change the current working file. The data of that file will be replaced.
      * @param path that path to the file.
      */
-    @Command("save-as")
+    @Command
     @Usage(
        "change the current working file.\n" +
        "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted.\n" +
        "After executing this command, the current file name changed."
     )
-    void saveAs(String path, HandlerCallback callback);
+    void save(String path, HandlerCallback callback);
 
     /**
      * Add meeting into the collection

@@ -118,7 +118,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
             callback.onError(new NullPointerException("Please use `save-as {String}` command to set the file name."));
             return;
         }
-        saveAs(currentFileName, callback);
+        save(currentFileName, callback);
     }
 
     /**
@@ -127,7 +127,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public void saveAs(String path, HandlerCallback callback) {
+    public void save(String path, HandlerCallback callback) {
         try {
             saveCollectionToFile(new File(path));
             updateFileName(path);

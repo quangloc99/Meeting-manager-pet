@@ -149,7 +149,7 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     }
 
     @Override
-    public void saveAs(String path, HandlerCallback callback) {
+    public void save(String path, HandlerCallback callback) {
         new CommandExecutor(defaultCallbackWrapper(callback)).run();
     }
 
