@@ -36,6 +36,10 @@ public interface SharedCommandHandlers extends CommandHandlers {
     )
     void export(String name, HandlerCallback<FileTransferRequest> callback);
 
+    // TODO: add more detailed usage.
+    @Command
+    @Usage("Open a collection with the given name.")
+    void open(String collectionName, HandlerCallback callback);
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.

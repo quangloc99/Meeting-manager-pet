@@ -10,13 +10,14 @@ $$;
 
 CREATE TABLE IF NOT EXISTS collections (
   id serial PRIMARY KEY,
+  name VARCHAR(255),    -- just like linux file system
   sort_order meeting_collection_sort_order default 'asc-time'
 );
 
 CREATE TABLE IF NOT EXISTS meetings (
   id serial PRIMARY KEY,
   name text,
-  time timestamp with time zone,
+  time timestamp,
   duration integer CHECK (duration >= 0),
   location_building integer,
   location_floor integer,

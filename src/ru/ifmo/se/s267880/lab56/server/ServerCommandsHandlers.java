@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.server;
 
+import com.sun.istack.internal.NotNull;
 import ru.ifmo.se.s267880.lab56.client.ClientInputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
@@ -10,6 +11,10 @@ import ru.ifmo.se.s267880.lab56.csv.CsvReader;
 import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 
 import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.ZoneId;
@@ -34,18 +39,19 @@ import ru.ifmo.se.s267880.lab56.shared.functional.*;
  */
 public class ServerCommandsHandlers implements SharedCommandHandlers {
     private List<Meeting> collection = null;
-    private String currentFileName;
+    private String storingName;
     private ZonedDateTime fileOpenSince = ZonedDateTime.now();
     private ZoneId zoneId = ZonedDateTime.now().getZone();
+    private PreparedStatements dataBaseQueryStatements;
 
-    public ServerCommandsHandlers(List<Meeting> collection) {
-        assert(collection != null);
+    public ServerCommandsHandlers(@NotNull List<Meeting> collection, Connection databaseConnection) throws SQLException {
         this.collection = collection;
+        this.dataBaseQueryStatements = new PreparedStatements(databaseConnection);
     }
 
-    private synchronized void updateFileName(String path) {
-        if ((path == null && currentFileName == null) || path.equals(currentFileName)) return;
-        currentFileName = path;
+    private synchronized void updateStoringName(String path) {
+        if ((path == null && storingName == null) || path.equals(storingName)) return;
+        storingName = path;
         fileOpenSince = ZonedDateTime.now();
     }
 
@@ -57,8 +63,8 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
         return meeting.withTime(meeting.getTime().withZoneSameLocal(zoneId));
     }
 
-    public synchronized String getCurrentFileName() {
-        return currentFileName;
+    public synchronized String getStoringName() {
+        return storingName;
     }
 
     /**
@@ -89,6 +95,29 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
         }
     }
 
+    @Override
+    public synchronized void open(String collectionName, HandlerCallback callback) {
+        try {
+            PreparedStatement st = dataBaseQueryStatements.getCollectionByName;
+            st.setString(1, collectionName);
+            ResultSet res = st.executeQuery();
+            if (!res.next()) {
+                callback.onError(new Exception("Collection \"" + collectionName + "\" not found."));   // TODO (or not :p): create a class for this exception.
+                return ;
+            }
+            int collectionId = res.getInt("id");
+            st = dataBaseQueryStatements.getMeetingsOfCollection;
+            st.setInt(1, collectionId);
+            List<Meeting> meetings = getDataFrom(st.executeQuery());
+            collection.clear();
+            collection.addAll(meetings);
+            updateStoringName(collectionName);
+            callback.onSuccess(null);
+        } catch (SQLException e) {
+            callback.onError(e);
+        }
+    }
+
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
      * @param path the path to the file.
@@ -105,20 +134,20 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
                 }
             } catch (IOException | ParseException e)  { callback.onError(e); }
         }
-        updateFileName(path);
+        updateStoringName(path);
         callback.onSuccess(null);
     }
 
     /**
-     * Save all the collection into the file with name {@link #currentFileName}.
+     * Save all the collection into the file with name {@link #storingName}.
      */
     @Override
     public synchronized void saveFile(HandlerCallback callback) {
-        if (currentFileName == null) {
+        if (storingName == null) {
             callback.onError(new NullPointerException("Please use `save-as {String}` command to set the file name."));
             return;
         }
-        saveFile(currentFileName, callback);
+        saveFile(storingName, callback);
     }
 
     /**
@@ -130,7 +159,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     public void saveFile(String path, HandlerCallback callback) {
         try {
             saveCollectionToFile(new File(path));
-            updateFileName(path);
+            updateStoringName(path);
         } catch (IOException e) {
             callback.onError(new IOException("Unable to write data into " + path, e));
         }
@@ -180,6 +209,20 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
                         ZonedDateTime.parse(row.get("meeting time"), Helper.meetingDateFormat)    // can throw ParseException
                 )))
                 .collect(Collectors.toList());
+    }
+
+    private List<Meeting> getDataFrom(ResultSet rs) throws SQLException {
+        List<Meeting> res = new LinkedList<>();
+        while (rs.next()) {
+            res.add(new Meeting(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    Duration.ofMinutes(rs.getInt("duration")),
+                    new BuildingLocation(rs.getInt("location_building"), rs.getInt("location_floor")),
+                    ZonedDateTime.ofInstant(rs.getTimestamp("time").toInstant(), zoneId)  // TODO make it display the right time on zoneId.
+            ));
+        }
+        return res;
     }
 
     /**
@@ -259,7 +302,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     public synchronized void info(HandlerCallback<Map<String, String>> callback) {
         Map<String, String> result = new HashMap<>();
-        result.put("file", currentFileName);
+        result.put("file", storingName);
         result.put("meeting-count", Integer.toString(collection.size()));
         result.put("since", Helper.meetingDateFormat.format(fileOpenSince));
         result.put("time-zone", zoneId.toString() + " " + ZoneUtils.toUTCZoneOffsetString(zoneId));

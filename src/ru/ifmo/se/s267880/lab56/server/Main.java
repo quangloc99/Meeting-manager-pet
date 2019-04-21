@@ -28,9 +28,9 @@ public class Main {
             System.out.println("Server connected at " + ss.getLocalPort());
             while (true) {
                 try {
-                    new QueryHandlerThread(ss.accept(), onNotification).start();
-                } catch (IOException e) {
-                    System.err.println("Cannot run thread due to IOException: " + e.getMessage());
+                    new QueryHandlerThread(ss.accept(), databaseConnection, onNotification).start();
+                } catch (IOException | SQLException e) {
+                    System.err.println("Cannot run thread: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -48,7 +48,7 @@ public class Main {
         if (is == null) throw new IOException("Cannot load script from resource.");
         BufferedReader in = new BufferedReader(new InputStreamReader(is));
         Statement st = res.createStatement();
-        st.executeUpdate(in.lines().collect(Collectors.joining()));
+        st.executeUpdate(in.lines().collect(Collectors.joining("\n")));
         return res;
     }
 }

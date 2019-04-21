@@ -10,6 +10,8 @@ import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
 import java.io.*;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -29,13 +31,13 @@ public class QueryHandlerThread extends Thread {
 
     private int userId = new Random().nextInt();
 
-    public QueryHandlerThread(Socket socket, EventEmitter<UserNotification> onNotificationEvent) {
-//        System.out.printf("Connected to client %s!\n", socket.getInetAddress());
+    public QueryHandlerThread(Socket socket, Connection databaseConnection, EventEmitter<UserNotification> onNotificationEvent) throws SQLException {
+        System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
         messageToClientSender = Sender.fromSocket(socket);
         messageFromClientReceiver = Receiver.fromSocket(socket);
 
-        commandsHandlers = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<>()));
+        commandsHandlers = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<>()), databaseConnection);
         commandController = new CommandController();
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, commandsHandlers, new ServerInputPreprocessor())
                 .forEach(commandController::addCommand);

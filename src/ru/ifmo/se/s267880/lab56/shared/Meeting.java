@@ -3,6 +3,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.OptionalInt;
 
 /**
  * @author Tran Quang Loc
@@ -18,10 +19,16 @@ public class Meeting implements Comparable<Meeting>, Serializable {
         }
     }
 
-    private String meetingName;         // replacement for object's name
-    private Duration duration;          // replacement for size
-    private BuildingLocation location;  // replacement for location
-    private ZonedDateTime meetingTime;           // replacement for object's creation's time
+    private transient OptionalInt id;
+    private String meetingName;                 // replacement for object's name
+    private Duration duration;                  // replacement for size
+    private BuildingLocation location;          // replacement for location
+    private ZonedDateTime meetingTime;          // replacement for object's creation's time
+
+    public Meeting(int id, String meetingName, Duration duration, BuildingLocation location, ZonedDateTime meetingTime) {
+        this(meetingName, duration, location, meetingTime);
+        this.id = OptionalInt.of(id);
+    }
 
     /**
      * @param meetingName The name of the meeting.
@@ -32,6 +39,7 @@ public class Meeting implements Comparable<Meeting>, Serializable {
         this.duration = duration;
         this.location = location;
         this.meetingTime = meetingTime;
+        id = OptionalInt.empty();
     }
 
     /**
@@ -57,9 +65,10 @@ public class Meeting implements Comparable<Meeting>, Serializable {
         return meetingTime;  // because it is immutable.
     }
 
+    public Meeting withId(int id) { return new Meeting(id, meetingName, duration, location, meetingTime); }
     public Meeting withName(String name) { return new Meeting(name, duration, location, meetingTime); }
     public Meeting withDuration(Duration dur) { return new Meeting(meetingName, dur, location, meetingTime); }
-    public Meeting withLocation(BuildingLocation loc) { return new Meeting(meetingName, duration, location, meetingTime); }
+    public Meeting withLocation(BuildingLocation loc) { return new Meeting(meetingName, duration, loc, meetingTime); }
     public Meeting withTime(ZonedDateTime time) { return new Meeting(meetingName, duration, location, time); }
 
     @Override
