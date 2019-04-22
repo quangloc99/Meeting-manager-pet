@@ -283,47 +283,6 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     }
 
     /**
-     * Sort all the meeting ascending by their date.
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public void sortByDate(HandlerCallback callback) {
-//        Collections.sort(collection, Comparator.comparing(Meeting::getTime));
-        callback.onSuccess(null);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void sortBytime(HandlerCallback callback) {
-//        Collections.sort(collection, Comparator.comparing(Meeting::getDuration));
-        callback.onSuccess(null);
-    }
-
-    /**
-     * Reverse the order of the meetings.
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public void reverse(HandlerCallback callback) {
-//        Collections.reverse(collection);
-        callback.onSuccess(null);
-    }
-
-    /**
-     * Swap 2 meeting.
-     * @param a the index of the first meeting.
-     * @param b the index of the second meeting.
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public void swap(int a, int b, HandlerCallback callback) {
-//        synchronized (collection) {
-//            Collections.swap(collection, a - 1, b - 1);
-//        }
-//        callback.onSuccess(null);
-    }
-
-    /**
      * Clear the collection.
      */
     @Override

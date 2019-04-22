@@ -123,34 +123,6 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Usage("Show some basic information.")
     void info(HandlerCallback<Map<String, String>> callback);
 
-
-    /**
-     * Sort all the meeting ascending by their date.
-     */
-    @Command(value="sort-by-date", additional = true)
-    @Usage("sort all the meeting ascending by their date.")
-    void sortByDate(HandlerCallback callabck);
-
-    @Command(value="sort-by-duration", additional = true)
-    @Usage("sort all the meetings ascending by their duration")
-    void sortBytime(HandlerCallback callback);
-
-    /**
-     * Reverse the order of the meetings.
-     */
-    @Command(additional = true)
-    @Usage("reverse the order ot the meetings.")
-    void reverse(HandlerCallback callback);
-
-    /**
-     * Swap 2 meeting.
-     * @param a the index of the first meeting.
-     * @param b the index of the second meeting.
-     */
-    @Command(additional = true)
-    @Usage("swap 2 meetings with the given indexes")
-    void swap(int a, int b, HandlerCallback callback);
-
     /**
      * Clear the collection.
      */

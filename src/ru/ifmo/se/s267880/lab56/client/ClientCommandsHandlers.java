@@ -241,37 +241,6 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     }
 
     /**
-     * Sort all the meeting ascending by their date.
-     */
-    @Override
-    public void sortByDate(HandlerCallback callback) {
-        new CommandExecutor(defaultCallbackWrapper(callback)).run();
-    }
-
-    @Override
-    public void sortBytime(HandlerCallback callback) {
-        new CommandExecutor(defaultCallbackWrapper(callback)).run();
-    }
-
-    /**
-     * Reverse the order of the meetings.
-     */
-    @Override
-    public void reverse(HandlerCallback callback) {
-        new CommandExecutor(defaultCallbackWrapper(callback)).run();
-    }
-
-    /**
-     * Swap 2 meeting.
-     * @param a the index of the first meeting.
-     * @param b the index of the second meeting.
-     */
-    @Override
-    public void swap(int a, int b, HandlerCallback callback) {
-        new CommandExecutor(defaultCallbackWrapper(callback)).run();
-    }
-
-    /**
      * Clear the collection.
      */
     @Override
