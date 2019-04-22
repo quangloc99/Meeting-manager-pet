@@ -8,14 +8,14 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
+import javax.mail.internet.InternetAddress;
 import java.io.*;
 import java.net.Socket;
+import java.security.spec.InvalidKeySpecException;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class QueryHandlerThread extends Thread {
@@ -25,26 +25,45 @@ public class QueryHandlerThread extends Thread {
     private Sender messageToClientSender;
     private Receiver messageFromClientReceiver;
     private EventEmitter<UserNotification> onNotificationEvent;
+    private SQLHelper sqlHelper;
     private Consumer<UserNotification> notificationListener = notification -> {
         try { messageToClientSender.sendWithStream(notification); } catch (IOException ignore) {}
     };
 
-    private int userId = new Random().nextInt();
-
-    public QueryHandlerThread(Socket socket, Connection databaseConnection, EventEmitter<UserNotification> onNotificationEvent) throws SQLException {
+    public QueryHandlerThread(Socket socket, Connection databaseConnection, UserStatePool userStatePool, EventEmitter<UserNotification> onNotificationEvent) throws SQLException {
         System.out.printf("Connected to client %s!\n", socket.getInetAddress());
         this.client = socket;
         messageToClientSender = Sender.fromSocket(socket);
         messageFromClientReceiver = Receiver.fromSocket(socket);
+        sqlHelper = new SQLHelper(databaseConnection);
 
-        commandsHandlers = new ServerCommandsHandlers(new UserState(databaseConnection));
+        commandsHandlers = new ServerCommandsHandlers() {
+            @Override
+            public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
+                try {
+                    String userEmail = userEmailAndPassword.getKey().getAddress();
+                    if (sqlHelper.getUserbyEmail(userEmail).next()) {
+                        callback.onError(new Exception("User with email " + userEmail + " has already existed."));
+                        return ;
+                    }
+                    // TODO validate with token
+                    ResultSet rs = sqlHelper.insertNewUser(userEmail, Crypto.hashPassword(userEmailAndPassword.getValue()));
+                    rs.next();
+                    int userId = rs.getInt("id");
+                    setState(userStatePool.getUserState(userId));
+                    onNotificationEvent.emit(new UserNotification(userEmail, "joined"));
+                    callback.onSuccess(true);
+                } catch (SQLException | InvalidKeySpecException e) {
+                    callback.onError(e);
+                }
+            }
+        };
         commandController = new CommandController();
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, commandsHandlers, new ServerInputPreprocessor())
                 .forEach(commandController::addCommand);
 
         this.onNotificationEvent = onNotificationEvent;
         onNotificationEvent.listen(notificationListener);
-        onNotificationEvent.emit(new UserNotification("user" + userId, "joined"));
     }
 
     @Override
@@ -81,11 +100,17 @@ public class QueryHandlerThread extends Thread {
         System.err.println(e.getMessage());
         System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
         onNotificationEvent.removeListener(notificationListener);
-        onNotificationEvent.emit(new UserNotification("user" + userId, "left"));
+        try {
+            onNotificationEvent.emit(new UserNotification(commandsHandlers.getState().getUserEmail(), "left"));
+        } catch (SQLException e1) {
+            System.err.println("Error with DataBase.");
+            e1.printStackTrace();
+        }
+        commandsHandlers.getState().dispose();
     }
 
     private CommandExecuteRespond generateResult(CommandExecuteRespondStatus status, Serializable result) {
-        LinkedList<Meeting> clonedCollection = new LinkedList<>(commandsHandlers.getCollection());
+        LinkedList<Meeting> clonedCollection = new LinkedList<>(commandsHandlers.getState().getMeetingsCollection());
         clonedCollection.sort(Comparator.comparing(Meeting::getName));
         return new CommandExecuteRespond(status, result, clonedCollection);
     }

@@ -14,9 +14,11 @@ import java.util.stream.Collectors;
 public class Main {
     private static EventEmitter<UserNotification> onNotification = new EventEmitter<>();
     private static Connection databaseConnection;
+    private static UserStatePool userStatePool;
     public static void main(String[] args) {
         try {
             databaseConnection = initDataBase();
+            userStatePool = new UserStatePool(databaseConnection);
         } catch (SQLException e) {
             System.err.println("Error while initialization data base: " + e.getMessage());
             System.exit(1);
@@ -28,7 +30,7 @@ public class Main {
             System.out.println("Server connected at " + ss.getLocalPort());
             while (true) {
                 try {
-                    new QueryHandlerThread(ss.accept(), databaseConnection, onNotification).start();
+                    new QueryHandlerThread(ss.accept(), databaseConnection, userStatePool, onNotification).start();
                 } catch (IOException | SQLException e) {
                     System.err.println("Cannot run thread: " + e.getMessage());
                     e.printStackTrace();

@@ -1,6 +1,5 @@
 package ru.ifmo.se.s267880.lab56.server;
 
-import com.sun.istack.internal.NotNull;
 import ru.ifmo.se.s267880.lab56.client.ClientInputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
@@ -12,7 +11,6 @@ import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 
 import java.io.*;
 import java.security.InvalidParameterException;
-import java.security.spec.InvalidKeySpecException;
 import java.sql.*;
 import java.text.ParseException;
 import java.time.Duration;
@@ -38,7 +36,7 @@ import javax.mail.internet.InternetAddress;
  * @see CommandController
  * @see ClientInputPreprocessor
  */
-public class ServerCommandsHandlers implements SharedCommandHandlers {
+abstract public class ServerCommandsHandlers implements SharedCommandHandlers {
     private UserState state;
 
     public ServerCommandsHandlers(UserState state) {
@@ -292,14 +290,6 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
         callback.onSuccess(null);
     }
 
-    /**
-     * List all the meetings.
-     * Note: The method will transform every meeting's time to the current zone with same <b>instant</b>.
-     */
-    public List<Meeting> getCollection() {
-        return state.getMeetingsCollection();
-    }
-
     @Override
     public void listTimeZones(int offsetHour, HandlerCallback<Map<Integer, ZoneId>> callback) {
         callback.onSuccess(ZoneUtils.getZonesBy(z -> ZoneUtils.toUTCZoneOffset(z).getTotalSeconds() / 3600 == offsetHour));
@@ -318,19 +308,11 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
         callback.onSuccess(null);
     }
 
-    @Override
-    public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
-//        try {
-//            String userEmail = userEmailAndPassword.getKey().getAddress();
-//            if (sqlHelper.getUserbyEmail(userEmail).next()) {
-//                callback.onError(new Exception("User with email " + userEmail + " has already existed."));
-//                return ;
-//            }
-//            // TODO validate with token
-//            sqlHelper.insertNewUser(userEmail, Crypto.hashPassword(userEmailAndPassword.getValue()));
-//            callback.onSuccess(true);
-//        } catch (SQLException | InvalidKeySpecException e) {
-//            callback.onError(e);
-//        }
+    public UserState getState() {
+        return state;
+    }
+
+    public void setState(UserState state) {
+        this.state = state;
     }
 }

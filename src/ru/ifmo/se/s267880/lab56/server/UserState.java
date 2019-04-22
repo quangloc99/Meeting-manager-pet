@@ -12,17 +12,21 @@ import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class UserState {
+    private int userId = -1;
     private List<Meeting> meetingsCollection = Collections.synchronizedList(new LinkedList<>());
     private List<Meeting> removedMeetings = Collections.synchronizedList(new LinkedList<>());
     private String collectionStoringName = null;
     private ZonedDateTime openSince = ZonedDateTime.now();
     private ZoneId timeZoneId = ZonedDateTime.now().getZone();
     private SQLHelper sqlHelper;
+    protected AtomicInteger referenceCount = new AtomicInteger();
 
-    public UserState(Connection connection) throws SQLException {
+    public UserState(int userId, Connection connection) throws SQLException {
+        this.userId = userId;
         this.sqlHelper = new SQLHelper(connection);
     }
 
@@ -93,7 +97,6 @@ public class UserState {
         return meeting.withTime(meeting.getTime().withZoneSameLocal(timeZoneId));
     }
 
-
     public synchronized void add(Meeting meeting) {
         meetingsCollection.add(transformMeetingTimeSameLocal(meeting));
     }
@@ -106,20 +109,40 @@ public class UserState {
         if (meetingNumber < 1 || meetingNumber > meetingsCollection.size()) {
             throw new IndexOutOfBoundsException("Number must be positive and not bigger than the number of meetings.");
         }
-        removedMeetings.add(meetingsCollection.remove(--meetingNumber));
+        Meeting m = meetingsCollection.remove(--meetingNumber);
+        if (sqlHelper != null) {
+            removedMeetings.add(m);
+        }
     }
 
     public synchronized void clear() {
-        removedMeetings.addAll(meetingsCollection);
+        if (sqlHelper != null) {
+            removedMeetings.addAll(meetingsCollection);
+        }
         meetingsCollection.clear();
+    }
+
+    public void increaseReferenceCount() {
+        referenceCount.getAndIncrement();
+    }
+
+    public void dispose() {
+        referenceCount.getAndDecrement();
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getUserEmail() throws SQLException {
+        if (userId == -1) return null;
+        ResultSet rs = sqlHelper.getUserById(userId);
+        if (!rs.next()) return null;
+        return rs.getString("email");
     }
 
     public List<Meeting> getMeetingsCollection() {
         return Collections.unmodifiableList(meetingsCollection);
-    }
-
-    public List<Meeting> getRemovedMeetings() {
-        return Collections.unmodifiableList(removedMeetings);
     }
 
     public String getCollectionStoringName() {

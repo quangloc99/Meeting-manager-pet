@@ -14,6 +14,7 @@ import java.util.List;
 
 public class SQLHelper {
     private final PreparedStatement getUserByEmailSt;
+    private final PreparedStatement getUserByIdSt;
     private final PreparedStatement getCollectionByNameSt;
     private final PreparedStatement getCollectionOfMeetingsSt;
     private final PreparedStatement insertUserAndGetIdSt;
@@ -25,6 +26,7 @@ public class SQLHelper {
 
     public SQLHelper(Connection connection) throws SQLException {
         this.connection = connection;
+        getUserByIdSt = connection.prepareStatement("select * from users where id = ?");
         getUserByEmailSt = connection.prepareStatement("select * from users where email = ?");
         getCollectionByNameSt = connection.prepareStatement("select id, sort_order from collections where name = ?");
         getCollectionOfMeetingsSt = connection.prepareStatement("select meetings.* from meetings where collection_id = ?");
@@ -38,6 +40,11 @@ public class SQLHelper {
         );
         insertUserAndGetIdSt = connection.prepareStatement("INSERT INTO users (email, password_hash) values (?, ?) RETURNING id");
         deleteMeetingSt = connection.prepareStatement("DELETE FROM meetings WHERE id = ?");
+    }
+
+    public ResultSet getUserById(int id) throws SQLException {
+        getUserByIdSt.setInt(1, id);
+        return getUserByIdSt.executeQuery();
     }
 
     public ResultSet getUserbyEmail(@NotNull String email) throws SQLException {
