@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client.repl;
 
+import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
 import ru.ifmo.se.s267880.lab56.client.repl.input.UserInputProvider;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
@@ -19,16 +20,16 @@ public class MainLoop extends Thread {
     public void run(HandlerCallback<Void> callback) {
         new Thread(() -> {
             Consumer<Exception> onError = e -> {
-                System.err.printf("Error: %s\n", e.getMessage());
+                ConsoleWrapper.console.printf("Error: %s\n", e.getMessage());
                 Throwable cause = e.getCause();
                 if (cause instanceof CommunicationIOException) {
-                    System.err.println("Disconnected to server");
+                    ConsoleWrapper.console.println("Disconnected to server");
                     callback.onError((Exception) cause);
                     return;
                 }
                 this.run(callback);
             };
-            System.out.printf("> ");  // show the prompt, just for show the user that it is ready.
+            ConsoleWrapper.console.printf("> ");
             this.inputProvider.getInput(new HandlerCallback<>(
                     args -> {
                         if (args.size() == 0) this.run(callback);   // there is no command at all.

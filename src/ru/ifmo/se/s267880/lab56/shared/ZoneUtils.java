@@ -1,5 +1,7 @@
 package ru.ifmo.se.s267880.lab56.shared;
 
+import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -42,8 +44,8 @@ public class ZoneUtils {
         new TreeMap<>(
             zones.entrySet().stream().collect(Collectors.groupingBy(e -> toUTCZoneOffset(e.getValue())))
         ) .forEach((k, v) -> {
-            System.out.printf("UTC%s%n", toUTCZoneOffsetString(k));
-            v.forEach(e -> System.out.printf("\t%d) %s%n", e.getKey(), e.getValue()));
+            ConsoleWrapper.console.printf("UTC%s%n", toUTCZoneOffsetString(k));
+            v.forEach(e -> ConsoleWrapper.console.printf("\t%d) %s%n", e.getKey(), e.getValue()));
         }) ;
     }
 }

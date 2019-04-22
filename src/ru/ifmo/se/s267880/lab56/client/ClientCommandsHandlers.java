@@ -35,14 +35,14 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     private <T extends Serializable> HandlerCallback<CommandExecuteRespond> defaultCallbackWrapper(HandlerCallback<T> callback) {
         return new HandlerCallback<>(
                 res -> {
-                    System.out.println("Command " + currentCommandName + " successfully executed.");
+                    ConsoleWrapper.console.println("Command " + currentCommandName + " successfully executed.");
                     if (!isQuite) {
-                        System.out.println("# Meeting list (sorted by name):");
+                        ConsoleWrapper.console.println("# Meeting list (sorted by name):");
                         int i = 0;
                         for (Meeting meeting : res.getCollection()) {
-                            System.out.printf("%3d) %s\n", ++i, meeting);
+                            ConsoleWrapper.console.printf("%3d) %s\n", ++i, meeting);
                         }
-                        System.out.println("To get the original order (the real order), please use command `show`.");
+                        ConsoleWrapper.console.println("To get the original order (the real order), please use command `show`.");
                     }
                     callback.onSuccess(res.getResult());
                 }, callback::onError

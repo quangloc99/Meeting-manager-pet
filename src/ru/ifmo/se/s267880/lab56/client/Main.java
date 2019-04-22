@@ -24,7 +24,6 @@ import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
-import java.util.Arrays;
 import java.util.function.Consumer;
 
 /**
@@ -55,7 +54,7 @@ public class Main {
                     // because we are trying to connect to server so the socket channel is not need to be closed.
                     return ;
                 }
-                System.err.printf(e instanceof  UnresolvedAddressException
+                ConsoleWrapper.console.printf(e instanceof  UnresolvedAddressException
                         ? "Address %s can not be resolved%n"
                         : "Unable to connect to %s%n", address);
                 if (confirm("Reenter address?")) {
@@ -74,7 +73,7 @@ public class Main {
         Consumer[] listeners = new Consumer[2];
         listeners[0] = messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).listen(m -> {
             if (!(m instanceof UserNotification)) return;
-            System.out.printf("\r>> %s%n> ", m);
+            ConsoleWrapper.console.printf("\r>> %s%n> ", m);
         });
         listeners[1] = messageFromServerBroadcaster.onError.listen(e -> {
             messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).removeListener(listeners[0]);
@@ -103,8 +102,8 @@ public class Main {
                 if (os.contains("Windows")) {
                     Runtime.getRuntime().exec("cls");
                 } else {
-                    System.out.print("\033[H\033[2J");
-                    System.out.flush();
+                    ConsoleWrapper.console.printf("\033[H\033[2J");
+                    ConsoleWrapper.console.flush();
                     Runtime.getRuntime().exec("clear");
                 }
             } catch (final Exception e) {
@@ -117,13 +116,13 @@ public class Main {
 
         cc.addCommand("list-commands", CommandHandler.ofConsumer(
                 "[Additional] List all the commands.", args -> {
-                    System.out.println("# Commands list:");
+                    ConsoleWrapper.console.println("# Commands list:");
                     cc.getCommandHandlers().forEach((commandName, handler) -> {
-                        System.out.print("- ");
+                        ConsoleWrapper.console.printf("- ");
                         for (String s : handler.getUsage(commandName).split("\n")) {
-                            System.out.printf("\t%s\n", s);
+                            ConsoleWrapper.console.printf("\t%s\n", s);
                         }
-                        System.out.println();
+                        ConsoleWrapper.console.println("");
                     });
                 }
         ));
@@ -138,14 +137,14 @@ public class Main {
     }
 
     private static void printAwesomeASCIITitle() {
-        System.out.println("  ___ ___    ___    ___ ______  ____  ____    ____      ___ ___   ____  ____    ____   ____    ___  ____");
-        System.out.println("_|   |   |  /  _]  /  _]      ||    ||    \\  /    |    |   |   | /    ||    \\  /    | /    |  /  _]|    \\");
-        System.out.println("_| _   _ | /  [_  /  [_|      | |  | |  _  ||   __|    | _   _ ||  o  ||  _  ||  o  ||   __| /  [_ |  D  )");
-        System.out.println("_|  \\_/  ||    _]|    _]_|  |_| |  | |  |  ||  |  |    |  \\_/  ||     ||  |  ||     ||  |  ||    _]|    /");
-        System.out.println("_|   |   ||   [_ |   [_  |  |   |  | |  |  ||  |_ |    |   |   ||  _  ||  |  ||  _  ||  |_ ||   [_ |    \\");
-        System.out.println("_|   |   ||     ||     | |  |   |  | |  |  ||     |    |   |   ||  |  ||  |  ||  |  ||     ||     ||  .  \\");
-        System.out.println("_|___|___||_____||_____| |__|  |____||__|__||___,_|    |___|___||__|__||__|__||__|__||___,_||_____||__|\\_|");
-        System.out.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
+        ConsoleWrapper.console.println("  ___ ___    ___    ___ ______  ____  ____    ____      ___ ___   ____  ____    ____   ____    ___  ____");
+        ConsoleWrapper.console.println("_|   |   |  /  _]  /  _]      ||    ||    \\  /    |    |   |   | /    ||    \\  /    | /    |  /  _]|    \\");
+        ConsoleWrapper.console.println("_| _   _ | /  [_  /  [_|      | |  | |  _  ||   __|    | _   _ ||  o  ||  _  ||  o  ||   __| /  [_ |  D  )");
+        ConsoleWrapper.console.println("_|  \\_/  ||    _]|    _]_|  |_| |  | |  |  ||  |  |    |  \\_/  ||     ||  |  ||     ||  |  ||    _]|    /");
+        ConsoleWrapper.console.println("_|   |   ||   [_ |   [_  |  |   |  | |  |  ||  |_ |    |   |   ||  _  ||  |  ||  _  ||  |_ ||   [_ |    \\");
+        ConsoleWrapper.console.println("_|   |   ||     ||     | |  |   |  | |  |  ||     |    |   |   ||  |  ||  |  ||  |  ||     ||     ||  .  \\");
+        ConsoleWrapper.console.println("_|___|___||_____||_____| |__|  |____||__|__||___,_|    |___|___||__|__||__|__||__|__||___,_||_____||__|\\_|");
+        ConsoleWrapper.console.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
     }
 
     /**
@@ -154,9 +153,9 @@ public class Main {
     public static void help() {
         InputStream help = Main.class.getResourceAsStream("res/help.md");
         if (help == null) {
-            System.out.println("No help found");
+            ConsoleWrapper.console.println("No help found");
         } else {
-            new BufferedReader(new InputStreamReader(help)).lines().forEach(System.out::println);
+            new BufferedReader(new InputStreamReader(help)).lines().forEach(ConsoleWrapper.console::println);
         }
     }
 
