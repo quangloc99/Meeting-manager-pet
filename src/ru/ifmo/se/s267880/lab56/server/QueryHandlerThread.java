@@ -37,43 +37,7 @@ public class QueryHandlerThread extends Thread {
         messageFromClientReceiver = Receiver.fromSocket(socket);
         sqlHelper = new SQLHelper(databaseConnection);
 
-        commandsHandlers = new ServerCommandsHandlers() {
-            @Override
-            public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
-                try {
-                    String userEmail = userEmailAndPassword.getKey().getAddress();
-                    if (sqlHelper.getUserbyEmail(userEmail).next()) {
-                        callback.onError(new Exception("User with email " + userEmail + " has already existed."));
-                        return ;
-                    }
-                    // TODO validate with token
-                    ResultSet rs = sqlHelper.insertNewUser(userEmail, Crypto.hashPassword(userEmailAndPassword.getValue()));
-                    rs.next();
-                    int userId = rs.getInt("id");
-                    setState(userStatePool.getUserState(userId));
-                    onNotificationEvent.emit(new UserNotification(userEmail, "has joined"));
-                    callback.onSuccess(true);
-                } catch (SQLException | InvalidKeySpecException e) {
-                    callback.onError(e);
-                }
-            }
-
-            @Override
-            public void logout(HandlerCallback callback) {
-                try {
-                    if (getState().getUserId() == -1) {
-                        callback.onError(new Exception("You are not login."));
-                        return ;
-                    }
-                    onNotificationEvent.emit(new UserNotification(getState().getUserEmail(), "has left"));
-                    setState(new UserState());
-                    callback.onSuccess(null);
-                } catch (SQLException e) {
-                    System.err.println("Error with Database.");
-                    callback.onError(e);
-                }
-            }
-        };
+        commandsHandlers = createCommandHandler(userStatePool);
         commandController = new CommandController();
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, commandsHandlers, new ServerInputPreprocessor())
                 .forEach(commandController::addCommand);
@@ -128,5 +92,67 @@ public class QueryHandlerThread extends Thread {
         LinkedList<Meeting> clonedCollection = new LinkedList<>(commandsHandlers.getState().getMeetingsCollection());
         clonedCollection.sort(Comparator.comparing(Meeting::getName));
         return new CommandExecuteRespond(status, result, clonedCollection);
+    }
+
+    private ServerCommandsHandlers createCommandHandler(UserStatePool userStatePool) {
+        return new ServerCommandsHandlers() {
+            @Override
+            public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
+                try {
+                    String userEmail = userEmailAndPassword.getKey().getAddress();
+                    if (sqlHelper.getUserbyEmail(userEmail).next()) {
+                        callback.onError(new Exception("User with email " + userEmail + " has already existed."));
+                        return ;
+                    }
+                    // TODO validate with token
+                    ResultSet rs = sqlHelper.insertNewUser(userEmail, Crypto.hashPassword(userEmailAndPassword.getValue()));
+                    rs.next();
+                    setState(userStatePool.getUserState(rs.getInt("id")));
+                    onNotificationEvent.emit(new UserNotification(userEmail, "has joined"));
+                    callback.onSuccess(true);
+                } catch (SQLException | InvalidKeySpecException e) {
+                    callback.onError(e);
+                }
+            }
+
+            @Override
+            public void login(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
+                try {
+                    String userEmail = userEmailAndPassword.getKey().getAddress();
+                    ResultSet rs = sqlHelper.getUserbyEmail(userEmail);
+                    if (!rs.next()) {
+                        callback.onError(new Exception("Email or password not correct."));
+                        return ;
+                    }
+                    String passwordHash = rs.getString("password_hash");
+                    if (!Crypto.validatePassword(userEmailAndPassword.getValue(), passwordHash)) {
+                        callback.onError(new Exception("Email or password not correct."));
+                        return ;
+                    }
+                    setState(userStatePool.getUserState(rs.getInt("id")));
+                    onNotificationEvent.emit(new UserNotification(userEmail, "has joined"));
+                    callback.onSuccess(true);
+                } catch (SQLException | InvalidKeySpecException e) {
+                    callback.onError(e);
+                }
+            }
+
+            @Override
+            public void logout(HandlerCallback callback) {
+                try {
+                    if (getState().getUserId() == -1) {
+                        callback.onError(new Exception("You are not login."));
+                        return ;
+                    }
+                    onNotificationEvent.emit(new UserNotification(getState().getUserEmail(), "has left"));
+                    setState(new UserState());
+                    callback.onSuccess(null);
+                } catch (SQLException e) {
+                    System.err.println("Error with Database.");
+                    callback.onError(e);
+                }
+            }
+
+        };
     }
 }

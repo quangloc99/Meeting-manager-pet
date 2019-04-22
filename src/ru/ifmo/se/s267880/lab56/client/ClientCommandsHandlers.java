@@ -278,17 +278,32 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
                  }
                  callback.onSuccess(res.getResult());
             }, callback::onError)).run();
-            Thread.sleep(1000);
+//            Thread.sleep(1000);
             Arrays.fill(pass, '\0');
-        } catch (InterruptedException | AddressException e) {
+        } catch (AddressException e) {
             callback.onError(e);
         }
     }
 
     @Override
+    public void login(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
+        char[] pass = ConsoleWrapper.console.readPassword("Enter your password: ");
+        if (pass == null) {
+            callback.onSuccess(true);
+            return;
+        }
+        userEmailAndPassword.setValue(pass);
+        new CommandExecutor(new HandlerCallback<>(res -> {
+            System.out.println("Your are logged in.");
+            callback.onSuccess(res.getResult());
+        }, callback::onError)).run();
+        Arrays.fill(pass, '\0');
+    }
+
+    @Override
     public void logout(HandlerCallback callback) {
         new CommandExecutor(new HandlerCallback<>(res -> {
-            ConsoleWrapper.console.println("You are logout. Your progress is till be save and can be access in the next login.");
+            ConsoleWrapper.console.println("You are logged out. Your progress is till be save and can be access in the next login.");
             callback.onSuccess(null);
         }, callback::onError)).run();
     }

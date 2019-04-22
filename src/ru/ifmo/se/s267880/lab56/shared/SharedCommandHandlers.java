@@ -153,6 +153,10 @@ public interface SharedCommandHandlers extends CommandHandlers {
     void register(Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback);
 
     @Command
+    @Usage("Login")
+    void login(Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback);
+
+    @Command
     @Usage("Just logout.")
     void logout(HandlerCallback callback);
 }
