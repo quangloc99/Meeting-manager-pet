@@ -284,4 +284,12 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
             callback.onError(e);
         }
     }
+
+    @Override
+    public void logout(HandlerCallback callback) {
+        new CommandExecutor(new HandlerCallback<>(res -> {
+            ConsoleWrapper.console.println("You are logout. Your progress is till be save and can be access in the next login.");
+            callback.onSuccess(null);
+        }, callback::onError)).run();
+    }
 }

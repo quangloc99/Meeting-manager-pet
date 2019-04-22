@@ -151,4 +151,8 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Command
     @Usage("Do the registration with email. The password will be asked after entering this command.")
     void register(Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback);
+
+    @Command
+    @Usage("Just logout.")
+    void logout(HandlerCallback callback);
 }

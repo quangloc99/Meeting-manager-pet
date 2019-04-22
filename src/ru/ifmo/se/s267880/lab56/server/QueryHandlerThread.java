@@ -51,9 +51,25 @@ public class QueryHandlerThread extends Thread {
                     rs.next();
                     int userId = rs.getInt("id");
                     setState(userStatePool.getUserState(userId));
-                    onNotificationEvent.emit(new UserNotification(userEmail, "joined"));
+                    onNotificationEvent.emit(new UserNotification(userEmail, "has joined"));
                     callback.onSuccess(true);
                 } catch (SQLException | InvalidKeySpecException e) {
+                    callback.onError(e);
+                }
+            }
+
+            @Override
+            public void logout(HandlerCallback callback) {
+                try {
+                    if (getState().getUserId() == -1) {
+                        callback.onError(new Exception("You are not login."));
+                        return ;
+                    }
+                    onNotificationEvent.emit(new UserNotification(getState().getUserEmail(), "has left"));
+                    setState(new UserState());
+                    callback.onSuccess(null);
+                } catch (SQLException e) {
+                    System.err.println("Error with Database.");
                     callback.onError(e);
                 }
             }
@@ -101,12 +117,11 @@ public class QueryHandlerThread extends Thread {
         System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
         onNotificationEvent.removeListener(notificationListener);
         try {
-            onNotificationEvent.emit(new UserNotification(commandsHandlers.getState().getUserEmail(), "left"));
+            onNotificationEvent.emit(new UserNotification(commandsHandlers.getState().getUserEmail(), "has left"));
         } catch (SQLException e1) {
-            System.err.println("Error with DataBase.");
+            System.err.println("Error with Database.");
             e1.printStackTrace();
         }
-        commandsHandlers.getState().dispose();
     }
 
     private CommandExecuteRespond generateResult(CommandExecuteRespondStatus status, Serializable result) {

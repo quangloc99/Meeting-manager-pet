@@ -15,17 +15,9 @@ public class UserStatePool {
 
     public UserState getUserState(int userId) throws SQLException {
         if (!pool.containsKey(userId)) {
-            pool.put(userId, new UserState(userId, connection) {
-                @Override
-                public void dispose() {
-                    super.dispose();
-                    if (referenceCount.get() > 0) return ;
-                    pool.remove(getUserId());
-                }
-            });
+            pool.put(userId, new UserState(userId, connection));
         }
         UserState us = pool.get(userId);
-        us.increaseReferenceCount();
         return us;
     }
 }

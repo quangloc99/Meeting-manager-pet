@@ -23,7 +23,6 @@ public class UserState {
     private ZonedDateTime openSince = ZonedDateTime.now();
     private ZoneId timeZoneId = ZonedDateTime.now().getZone();
     private SQLHelper sqlHelper;
-    protected AtomicInteger referenceCount = new AtomicInteger();
 
     public UserState(int userId, Connection connection) throws SQLException {
         this.userId = userId;
@@ -124,14 +123,6 @@ public class UserState {
             removedMeetings.addAll(meetingsCollection);
         }
         meetingsCollection.clear();
-    }
-
-    public void increaseReferenceCount() {
-        referenceCount.getAndIncrement();
-    }
-
-    public void dispose() {
-        referenceCount.getAndDecrement();
     }
 
     public int getUserId() {
