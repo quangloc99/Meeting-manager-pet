@@ -17,9 +17,9 @@ public class SQLHelper {
     private final PreparedStatement getUserByIdSt;
     private final PreparedStatement getCollectionByNameSt;
     private final PreparedStatement getCollectionOfMeetingsSt;
-    private final PreparedStatement insertUserAndGetIdSt;
-    private final PreparedStatement insertCollectionAndGetIdSt;
-    private final PreparedStatement insertMeetingAndGetIdSt;
+    private final PreparedStatement insertUserAndGetSt;
+    private final PreparedStatement insertCollectionAndGetSt;
+    private final PreparedStatement insertMeetingAndGetSt;
     private final PreparedStatement deleteMeetingSt;
 
     private Connection connection;
@@ -28,17 +28,17 @@ public class SQLHelper {
         this.connection = connection;
         getUserByIdSt = connection.prepareStatement("select * from users where id = ?");
         getUserByEmailSt = connection.prepareStatement("select * from users where email = ?");
-        getCollectionByNameSt = connection.prepareStatement("select id, sort_order from collections where name = ?");
+        getCollectionByNameSt = connection.prepareStatement("select * from collections where name = ?");
         getCollectionOfMeetingsSt = connection.prepareStatement("select meetings.* from meetings where collection_id = ?");
-        insertCollectionAndGetIdSt = connection.prepareStatement(
-                "INSERT INTO collections (name, sort_order) values (?, CAST(? AS meeting_collection_sort_order)) RETURNING id"
+        insertCollectionAndGetSt = connection.prepareStatement(
+                "INSERT INTO collections (name, sort_order, owner_id) values (?, CAST(? AS meeting_collection_sort_order), ?) RETURNING *"
         );
-        insertMeetingAndGetIdSt = connection.prepareStatement(
+        insertMeetingAndGetSt = connection.prepareStatement(
                 "INSERT INTO meetings (name, duration, location_building, location_floor, time, collection_id) " +
                 "VALUES (?, ?, ?, ?, ?, ?) " +
                 "RETURNING id"
         );
-        insertUserAndGetIdSt = connection.prepareStatement("INSERT INTO users (email, password_hash) values (?, ?) RETURNING id");
+        insertUserAndGetSt = connection.prepareStatement("INSERT INTO users (email, password_hash) values (?, ?) RETURNING *");
         deleteMeetingSt = connection.prepareStatement("DELETE FROM meetings WHERE id = ?");
     }
 
@@ -58,15 +58,16 @@ public class SQLHelper {
     }
 
     public ResultSet insertNewUser(@NotNull String email, @NotNull String passwordHash) throws SQLException {
-        insertUserAndGetIdSt.setString(1, email);
-        insertUserAndGetIdSt.setString(2, passwordHash);
-        return insertUserAndGetIdSt.executeQuery();
+        insertUserAndGetSt.setString(1, email);
+        insertUserAndGetSt.setString(2, passwordHash);
+        return insertUserAndGetSt.executeQuery();
     }
 
-    public ResultSet insertNewCollection(@NotNull String name, String sortOrder) throws SQLException {
-        insertCollectionAndGetIdSt.setString(1, name);
-        insertCollectionAndGetIdSt.setString(2, sortOrder);   // TODO add sort order
-        return insertCollectionAndGetIdSt.executeQuery();
+    public ResultSet insertNewCollection(@NotNull String name, String sortOrder, int ownerId) throws SQLException {
+        insertCollectionAndGetSt.setString(1, name);
+        insertCollectionAndGetSt.setString(2, sortOrder);   // TODO add sort order
+        insertCollectionAndGetSt.setInt(3, ownerId);
+        return insertCollectionAndGetSt.executeQuery();
     }
 
     public List<Meeting> getMeetingListByCollectionId(int collectionId, ZoneId zoneId) throws SQLException {
@@ -94,13 +95,13 @@ public class SQLHelper {
     }
 
     public Meeting storeMeetingToDatabase(Meeting meeting, int collectionStoringId) throws SQLException {
-        insertMeetingAndGetIdSt.setString(1, meeting.getName());
-        insertMeetingAndGetIdSt.setLong(2, meeting.getDuration().toMinutes());
-        insertMeetingAndGetIdSt.setInt(3, meeting.getLocation().getBuildingNumber());
-        insertMeetingAndGetIdSt.setInt(4, meeting.getLocation().getFloor());
-        insertMeetingAndGetIdSt.setTimestamp(5, Timestamp.from(meeting.getTime().toInstant()));
-        insertMeetingAndGetIdSt.setInt(6, collectionStoringId);
-        ResultSet rs = insertMeetingAndGetIdSt.executeQuery();
+        insertMeetingAndGetSt.setString(1, meeting.getName());
+        insertMeetingAndGetSt.setLong(2, meeting.getDuration().toMinutes());
+        insertMeetingAndGetSt.setInt(3, meeting.getLocation().getBuildingNumber());
+        insertMeetingAndGetSt.setInt(4, meeting.getLocation().getFloor());
+        insertMeetingAndGetSt.setTimestamp(5, Timestamp.from(meeting.getTime().toInstant()));
+        insertMeetingAndGetSt.setInt(6, collectionStoringId);
+        ResultSet rs = insertMeetingAndGetSt.executeQuery();
         rs.next();
         return meeting.withId(rs.getInt("id"));
     }

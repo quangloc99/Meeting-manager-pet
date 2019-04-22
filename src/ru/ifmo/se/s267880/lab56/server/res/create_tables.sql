@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS collections (
   id serial PRIMARY KEY,
   name VARCHAR(255) UNIQUE,    -- just like linux file system
-  sort_order meeting_collection_sort_order default 'asc-time'
+  sort_order meeting_collection_sort_order default 'asc-time',
+  owner_id serial REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS meetings (

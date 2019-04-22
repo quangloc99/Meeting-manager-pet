@@ -60,20 +60,24 @@ public class UserState {
         updateStoringName(collectionName);
     }
 
-    public synchronized void storeToDatabase() throws SQLException, InvalidParameterException {
+    public synchronized void storeToDatabase() throws Exception {
         if (this.collectionStoringName == null) {
             throw new NullPointerException("Please use save <name> for save, because you did not save before.");
         }
         storeToDatabase(collectionStoringName, false);
     }
 
-    public synchronized void storeToDatabase(String name, boolean toNewCollection) throws SQLException, InvalidParameterException {
+    public synchronized void storeToDatabase(String name, boolean toNewCollection) throws Exception {
         if (sqlHelper == null) throw new NullPointerException("You are not signed in.");
         ResultSet res = sqlHelper.getCollectionByName(name);
         if (!res.next()) {
-            (res = sqlHelper.insertNewCollection(name, "asc-time")).next();
+            (res = sqlHelper.insertNewCollection(name, "asc-time", userId)).next();
         } else if (toNewCollection) {
             throw new InvalidParameterException("Collection with name \"" + name + "\" existed. Please choose another name.");
+        }
+        if (res.getInt("owner_id") != userId) {
+            throw new Exception("You do not have the right to overwrite this collection. " +
+                    "Use `save <name>` command instead to save this list as yours.");  // TODO create a separate exception
         }
         int collectionId = res.getInt("id");
         if (!toNewCollection) {

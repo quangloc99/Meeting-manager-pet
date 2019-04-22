@@ -90,7 +90,7 @@ abstract public class ServerCommandsHandlers implements SharedCommandHandlers {
         try {
             state.storeToDatabase();
             callback.onSuccess(null);
-        } catch (SQLException | InvalidParameterException e) {
+        } catch (Exception e) {
             callback.onError(e);
         }
     }
@@ -100,7 +100,7 @@ abstract public class ServerCommandsHandlers implements SharedCommandHandlers {
         try {
             state.storeToDatabase(name, true);
             callback.onSuccess(null);
-        } catch (SQLException | InvalidParameterException e) {
+        } catch (Exception e) {
             callback.onError(e);
         }
     }
