@@ -3,8 +3,11 @@ package ru.ifmo.se.s267880.lab56.client;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import java.io.*;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -286,5 +289,30 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     @Override
     public void setTimeZone(int timeZoneKey, HandlerCallback callback) {
         new CommandExecutor(defaultCallbackWrapper(callback)).run();
+    }
+
+    @Override
+    public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
+        try {
+            userEmailAndPassword.getKey().validate();
+            char[] pass = UserInputHelper.getCheckedPassword();
+            if (pass == null) {
+                callback.onSuccess(true);
+                return ;
+            }
+            userEmailAndPassword.setValue(pass);
+            new CommandExecutor(new HandlerCallback<>(res -> {
+                 if (res.<Boolean>getResult()) {
+                     ConsoleWrapper.console.println("Registration completed. You are now login.");
+                 } else {
+                     ConsoleWrapper.console.println("Registration aborted.");
+                 }
+                 callback.onSuccess(res.getResult());
+            }, callback::onError)).run();
+            Thread.sleep(1000);
+            Arrays.fill(pass, '\0');
+        } catch (InterruptedException | AddressException e) {
+            callback.onError(e);
+        }
     }
 }

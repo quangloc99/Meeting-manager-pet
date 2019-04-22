@@ -10,6 +10,8 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CannotPreproces
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.JsonBasicInputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +22,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import static java.util.Map.Entry;
+import static java.util.AbstractMap.SimpleEntry;
 
 /**
  * An input preprocessor that preprocess Json into Meeting and Date.
@@ -31,9 +35,14 @@ import java.util.*;
 public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
     @Override
     public Object preprocess(Object obj, Class inputType) throws CannotPreprocessInputException {
-        if (obj instanceof  String) {
+        if (obj instanceof String) {
             if (inputType == String.class) return obj;
             if (inputType == File.class) return new File((String) obj);
+            if (inputType == Entry.class) try {
+                return new SimpleEntry<InternetAddress, char[]>(new InternetAddress((String)obj, false), null);
+            } catch (AddressException e) {
+                throw new CannotPreprocessInputException(obj + " has wrong email format.");
+            }
             try {
                 Class wrapped = Helper.toWrapper(inputType);
                 if (wrapped == Integer.class) return Integer.parseInt((String) obj);

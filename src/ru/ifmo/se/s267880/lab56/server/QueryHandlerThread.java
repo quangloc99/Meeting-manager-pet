@@ -37,7 +37,7 @@ public class QueryHandlerThread extends Thread {
         messageToClientSender = Sender.fromSocket(socket);
         messageFromClientReceiver = Receiver.fromSocket(socket);
 
-        commandsHandlers = new ServerCommandsHandlers(Collections.synchronizedList(new LinkedList<>()), databaseConnection);
+        commandsHandlers = new ServerCommandsHandlers(new UserState(databaseConnection));
         commandController = new CommandController();
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, commandsHandlers, new ServerInputPreprocessor())
                 .forEach(commandController::addCommand);

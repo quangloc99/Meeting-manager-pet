@@ -11,6 +11,8 @@ import java.io.File;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import static java.util.Map.Entry;
+import javax.mail.internet.InternetAddress;
 
 
 /**
@@ -173,4 +175,8 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Command(value="set-time-zone", additional = true)
     @Usage("Set the time zone by index. Use command `list-time-zones` for the list of time zones with indexes.")
     void setTimeZone(int timeZoneKey, HandlerCallback callback);
+
+    @Command
+    @Usage("Do the registration with email. The password will be asked after entering this command.")
+    void register(Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback);
 }

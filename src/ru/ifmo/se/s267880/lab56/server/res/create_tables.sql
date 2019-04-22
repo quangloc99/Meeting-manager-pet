@@ -8,6 +8,12 @@ BEGIN
 END
 $$;
 
+CREATE TABLE IF NOT EXISTS users (
+  id serial PRIMARY KEY,
+  email text UNIQUE,
+  password_hash text
+);
+
 CREATE TABLE IF NOT EXISTS collections (
   id serial PRIMARY KEY,
   name VARCHAR(255) UNIQUE,    -- just like linux file system

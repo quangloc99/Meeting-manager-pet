@@ -12,6 +12,7 @@ import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 
 import java.io.*;
 import java.security.InvalidParameterException;
+import java.security.spec.InvalidKeySpecException;
 import java.sql.*;
 import java.text.ParseException;
 import java.time.Duration;
@@ -22,6 +23,8 @@ import java.util.stream.Collectors;
 
 import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
 import ru.ifmo.se.s267880.lab56.shared.functional.*;
+
+import javax.mail.internet.InternetAddress;
 
 /**
  * An implementation of CommandHandlersWithMeeting on server side.
@@ -36,40 +39,14 @@ import ru.ifmo.se.s267880.lab56.shared.functional.*;
  * @see ClientInputPreprocessor
  */
 public class ServerCommandsHandlers implements SharedCommandHandlers {
-    private List<Meeting> collection = null;
-    private String collectionStoringName;
-    private ZonedDateTime fileOpenSince = ZonedDateTime.now();
-    private ZoneId zoneId = ZonedDateTime.now().getZone();
-    private SQLHelper sqlHelper;
-    private List<Meeting> removedMeeting = Collections.synchronizedList(new LinkedList<>());
+    private UserState state;
 
-    public ServerCommandsHandlers(@NotNull List<Meeting> collection, Connection databaseConnection) throws SQLException {
-        this.collection = collection;
-        this.sqlHelper = new SQLHelper(databaseConnection);
+    public ServerCommandsHandlers(UserState state) {
+        this.state = state;
     }
 
-    private synchronized void resetState(String restoringName, List<Meeting> meetings) {
-        if (!Objects.equals(restoringName, collectionStoringName)) {
-            collectionStoringName = restoringName;
-            fileOpenSince = ZonedDateTime.now();
-        }
-        if (meetings != null) {
-            removedMeeting.clear();
-            collection.clear();
-            collection.addAll(meetings);
-        }
-    }
-
-    private Meeting transformMeetingTimeSameInstant(Meeting meeting) {
-        return meeting.withTime(meeting.getTime().withZoneSameInstant(zoneId));
-    }
-
-    private Meeting transformMeetingTimeSameLocal(Meeting meeting) {
-        return meeting.withTime(meeting.getTime().withZoneSameLocal(zoneId));
-    }
-
-    public synchronized String getCollectionStoringName() {
-        return collectionStoringName;
+    public ServerCommandsHandlers() {
+        this.state = new UserState();
     }
 
     /**
@@ -81,7 +58,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     public void doImport(File file, HandlerCallback callback) {
         try {
             try (InputStream in = new FileInputStream(file)) {
-                collection.addAll(getDataFrom(in));
+                getDataFrom(in).forEach(state::add);
             }
             callback.onSuccess(null);
         } catch (Exception e) {
@@ -93,7 +70,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     public void export(String name, HandlerCallback<FileTransferRequest> callback) {
         try {
             File f = Helper.createTempFile();
-            saveCollectionToFile(f);
+            saveCollectionToFile(state.getMeetingsCollection(), f);
             callback.onSuccess(new FileTransferRequest(name, f));
         } catch (IOException e) {
             callback.onError(new IOException("Cannot create temp file for exporting.", e));
@@ -103,54 +80,29 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     public synchronized void open(String collectionName, HandlerCallback callback) {
         try {
-            ResultSet res = sqlHelper.getCollectionByName(collectionName);
-            if (!res.next()) {
-                callback.onError(new Exception("Collection \"" + collectionName + "\" not found."));   // TODO (or not :p): create a class for this exception.
-                return ;
-            }
-            int collectionId = res.getInt("id");
-            List<Meeting> meetings = sqlHelper.getMeetingListByCollectionId(collectionId, zoneId);
-            resetState(collectionName, meetings);
+            state.loadFromDatabase(collectionName);
             callback.onSuccess(null);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             callback.onError(e);
         }
     }
 
     @Override
     public void save(HandlerCallback callback) {
-        if (collectionStoringName == null) {
-            callback.onError(new NullPointerException("Please use `save {String}` command to set the file name."));
-            return;
+        try {
+            state.storeToDatabase();
+            callback.onSuccess(null);
+        } catch (SQLException | InvalidParameterException e) {
+            callback.onError(e);
         }
-        save(collectionStoringName, false, callback);
     }
 
     @Override
-    public void save(String name, HandlerCallback callback) { save(name, true, callback); }
-
-    public void save(String name, boolean toNewCollection, HandlerCallback callback) {
+    public void save(String name, HandlerCallback callback) {
         try {
-            ResultSet res = sqlHelper.getCollectionByName(name);
-            if (!res.next()) {
-                (res = sqlHelper.insertNewCollection(name, "asc-time")).next();
-            } else if (toNewCollection) {
-                callback.onError(new InvalidParameterException("Collection with name \"" + name + "\" existed. Please choose another name."));
-                return;
-            }
-            int collectionId = res.getInt("id");
-            if (!toNewCollection) {
-                sqlHelper.removeMeetings(removedMeeting);
-            }
-            List<Meeting> newCollections = collection.stream()
-                    .map(FunctionWithException.toFunction(meeting -> !toNewCollection && meeting.getId().isPresent()
-                            ? meeting
-                            : sqlHelper.storeMeetingToDatabase(meeting, collectionId)
-                    ))
-                    .collect(Collectors.toList());
-            resetState(name, newCollections);
+            state.storeToDatabase(name, true);
             callback.onSuccess(null);
-        } catch (SQLException e) {
+        } catch (SQLException | InvalidParameterException e) {
             callback.onError(e);
         }
     }
@@ -164,27 +116,23 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     public void loadFile(String path, HandlerCallback callback) {
         if (path != null) {
             try {
-                List<Meeting> t = getDataFromFile(path);
-                synchronized (collection) {
-                    collection.clear();
-                    collection.addAll(t);
-                }
+                state.resetCollectionState(getDataFromFile(path));
+                state.updateStoringName(path);
             } catch (IOException | ParseException e)  { callback.onError(e); }
         }
-        resetState(path, null);
         callback.onSuccess(null);
     }
 
     /**
-     * Save all the collection into the file with name {@link #collectionStoringName}.
+     * Save all the collection into the file with name ....
      */
     @Override
     public synchronized void saveFile(HandlerCallback callback) {
-        if (collectionStoringName == null) {
+        if (state.getCollectionStoringName() == null) {
             callback.onError(new NullPointerException("Please use `save-file {String}` command to set the file name."));
             return;
         }
-        saveFile(collectionStoringName, callback);
+        saveFile(state.getCollectionStoringName(), callback);
     }
 
     /**
@@ -195,15 +143,16 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @SuppressWarnings("unchecked")
     public void saveFile(String path, HandlerCallback callback) {
         try {
-            saveCollectionToFile(new File(path));
-            resetState(path, null);
+            saveCollectionToFile(state.getMeetingsCollection(), new File(path));
+            state.resetCollectionState(state.getMeetingsCollection());   // TODO make this line perform better since the collection is assigned to itself.
+            state.updateStoringName(path);
+            callback.onSuccess(null);
         } catch (IOException e) {
             callback.onError(new IOException("Unable to write data into " + path, e));
         }
-        callback.onSuccess(null);
     }
 
-    private void saveCollectionToFile(File file) throws IOException {
+    private void saveCollectionToFile(List<Meeting> collection, File file) throws IOException {
         List<String> header = new LinkedList<>();
         header.add("meeting name");
         header.add("meeting time");
@@ -266,7 +215,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void add(Meeting meeting, HandlerCallback callback) {
-        collection.add(transformMeetingTimeSameLocal(meeting));
+        state.add(meeting);
         callback.onSuccess(null);
     }
 
@@ -277,7 +226,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     public void show(HandlerCallback<List<Meeting>> callback) {
-        callback.onSuccess(this.getCollection());
+        callback.onSuccess(state.getMeetingsCollection());
     }
 
     /**
@@ -289,9 +238,9 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void remove(Meeting meeting, HandlerCallback callback) {
-        int num = collection.indexOf(transformMeetingTimeSameLocal(meeting));
+        int num = state.findMeeting(meeting);
         if (num == -1) callback.onSuccess(null);
-        else remove(num, callback);
+        else state.remove(num);
     }
 
     /**
@@ -301,12 +250,12 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void remove(int num, HandlerCallback callback) {
-        if (num < 1 || num > collection.size()) {
-            callback.onError(new IndexOutOfBoundsException("removed id must be bigger than 0 and not bigger than the the collection size."));
-            return ;
+        try {
+            state.remove(num);
+            callback.onSuccess(null);
+        } catch (IndexOutOfBoundsException e) {
+            callback.onError(e);
         }
-        removedMeeting.add(collection.remove(num - 1));
-        callback.onSuccess(null);
     }
 
     /**
@@ -317,10 +266,11 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     public void addIfMin(Meeting meeting, HandlerCallback callback) {
-        meeting = transformMeetingTimeSameLocal(meeting);
-        synchronized (collection) {
-            if (meeting.compareTo(Collections.min(collection)) >= 0) return;
-            add(meeting, callback);
+        meeting = state.transformMeetingTimeSameLocal(meeting);
+        synchronized (state.getMeetingsCollection()) {
+            if (meeting.compareTo(Collections.min(state.getMeetingsCollection())) < 0)
+                state.add(meeting);
+            callback.onSuccess(null);
         }
     }
 
@@ -329,12 +279,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     public synchronized void info(HandlerCallback<Map<String, String>> callback) {
-        Map<String, String> result = new HashMap<>();
-        result.put("file", collectionStoringName);
-        result.put("meeting-count", Integer.toString(collection.size()));
-        result.put("since", Helper.meetingDateFormat.format(fileOpenSince));
-        result.put("time-zone", zoneId.toString() + " " + ZoneUtils.toUTCZoneOffsetString(zoneId));
-        callback.onSuccess(result);
+        callback.onSuccess(state.generateInfo());
     }
 
     /**
@@ -343,14 +288,14 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void sortByDate(HandlerCallback callback) {
-        Collections.sort(collection, Comparator.comparing(Meeting::getTime));
+//        Collections.sort(collection, Comparator.comparing(Meeting::getTime));
         callback.onSuccess(null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void sortBytime(HandlerCallback callback) {
-        Collections.sort(collection, Comparator.comparing(Meeting::getDuration));
+//        Collections.sort(collection, Comparator.comparing(Meeting::getDuration));
         callback.onSuccess(null);
     }
 
@@ -360,7 +305,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void reverse(HandlerCallback callback) {
-        Collections.reverse(collection);
+//        Collections.reverse(collection);
         callback.onSuccess(null);
     }
 
@@ -372,10 +317,10 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void swap(int a, int b, HandlerCallback callback) {
-        synchronized (collection) {
-            Collections.swap(collection, a - 1, b - 1);
-        }
-        callback.onSuccess(null);
+//        synchronized (collection) {
+//            Collections.swap(collection, a - 1, b - 1);
+//        }
+//        callback.onSuccess(null);
     }
 
     /**
@@ -384,8 +329,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
     @Override
     @SuppressWarnings("unchecked")
     public void clear(HandlerCallback callback) {
-        removedMeeting.addAll(collection);
-        collection.clear();
+        state.clear();
         callback.onSuccess(null);
     }
 
@@ -394,11 +338,7 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
      * Note: The method will transform every meeting's time to the current zone with same <b>instant</b>.
      */
     public List<Meeting> getCollection() {
-        synchronized (collection) {
-            return collection.stream()
-                    .map(this::transformMeetingTimeSameInstant)
-                    .collect(Collectors.toList());
-        }
+        return state.getMeetingsCollection();
     }
 
     @Override
@@ -415,7 +355,23 @@ public class ServerCommandsHandlers implements SharedCommandHandlers {
                     "Please use command `list-time-zones` for the list of time zones", timeZoneKey)));
             return;
         }
-        zoneId = ZoneUtils.allZoneIds.get(timeZoneKey);
+        state.setTimeZone(ZoneUtils.allZoneIds.get(timeZoneKey));
         callback.onSuccess(null);
+    }
+
+    @Override
+    public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
+//        try {
+//            String userEmail = userEmailAndPassword.getKey().getAddress();
+//            if (sqlHelper.getUserbyEmail(userEmail).next()) {
+//                callback.onError(new Exception("User with email " + userEmail + " has already existed."));
+//                return ;
+//            }
+//            // TODO validate with token
+//            sqlHelper.insertNewUser(userEmail, Crypto.hashPassword(userEmailAndPassword.getValue()));
+//            callback.onSuccess(true);
+//        } catch (SQLException | InvalidKeySpecException e) {
+//            callback.onError(e);
+//        }
     }
 }

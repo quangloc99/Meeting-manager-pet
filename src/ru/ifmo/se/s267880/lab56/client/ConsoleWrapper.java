@@ -34,10 +34,7 @@ public class ConsoleWrapper {
         else {
             synchronized (ioLock) {
                 System.out.printf(fmt, objs);
-                String str = scanner.nextLine();
-                char[] res = new char[str.length()];
-                str.getChars(0, str.length(), res, res.length);
-                return res;
+                return scanner.nextLine().toCharArray();
             }
         }
     }

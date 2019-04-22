@@ -13,8 +13,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SQLHelper {
+    private final PreparedStatement getUserByEmailSt;
     private final PreparedStatement getCollectionByNameSt;
     private final PreparedStatement getCollectionOfMeetingsSt;
+    private final PreparedStatement insertUserAndGetIdSt;
     private final PreparedStatement insertCollectionAndGetIdSt;
     private final PreparedStatement insertMeetingAndGetIdSt;
     private final PreparedStatement deleteMeetingSt;
@@ -23,6 +25,7 @@ public class SQLHelper {
 
     public SQLHelper(Connection connection) throws SQLException {
         this.connection = connection;
+        getUserByEmailSt = connection.prepareStatement("select * from users where email = ?");
         getCollectionByNameSt = connection.prepareStatement("select id, sort_order from collections where name = ?");
         getCollectionOfMeetingsSt = connection.prepareStatement("select meetings.* from meetings where collection_id = ?");
         insertCollectionAndGetIdSt = connection.prepareStatement(
@@ -33,12 +36,24 @@ public class SQLHelper {
                 "VALUES (?, ?, ?, ?, ?, ?) " +
                 "RETURNING id"
         );
+        insertUserAndGetIdSt = connection.prepareStatement("INSERT INTO users (email, password_hash) values (?, ?) RETURNING id");
         deleteMeetingSt = connection.prepareStatement("DELETE FROM meetings WHERE id = ?");
+    }
+
+    public ResultSet getUserbyEmail(@NotNull String email) throws SQLException {
+        getUserByEmailSt.setString(1, email);
+        return getUserByEmailSt.executeQuery();
     }
 
     public ResultSet getCollectionByName(@NotNull  String name) throws SQLException {
         getCollectionByNameSt.setString(1, name);
         return getCollectionByNameSt.executeQuery();
+    }
+
+    public ResultSet insertNewUser(@NotNull String email, @NotNull String passwordHash) throws SQLException {
+        insertUserAndGetIdSt.setString(1, email);
+        insertUserAndGetIdSt.setString(2, passwordHash);
+        return insertUserAndGetIdSt.executeQuery();
     }
 
     public ResultSet insertNewCollection(@NotNull String name, String sortOrder) throws SQLException {
