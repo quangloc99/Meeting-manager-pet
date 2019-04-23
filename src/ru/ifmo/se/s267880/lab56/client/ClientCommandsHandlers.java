@@ -35,7 +35,7 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
         return new CommandExecuteRequest(currentCommandName, castedParams);
     }
 
-    private <T extends Serializable> HandlerCallback<CommandExecuteRespond> defaultCallbackWrapper(HandlerCallback<T> callback) {
+    private <T extends Serializable> HandlerCallback<Respond> defaultCallbackWrapper(HandlerCallback<T> callback) {
         return new HandlerCallback<>(
                 res -> {
                     ConsoleWrapper.console.println("Command " + currentCommandName + " successfully executed.");
@@ -53,7 +53,7 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     }
 
     private class CommandExecutor {
-        HandlerCallback<CommandExecuteRespond> callback;
+        HandlerCallback<Respond> callback;
         Message<MessageType> request = null;
         Consumer<Exception> errorHandler = messageFromServerBroadcaster.onError.listen(e -> {
             removeHandlers();
@@ -61,15 +61,15 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
         });
         Consumer<Message<MessageType>> respondFailHandler = messageFromServerBroadcaster
                 .whenReceive(MessageType.RESPOND_FAIL).listen(m -> {
-                    if (!(m instanceof CommandExecuteRespond)) return;
+                    if (!(m instanceof Respond)) return;
                     removeHandlers();
-                    callback.onError(((CommandExecuteRespond) m).getResult());
+                    callback.onError(((Respond) m).getResult());
                 });
         Consumer<Message<MessageType>> respondSuccessHandler = messageFromServerBroadcaster
                 .whenReceive(MessageType.RESPOND_SUCCESS).listen(m -> {
-                    if (!(m instanceof CommandExecuteRespond)) return;
+                    if (!(m instanceof Respond)) return;
                     removeHandlers();
-                    callback.onSuccess((CommandExecuteRespond) m);
+                    callback.onSuccess((Respond) m);
                 });
 
         public CommandExecutor setRequest(Message<MessageType> request) {
@@ -77,7 +77,7 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
             return this;
         }
 
-        CommandExecutor(HandlerCallback<CommandExecuteRespond> callback) {
+        CommandExecutor(HandlerCallback<Respond> callback) {
             this.callback = callback;
         }
 

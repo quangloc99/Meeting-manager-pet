@@ -70,8 +70,8 @@ public class QueryHandlerThread extends Thread {
             if (!(res instanceof CommandExecuteRequest)) return;
             CommandExecuteRequest qr = (CommandExecuteRequest)  res;
             commandController.execute(qr.getCommandName(), qr.getParameters(), new HandlerCallback<>(
-                    o -> sendExecuteRespondToClient(generateResult(CommandExecuteRespondStatus.SUCCESS, (Serializable) o)),
-                    e -> sendExecuteRespondToClient(generateResult(CommandExecuteRespondStatus.FAIL, e))
+                    o -> sendExecuteRespondToClient(generateResult(MessageType.RESPOND_SUCCESS, (Serializable) o)),
+                    e -> sendExecuteRespondToClient(generateResult(MessageType.RESPOND_FAIL, e))
             ));
         });
         this.messageFromClientBroadcaster.onError.listen(this::onDisconnectedToClient);
@@ -84,7 +84,7 @@ public class QueryHandlerThread extends Thread {
         onNotificationEvent.listen(notificationListener);
     }
 
-    private void sendExecuteRespondToClient(CommandExecuteRespond res) {
+    private void sendExecuteRespondToClient(Respond res) {
         try {
             messageToClientSender.send(res);
         } catch (IOException e) {
@@ -110,10 +110,10 @@ public class QueryHandlerThread extends Thread {
         }
     }
 
-    private CommandExecuteRespond generateResult(CommandExecuteRespondStatus status, Serializable result) {
+    private Respond generateResult(MessageType respondType, Serializable result) {
         LinkedList<Meeting> clonedCollection = new LinkedList<>(commandsHandlers.getState().getMeetingsCollection());
         clonedCollection.sort(Comparator.comparing(Meeting::getName));
-        return new CommandExecuteRespond(status, result, clonedCollection);
+        return new Respond(respondType, result, clonedCollection);
     }
 
     private ServerCommandsHandlers createCommandHandler() {

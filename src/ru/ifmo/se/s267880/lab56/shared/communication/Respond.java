@@ -9,27 +9,23 @@ import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Objects;
 
-public class CommandExecuteRespond implements Serializable, Message<MessageType> {
-    private CommandExecuteRespondStatus status;
+public class Respond implements Serializable, Message<MessageType> {
+    private MessageType respondType;
     private Serializable result;
     private List<Meeting> collection;
     private transient boolean initialized;
 
     @Override
-    public MessageType getType() {
-        return status == CommandExecuteRespondStatus.SUCCESS ? MessageType.RESPOND_SUCCESS : MessageType.RESPOND_FAIL;
-    }
+    public MessageType getType() { return respondType; }
 
-    public CommandExecuteRespond(CommandExecuteRespondStatus status, Serializable result, List<Meeting> collection) {
+    public Respond(MessageType respondType, Serializable result, List<Meeting> collection) {
         this.initialized = true;
-        Objects.requireNonNull(status);
-        this.status = status;
+        if (respondType != MessageType.RESPOND_FAIL && respondType != MessageType.RESPOND_SUCCESS) {
+            throw new IllegalArgumentException("respond type must be RESPOND_SUCCESS or RESPOND_FAIL");
+        }
+        this.respondType = respondType;
         this.result = result;
         this.collection = collection;
-    }
-
-    public CommandExecuteRespondStatus getStatus() {
-        return this.status;
     }
 
     public <T extends Serializable> T getResult() {
