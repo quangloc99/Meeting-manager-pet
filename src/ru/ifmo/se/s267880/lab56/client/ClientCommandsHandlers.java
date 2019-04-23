@@ -251,7 +251,10 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     @Override
     public void listTimeZones(int offset, HandlerCallback<Map<Integer, ZoneId>> callback) {
         new CommandExecutor(
-                new HandlerCallback<>(res -> ZoneUtils.printZonesByZoneOffset(res.getResult()), callback::onError)
+                new HandlerCallback<>(res -> {
+                    ZoneUtils.printZonesByZoneOffset(res.getResult());
+                    callback.onSuccess(null);
+                }, callback::onError)
         ).run();
     }
 

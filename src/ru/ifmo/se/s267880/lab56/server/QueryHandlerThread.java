@@ -122,24 +122,25 @@ public class QueryHandlerThread extends Thread {
         Consumer<Message<MessageType>> onRecevingToken = new Consumer<Message<MessageType>>() {
             @Override
             public void accept(Message<MessageType> msg) {
-                if (System.currentTimeMillis() - currentMillis > timeOut) {
+                long deltaTime = System.currentTimeMillis() - currentMillis;
+                if (deltaTime > timeOut) {
                     callback.onError(new TimeoutException("Your token has been expired."));
                     messageFromClientBroadcaster.whenReceive(MessageType.RESPOND_SUCCESS).removeListener(this);
                     return ;
                 }
                 if (!(msg instanceof Respond)) return;
                 String res = ((Respond) msg).getResult();
-                String parts[] = res.split(":");
-                if (parts.length != 2 || !parts[0].equals("Token")) return;
-                if (parts[1].equals(token)) {
+                if (!res.startsWith("Token:")) return;
+                res = res.substring(res.indexOf(":") + 1);
+                if (res.equals(token)) {
                     callback.onSuccess(true);
                     messageFromClientBroadcaster.whenReceive(MessageType.RESPOND_SUCCESS).removeListener(this);
                 }
-                else if (parts[1].equals("\\abort")) {
+                else if (res.equals("\\abort")) {
                     callback.onSuccess(false);
                     messageFromClientBroadcaster.whenReceive(MessageType.RESPOND_SUCCESS).removeListener(this);
                 } else try {
-                    messageToClientSender.send(new TokenRequest("Your token is incorrect. Enter it again."));
+                    messageToClientSender.send(new TokenRequest("Your token is incorrect. Enter it again. (Token expires in " + (timeOut - deltaTime) / 1000 + "s)"));
                 } catch (IOException e) {
                     callback.onError(e);
                 }
@@ -227,6 +228,35 @@ public class QueryHandlerThread extends Thread {
                 }
             }
 
+            @Override
+            public synchronized void open(String collectionName, HandlerCallback callback) {
+                try {
+                    if (!sqlHelper.getCollectionByName(collectionName).next()) {
+                        callback.onError(new Exception("There is no collection with name " + collectionName));
+                        return ;
+                    }
+                    String email = getState().getUserEmail();
+                    String token = Helper.generateToken();
+                    String mailContent = MessageFormat.format(mailTemplate, "opening collection \"" + collectionName + "\"", token);
+
+                    mailSender.sendHTMLMail(email, "Token for opening collection \"" + collectionName + "\"", mailContent);
+
+                    listenForToken(token, 60_000, new HandlerCallback<>(tokenOk -> {
+                        if (tokenOk) super.open(collectionName, callback);
+                        else callback.onSuccess(false);
+                    }, callback::onError));
+
+                    messageToClientSender.send(new TokenRequest(
+                            "A token is send to your email to verify this request to open this collection. " +
+                                    "Token will be expired in 60 seconds."
+                    ));
+
+                } catch (IOException | SQLException e) {
+                    callback.onError(e);
+                } catch (MessagingException e) {
+                    callback.onError(new Exception("Cannot send email."));
+                }
+            }
         };
     }
 }
