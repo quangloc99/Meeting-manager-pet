@@ -158,12 +158,17 @@ public class ReflectionCommandHandlerGenerator {
 
             @Override
             public String getUsage(String commandName) {
+                int paramCount = med.getParameterCount() - (hasHandlerCallbackParam(med) ? 1 : 0);
                 Usage usage = med.getAnnotation(Usage.class);
                 Command command = med.getAnnotation(Command.class);
                 assert(command != null);
-                String res = commandName + String.format("<%d>", med.getParameterCount());
+                String [] params = new String[paramCount];
+                for (int i = 0; i < paramCount; ++i) {
+                    params[i] = "<" + med.getParameters()[i].getName() + ">";
+                }
+                String res = commandName + " " + String.join(" ", params);
                 if (usage == null) return res + "\n\tThis command has no usage";
-                return res + "\n\t" + (command.additional() ? "[Additional] " : " ") + usage.value();
+                return res + "\n\t" + usage.value();
             }
         };
     }

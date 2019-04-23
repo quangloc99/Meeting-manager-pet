@@ -26,21 +26,16 @@ public interface SharedCommandHandlers extends CommandHandlers {
      * @param file the file that the data will be imported from.
      */
     @Command("import")
-    @Usage(
-            value = "Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted",
-            params = {"String"}
-    )
-    void doImport(File file, HandlerCallback callback);
+    @Usage("Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted")
+    void doImport(File fileName, HandlerCallback callback);
 
     @Command
-    @Usage(
-            value = "Export/download the current collection and save it with csv format."
-    )
-    void export(String name, HandlerCallback<FileTransferRequest> callback);
+    @Usage("Export/download the current collection and save it with csv format.")
+    void export(String fileName, HandlerCallback<FileTransferRequest> callback);
 
     // TODO: add more detailed usage.
     @Command
-    @Usage("Open a collection with the given name.")
+    @Usage("Open a collection with name.")
     void open(String collectionName, HandlerCallback callback);
 
     @Command
@@ -49,7 +44,7 @@ public interface SharedCommandHandlers extends CommandHandlers {
 
     @Command
     @Usage("Save the collection into the database with the give name.")
-    void save(String name, HandlerCallback callback);
+    void save(String collectionName, HandlerCallback callback);
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
@@ -58,7 +53,7 @@ public interface SharedCommandHandlers extends CommandHandlers {
 //    @Command
     @Usage("load a file with name given by arg. The content of the collection will be replaced.\n" +
             "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted." )
-    void loadFile(String path, HandlerCallback callback);
+    void loadFile(String pathToFile, HandlerCallback callback);
 
 //    @Command
     @Usage("save current collection. Note that initially there is no file name yet, so please use `save-as {String}` first.")
@@ -74,15 +69,15 @@ public interface SharedCommandHandlers extends CommandHandlers {
        "Note that if the file name contains special characters (e.g \".\", \",\", \" \", \"\\\", ...), then it must be quoted.\n" +
        "After executing this command, the current file name changed."
     )
-    void saveFile(String path, HandlerCallback callback);
+    void saveFile(String pathToFile, HandlerCallback callback);
 
     /**
      * Add meeting into the collection
      * @param meeting the meeting wanted to be add.
      */
     @Command
-    @Usage(value = "add new meeting into the collection.", params = {"MeetingJson"})
-    void add(Meeting meeting, HandlerCallback callback);
+    @Usage("add new meeting into the collection.")
+    void add(Meeting meetingJson, HandlerCallback callback);
 
     /**
      * List all the meetings.
@@ -96,25 +91,24 @@ public interface SharedCommandHandlers extends CommandHandlers {
      * @param meeting the meeting wanted to be removed.
      */
     @Command
-    @Usage(value = "remove the meeting correspond to the argument.", params = {"MeetingJson"})
-    void remove(Meeting meeting, HandlerCallback callback);
+    @Usage("remove the meeting correspond to the argument.")
+    void remove(Meeting meetingJson, HandlerCallback callback);
 
     /**
      * Remove a meeting from the collection by index.
      * @param num the index (base 1) of the element.
      */
     @Command
-    @Usage("remove the meeting with index given by the argument.")
-    void remove(int num, HandlerCallback callback);
+    @Usage("remove the meeting with index.")
+    void remove(int meetingId, HandlerCallback callback);
 
     /**
      * Add new meeting into the collection if it's date is before every other meeting in the collection.
      * @param meeting the meeting wanted to be added.
      */
     @Command("add_if_min")
-    @Usage(value = "add new meeting into the collection if it's date is before every other meeting in the collection.",
-            params = {"MeetingJson"})
-    void addIfMin(Meeting meeting, HandlerCallback callback);
+    @Usage("add new meeting into the collection if it's date is before every other meeting in the collection.")
+    void addIfMin(Meeting meetingJson, HandlerCallback callback);
 
     /**
      * show file name, number of meeting and the time the file first load during this session.
@@ -135,8 +129,8 @@ public interface SharedCommandHandlers extends CommandHandlers {
      * @param offsetHour the time zone offset's hour
      * @return a map between a representative index with a ZoneId
      */
-    @Command(value="list-time-zones", additional = true)
-    @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-time-zones 3` will list all" +
+    @Command(value="list-timezones", additional = true)
+    @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-timezones 3` will list all" +
             " the time zone with the offset \"UTF+3\"")
     void listTimeZones(int offsetHour, HandlerCallback<Map<Integer, ZoneId>> callback);
 
@@ -144,17 +138,17 @@ public interface SharedCommandHandlers extends CommandHandlers {
      * Set the current time zone corresponding to to the key in {@link ZoneUtils#allZoneIds}
      * @param timeZoneKey the time zone's key in {@link ZoneUtils#allZoneIds}
      */
-    @Command(value="set-time-zone", additional = true)
-    @Usage("Set the time zone by index. Use command `list-time-zones` for the list of time zones with indexes.")
-    void setTimeZone(int timeZoneKey, HandlerCallback callback);
+    @Command(value="set-timezone", additional = true)
+    @Usage("Set the time zone by index. Use command `list-timezones` for the list of time zones with indexes.")
+    void setTimeZone(int timeZoneId, HandlerCallback callback);
 
     @Command
     @Usage("Do the registration with email. The password will be asked after entering this command.")
-    void register(Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback);
+    void register(Entry<InternetAddress, char[]> email, HandlerCallback<Boolean> callback);
 
     @Command
     @Usage("Login")
-    void login(Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback);
+    void login(Entry<InternetAddress, char[]> email, HandlerCallback<Boolean> callback);
 
     @Command
     @Usage("Just logout.")
