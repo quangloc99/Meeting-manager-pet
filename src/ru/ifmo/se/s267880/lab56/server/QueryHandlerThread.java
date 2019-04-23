@@ -23,10 +23,11 @@ public class QueryHandlerThread extends Thread {
     private ServerCommandsHandlers commandsHandlers;
     private CommandController commandController;
     private Sender messageToClientSender;
-    private Receiver messageFromClientReceiver;
+    private Broadcaster<MessageType> messageFromClientBroadcaster;
     private EventEmitter<UserNotification> onNotificationEvent;
     private SQLHelper sqlHelper;
     private UserStatePool userStatePool;
+    private MailSender mailSender;
 
     private Consumer<UserNotification> notificationListener = notification -> {
         try { messageToClientSender.sendWithStream(notification); } catch (IOException ignore) {}
@@ -37,11 +38,13 @@ public class QueryHandlerThread extends Thread {
         private EventEmitter<UserNotification> onNotificationEvent;
         private Connection databaseConnection;
         private UserStatePool userStatePool;
+        private MailSender mailSender;
 
         public void setDatabaseConnection(Connection databaseConnection) { this.databaseConnection = databaseConnection; }
         public void setOnNotificationEvent(EventEmitter<UserNotification> onNotificationEvent) { this.onNotificationEvent = onNotificationEvent; }
         public void setSocket(Socket socket) { this.socket = socket; }
         public void setUserStatePool(UserStatePool userStatePool) { this.userStatePool = userStatePool; }
+        public void setMailSender(MailSender mailSender) { this.mailSender = mailSender; }
 
         public QueryHandlerThread build() throws SQLException {
             QueryHandlerThread res = new QueryHandlerThread();
@@ -49,6 +52,7 @@ public class QueryHandlerThread extends Thread {
             res.onNotificationEvent = onNotificationEvent;
             res.userStatePool = userStatePool;
             res.sqlHelper = new SQLHelper(databaseConnection);
+            res.mailSender = mailSender;
             res.init();
             return res;
         }
@@ -59,7 +63,18 @@ public class QueryHandlerThread extends Thread {
     private void init() {
         System.out.printf("Connected to client %s!\n", client.getInetAddress());
         this.messageToClientSender = Sender.fromSocket(client);
-        this.messageFromClientReceiver = Receiver.fromSocket(client);
+        this.messageFromClientBroadcaster = new Broadcaster<>(Receiver.fromSocket(client));
+        new Thread(this.messageFromClientBroadcaster).start();
+
+        this.messageFromClientBroadcaster.whenReceive(MessageType.REQUEST).listen(res -> {
+            if (!(res instanceof CommandExecuteRequest)) return;
+            CommandExecuteRequest qr = (CommandExecuteRequest)  res;
+            commandController.execute(qr.getCommandName(), qr.getParameters(), new HandlerCallback<>(
+                    o -> sendExecuteRespondToClient(generateResult(CommandExecuteRespondStatus.SUCCESS, (Serializable) o)),
+                    e -> sendExecuteRespondToClient(generateResult(CommandExecuteRespondStatus.FAIL, e))
+            ));
+        });
+        this.messageFromClientBroadcaster.onError.listen(this::onDisconnectedToClient);
 
         this.commandsHandlers = this.createCommandHandler();
         this.commandController = new CommandController();
@@ -69,33 +84,14 @@ public class QueryHandlerThread extends Thread {
         onNotificationEvent.listen(notificationListener);
     }
 
-    @Override
-    public void run() {
-        try {
-            CommandExecuteRequest qr = messageFromClientReceiver.receiveWithStream();
-            commandController.execute(qr.getCommandName(), qr.getParameters(), new HandlerCallback<>(
-                    this::onCommandSuccessfulExecuted,
-                    this::onErrorWhenExecutingCommand
-            ));
-        } catch (IOException | ClassNotFoundException e) {
-            onDisconnectedToClient(new CommunicationIOException("Cannot read data sent from client.", e));
-        }
-    }
-
-    private void onCommandSuccessfulExecuted(Object o) {
-        sendDataToClient(generateResult(CommandExecuteRespondStatus.SUCCESS, (Serializable) o), this, this::onDisconnectedToClient);
-    }
-
-    private void onErrorWhenExecutingCommand(Exception e) {
-        sendDataToClient(generateResult(CommandExecuteRespondStatus.FAIL, e), this, this::onDisconnectedToClient);
-    }
-
-    private void sendDataToClient(CommandExecuteRespond res, Runnable onSuccess, Consumer<Exception> onError) {
+    private void sendExecuteRespondToClient(CommandExecuteRespond res) {
         try {
             messageToClientSender.send(res);
-            new Thread(onSuccess).start();
         } catch (IOException e) {
-            onError.accept(new CommunicationIOException("Cannot send data to client.", e));
+//            onDisconnectedToClient(new CommunicationIOException("Cannot send data to client.", e));
+            // no need to call the above method, because when there is an error with socket, the broadCaster will
+            // broad cast it.
+            // TODO handle this part less tricky
         }
     }
 
@@ -103,8 +99,11 @@ public class QueryHandlerThread extends Thread {
         System.err.println(e.getMessage());
         System.out.printf("Disconnected to client %s.\n", client.getInetAddress());
         onNotificationEvent.removeListener(notificationListener);
+        messageFromClientBroadcaster.removeAllListeners();
         try {
-            onNotificationEvent.emit(new UserNotification(commandsHandlers.getState().getUserEmail(), "has left"));
+            if (commandsHandlers.getState().getUserId() != -1) {
+                onNotificationEvent.emit(new UserNotification(commandsHandlers.getState().getUserEmail(), "has left"));
+            }
         } catch (SQLException e1) {
             System.err.println("Error with Database.");
             e1.printStackTrace();

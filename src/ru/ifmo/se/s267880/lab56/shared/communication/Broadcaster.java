@@ -35,6 +35,11 @@ public class Broadcaster<T> implements Runnable {
         return events.get(event);
     }
 
+    public void removeAllListeners() {
+        events.forEach((key, value) -> value.clear());
+        onError.clear();
+    }
+
     public boolean isConnecting() {
         return isConnecting;
     }
