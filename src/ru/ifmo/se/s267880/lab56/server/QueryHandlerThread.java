@@ -1,13 +1,11 @@
 package ru.ifmo.se.s267880.lab56.server;
 
-import ru.ifmo.se.s267880.lab56.shared.EventEmitter;
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.Meeting;
-import ru.ifmo.se.s267880.lab56.shared.SharedCommandHandlers;
+import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
+import javax.mail.MessagingException;
 import javax.mail.internet.InternetAddress;
 import java.io.*;
 import java.net.Socket;
@@ -15,8 +13,11 @@ import java.security.spec.InvalidKeySpecException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class QueryHandlerThread extends Thread {
     private Socket client;
@@ -116,7 +117,41 @@ public class QueryHandlerThread extends Thread {
         return new Respond(respondType, result, clonedCollection);
     }
 
+    private void listenForToken(String token, long timeOut, HandlerCallback<Boolean> callback)  {
+        long currentMillis = System.currentTimeMillis();
+        Consumer<Message<MessageType>> onRecevingToken = new Consumer<Message<MessageType>>() {
+            @Override
+            public void accept(Message<MessageType> msg) {
+                if (System.currentTimeMillis() - currentMillis > timeOut) {
+                    callback.onError(new TimeoutException("Your token has been expired."));
+                    messageFromClientBroadcaster.whenReceive(MessageType.RESPOND_SUCCESS).removeListener(this);
+                    return ;
+                }
+                if (!(msg instanceof Respond)) return;
+                String res = ((Respond) msg).getResult();
+                String parts[] = res.split(":");
+                if (parts.length != 2 || !parts[0].equals("Token")) return;
+                if (parts[1].equals(token)) {
+                    callback.onSuccess(true);
+                    messageFromClientBroadcaster.whenReceive(MessageType.RESPOND_SUCCESS).removeListener(this);
+                }
+                else if (parts[1].equals("\\abort")) {
+                    callback.onSuccess(false);
+                    messageFromClientBroadcaster.whenReceive(MessageType.RESPOND_SUCCESS).removeListener(this);
+                } else try {
+                    messageToClientSender.send(new TokenRequest("Your token is incorrect. Enter it again."));
+                } catch (IOException e) {
+                    callback.onError(e);
+                }
+            }
+        };
+        messageFromClientBroadcaster.whenReceive(MessageType.RESPOND_SUCCESS).listen(onRecevingToken);
+    }
+
     private ServerCommandsHandlers createCommandHandler() {
+        InputStream mailTemplateFile = Main.class.getResourceAsStream("res/email-template.html");
+        String mailTemplate = new BufferedReader(new InputStreamReader(mailTemplateFile)).lines().collect(Collectors.joining("\n"));
+
         return new ServerCommandsHandlers() {
             @Override
             public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
@@ -126,14 +161,31 @@ public class QueryHandlerThread extends Thread {
                         callback.onError(new Exception("User with email " + userEmail + " has already existed."));
                         return ;
                     }
-                    // TODO validate with token
-                    ResultSet rs = sqlHelper.insertNewUser(userEmail, Crypto.hashPassword(userEmailAndPassword.getValue()));
-                    rs.next();
-                    setState(userStatePool.getUserState(rs.getInt("id")));
-                    onNotificationEvent.emit(new UserNotification(userEmail, "has joined"));
-                    callback.onSuccess(true);
-                } catch (SQLException | InvalidKeySpecException e) {
+                    String token = Helper.generateToken();
+                    String mail = MessageFormat.format(mailTemplate, "registration", token);
+                    mailSender.sendHTMLMail(userEmail, "Token for registration", mail);
+
+                    listenForToken(token, 90_000, new HandlerCallback<>(tokenOk -> {
+                        if (tokenOk) try {
+                            ResultSet rs = sqlHelper.insertNewUser(userEmail, Crypto.hashPassword(userEmailAndPassword.getValue()));
+                            rs.next();
+                            setState(userStatePool.getUserState(rs.getInt("id")));
+                            onNotificationEvent.emit(new UserNotification(userEmail, "has joined"));
+                        } catch (SQLException | InvalidKeySpecException e) {
+                            callback.onError(e);
+                        }
+                        callback.onSuccess(tokenOk);
+                    }, callback::onError));
+
+                    messageToClientSender.send(new TokenRequest(
+                            "A token for registration has been send to your mail box. " +
+                                    "Enter it to complete your registration. " +
+                                    "Token will be expired in 90 seconds."
+                    ));
+                } catch (IOException | SQLException e) {
                     callback.onError(e);
+                } catch (MessagingException e) {
+                    callback.onError(new Exception("Token cannot be sent."));
                 }
             }
 

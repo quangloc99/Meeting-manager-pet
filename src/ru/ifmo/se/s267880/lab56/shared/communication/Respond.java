@@ -18,6 +18,7 @@ public class Respond implements Serializable, Message<MessageType> {
     @Override
     public MessageType getType() { return respondType; }
 
+    // TODO somehow move collection to result, so this class can be more universal.
     public Respond(MessageType respondType, Serializable result, List<Meeting> collection) {
         this.initialized = true;
         if (respondType != MessageType.RESPOND_FAIL && respondType != MessageType.RESPOND_SUCCESS) {

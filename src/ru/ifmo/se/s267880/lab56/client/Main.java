@@ -17,6 +17,7 @@ import sun.misc.Unsafe;
 import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
@@ -69,19 +70,33 @@ public class Main {
     private static CommandController createCommandController(SocketChannel sc) {
         CommandController cc = new CommandController();
         Broadcaster<MessageType> messageFromServerBroadcaster = new Broadcaster<>(Receiver.fromSocketChannel(sc));
+        Sender messageToServerSender = Sender.fromSocketChannel(sc);
 
-        Consumer[] listeners = new Consumer[2];
-        listeners[0] = messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).listen(m -> {
+        Consumer[] listeners = new Consumer[3];
+        listeners[0] = messageFromServerBroadcaster.onError.listen(e -> {
+            messageFromServerBroadcaster.removeAllListeners();
+        });
+        listeners[1] = messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).listen(m -> {
             if (!(m instanceof UserNotification)) return;
             ConsoleWrapper.console.printf("\r>> %s%n> ", m);
         });
-        listeners[1] = messageFromServerBroadcaster.onError.listen(e -> {
-            messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).removeListener(listeners[0]);
-            messageFromServerBroadcaster.onError.removeListener(listeners[1]);
+        listeners[2] = messageFromServerBroadcaster.whenReceive(MessageType.REQUEST).listen(res -> {
+            if (res instanceof TokenRequest) {
+                ConsoleWrapper.console.println(((TokenRequest) res).getDisplayingMessage());
+                String token = ConsoleWrapper.console.readLine("Enter your token (enter `\\abort` to cancel this operation):");
+                try {
+                    messageToServerSender.sendWithChannel(new Respond(
+                            MessageType.RESPOND_SUCCESS,
+                            "Token:" + token,
+                            null
+                    ));
+                } catch (IOException ignore) {
+                    // TODO make this part less tricky
+                }
+            }
         });
 
         new Thread(messageFromServerBroadcaster).start();
-        Sender messageToServerSender = Sender.fromSocketChannel(sc);
         ClientCommandsHandlers handlers = new ClientCommandsHandlers(messageFromServerBroadcaster, messageToServerSender);
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, handlers, new ClientInputPreprocessor())
                 .forEach(cc::addCommand);

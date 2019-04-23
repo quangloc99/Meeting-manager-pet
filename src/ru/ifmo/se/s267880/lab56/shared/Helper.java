@@ -4,10 +4,7 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.AbstractMap;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -88,6 +85,13 @@ public class Helper {
         File res = File.createTempFile(Config.TEMP_FILE_PREFIX, null);
         res.deleteOnExit();
         return res;
+    }
+
+    public static String generateToken() {
+        Random random = new Random();
+        byte[] res = new byte[18];
+        random.nextBytes(res);
+        return Base64.getEncoder().encodeToString(res);
     }
 
     public static Class<?> toWrapper(Class<?> clazz) {
