@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
  * @author Tran Quang Loc
  */
 public class Helper {
+    public static final Pattern PASSWORD_PATTERN = Pattern.compile("[\\w@#$%^&+=]{6,}");
     /**
      * The default date format for <i>almost</i> Date object.
      */

@@ -162,6 +162,10 @@ public class QueryHandlerThread extends Thread {
                         callback.onError(new Exception("User with email " + userEmail + " has already existed."));
                         return ;
                     }
+                    if (userEmailAndPassword.getValue().length < 6) {
+                        callback.onError(new Exception("Password must contains at least 6 characters."));
+                    }
+                    // TODO add more verification.
                     String token = Helper.generateToken();
                     String mail = MessageFormat.format(mailTemplate, "registration", token);
                     mailSender.sendHTMLMail(userEmail, "Token for registration", mail);
