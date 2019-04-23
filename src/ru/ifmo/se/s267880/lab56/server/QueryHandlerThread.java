@@ -26,23 +26,46 @@ public class QueryHandlerThread extends Thread {
     private Receiver messageFromClientReceiver;
     private EventEmitter<UserNotification> onNotificationEvent;
     private SQLHelper sqlHelper;
+    private UserStatePool userStatePool;
+
     private Consumer<UserNotification> notificationListener = notification -> {
         try { messageToClientSender.sendWithStream(notification); } catch (IOException ignore) {}
     };
 
-    public QueryHandlerThread(Socket socket, Connection databaseConnection, UserStatePool userStatePool, EventEmitter<UserNotification> onNotificationEvent) throws SQLException {
-        System.out.printf("Connected to client %s!\n", socket.getInetAddress());
-        this.client = socket;
-        messageToClientSender = Sender.fromSocket(socket);
-        messageFromClientReceiver = Receiver.fromSocket(socket);
-        sqlHelper = new SQLHelper(databaseConnection);
+    public static class Builder {
+        private Socket socket;
+        private EventEmitter<UserNotification> onNotificationEvent;
+        private Connection databaseConnection;
+        private UserStatePool userStatePool;
 
-        commandsHandlers = createCommandHandler(userStatePool);
-        commandController = new CommandController();
+        public void setDatabaseConnection(Connection databaseConnection) { this.databaseConnection = databaseConnection; }
+        public void setOnNotificationEvent(EventEmitter<UserNotification> onNotificationEvent) { this.onNotificationEvent = onNotificationEvent; }
+        public void setSocket(Socket socket) { this.socket = socket; }
+        public void setUserStatePool(UserStatePool userStatePool) { this.userStatePool = userStatePool; }
+
+        public QueryHandlerThread build() throws SQLException {
+            QueryHandlerThread res = new QueryHandlerThread();
+            res.client = socket;
+            res.onNotificationEvent = onNotificationEvent;
+            res.userStatePool = userStatePool;
+            res.sqlHelper = new SQLHelper(databaseConnection);
+            res.init();
+            return res;
+        }
+    }
+
+    private QueryHandlerThread() {}
+
+    private void init() {
+        System.out.printf("Connected to client %s!\n", client.getInetAddress());
+        this.messageToClientSender = Sender.fromSocket(client);
+        this.messageFromClientReceiver = Receiver.fromSocket(client);
+
+        this.commandsHandlers = this.createCommandHandler();
+        this.commandController = new CommandController();
         ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, commandsHandlers, new ServerInputPreprocessor())
                 .forEach(commandController::addCommand);
 
-        this.onNotificationEvent = onNotificationEvent;
         onNotificationEvent.listen(notificationListener);
     }
 
@@ -94,7 +117,7 @@ public class QueryHandlerThread extends Thread {
         return new CommandExecuteRespond(status, result, clonedCollection);
     }
 
-    private ServerCommandsHandlers createCommandHandler(UserStatePool userStatePool) {
+    private ServerCommandsHandlers createCommandHandler() {
         return new ServerCommandsHandlers() {
             @Override
             public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {

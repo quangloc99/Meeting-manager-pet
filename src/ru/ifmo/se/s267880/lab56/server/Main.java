@@ -26,11 +26,18 @@ public class Main {
             System.err.println(e.getMessage());
             System.exit(1);
         }
+
+        QueryHandlerThread.Builder handlerThreadBuiler = new QueryHandlerThread.Builder();
+        handlerThreadBuiler.setDatabaseConnection(databaseConnection);
+        handlerThreadBuiler.setUserStatePool(userStatePool);
+        handlerThreadBuiler.setOnNotificationEvent(onNotification);
+
         try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT)) {
             System.out.println("Server connected at " + ss.getLocalPort());
             while (true) {
                 try {
-                    new QueryHandlerThread(ss.accept(), databaseConnection, userStatePool, onNotification).start();
+                    handlerThreadBuiler.setSocket(ss.accept());
+                    handlerThreadBuiler.build().start();
                 } catch (IOException | SQLException e) {
                     System.err.println("Cannot run thread: " + e.getMessage());
                     e.printStackTrace();
