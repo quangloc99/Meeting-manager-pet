@@ -137,7 +137,7 @@ public class UserState {
     }
 
     public List<Meeting> getMeetingsCollection() {
-
+        meetingsCollection.sort(Comparator.comparing(Meeting::getTime));
         return Collections.unmodifiableList(meetingsCollection);
     }
 

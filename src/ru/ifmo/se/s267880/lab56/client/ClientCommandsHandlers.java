@@ -45,7 +45,7 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
                         for (Meeting meeting : res.getCollection()) {
                             ConsoleWrapper.console.printf("%3d) %s\n", ++i, meeting);
                         }
-                        ConsoleWrapper.console.println("To get the original order (the real order), please use command `show`.");
+//                        ConsoleWrapper.console.println("To get the original order (the real order), please use command `show`.");
                     }
                     callback.onSuccess(res.getResult());
                 }, callback::onError

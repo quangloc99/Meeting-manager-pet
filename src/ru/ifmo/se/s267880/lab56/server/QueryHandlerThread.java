@@ -112,9 +112,7 @@ public class QueryHandlerThread extends Thread {
     }
 
     private Respond generateResult(MessageType respondType, Serializable result) {
-        LinkedList<Meeting> clonedCollection = new LinkedList<>(commandsHandlers.getState().getMeetingsCollection());
-        clonedCollection.sort(Comparator.comparing(Meeting::getName));
-        return new Respond(respondType, result, clonedCollection);
+        return new Respond(respondType, result, commandsHandlers.getState().getMeetingsCollection());
     }
 
     private void listenForToken(String token, long timeOut, HandlerCallback<Boolean> callback)  {
