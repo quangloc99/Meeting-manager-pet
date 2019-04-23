@@ -164,6 +164,7 @@ public class QueryHandlerThread extends Thread {
                     }
                     if (userEmailAndPassword.getValue().length < 6) {
                         callback.onError(new Exception("Password must contains at least 6 characters."));
+                        return ;
                     }
                     // TODO add more verification.
                     String token = Helper.generateToken();

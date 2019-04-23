@@ -277,7 +277,11 @@ abstract public class ServerCommandsHandlers implements SharedCommandHandlers {
      */
     @Override
     public synchronized void info(HandlerCallback<Map<String, String>> callback) {
-        callback.onSuccess(state.generateInfo());
+        try {
+            callback.onSuccess(state.generateInfo());
+        } catch (Exception e) {
+            callback.onError(e);
+        }
     }
 
     /**

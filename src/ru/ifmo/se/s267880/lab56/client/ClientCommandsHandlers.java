@@ -230,12 +230,13 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     public void info(HandlerCallback<Map<String, String>> callback) {
         new CommandExecutor(new HandlerCallback<>(res -> {
             Map<String, String> result = res.getResult();
-            System.out.println("# Information");
-            System.out.println("File name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
-            System.out.println("Time zone: UTC" + result.get("time-zone"));
-            System.out.println("Number of meeting: " + result.get("meeting-count"));
-            System.out.println("File load since: " + result.get("since"));
-            System.out.println("Is quite: " + isQuite);
+            ConsoleWrapper.console.println("# Information");
+            ConsoleWrapper.console.println("User email: " + result.get("user-email"));
+            ConsoleWrapper.console.println("File name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
+            ConsoleWrapper.console.println("Time zone: UTC" + result.get("time-zone"));
+            ConsoleWrapper.console.println("Number of meeting: " + result.get("meeting-count"));
+            ConsoleWrapper.console.println("File load since: " + result.get("since"));
+            ConsoleWrapper.console.println("Is quite: " + isQuite);
             callback.onSuccess(result);
         }, callback::onError)).run();
     }

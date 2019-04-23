@@ -137,6 +137,7 @@ public class UserState {
     }
 
     public List<Meeting> getMeetingsCollection() {
+
         return Collections.unmodifiableList(meetingsCollection);
     }
 
@@ -152,8 +153,9 @@ public class UserState {
         this.timeZoneId = timeZoneId;
     }
 
-    public synchronized Map<String, String> generateInfo() {
+    public synchronized Map<String, String> generateInfo() throws SQLException {
         Map<String, String> result = new HashMap<>();
+        result.put("user-email", getUserEmail());
         result.put("file", collectionStoringName);
         result.put("meeting-count", Integer.toString(meetingsCollection.size()));
         result.put("since", Helper.meetingDateFormat.format(openSince));
