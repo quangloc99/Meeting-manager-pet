@@ -7,6 +7,7 @@ import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerUserAccountManipula
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 import ru.ifmo.se.s267880.lab56.shared.functional.ConsumerWithException;
@@ -18,6 +19,7 @@ import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.UserAccountManipula
 import java.io.*;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class QueryHandlerThread extends Thread {
     private final Services services;
@@ -39,19 +41,15 @@ public class QueryHandlerThread extends Thread {
             ));
         });
         services.getMessageFromClientBroadcaster().onError.listen(this::onDisconnectedToClient);
-        Map<Class, CommandHandlers> handlersMap = new HashMap<>();
-        handlersMap.put(CollectionManipulationCommandHandlers.class, new ServerCollectionManipulationCommandHandlers(services));
-        handlersMap.put(StoringAndRestoringCommandHandlers.class, new ServerStoringAndRestoringCommandHandlers(services));
-        handlersMap.put(UserAccountManipulationCommandHandlers.class, new ServerUserAccountManipulationCommandHandlers(services));
-        handlersMap.put(MiscellaneousCommandHandlers.class, new ServerMiscellaneousCommandHandlers(services));
-
-        handlersMap.forEach((cls, handlers) -> {
-            ReflectionCommandHandlerGenerator.generate(cls, handlers, new ServerInputPreprocessor())
-                    .forEach(commandController::addCommand);
-            // also add additional handlers that not defined in the shard interfaces.
-            ReflectionCommandHandlerGenerator.generate(handlers.getClass(), handlers, new ServerInputPreprocessor())
-                    .forEach(commandController::addCommand);
-        });
+        InputPreprocessor inputPreprocessor = new ServerInputPreprocessor();
+        Stream.of(
+                new ServerCollectionManipulationCommandHandlers(services),
+                new ServerStoringAndRestoringCommandHandlers(services),
+                new ServerUserAccountManipulationCommandHandlers(services),
+                new ServerMiscellaneousCommandHandlers(services)
+        )
+                .map(handlers -> handlers.generateHandlers(inputPreprocessor))
+                .forEach(handlerMap -> handlerMap.forEach(commandController::addCommand));
 
         services.getOnNotificationEvent().listen(this::notificationListener);
     }

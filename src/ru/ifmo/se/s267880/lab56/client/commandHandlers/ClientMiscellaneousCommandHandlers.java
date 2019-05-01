@@ -4,7 +4,10 @@ import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
 import ru.ifmo.se.s267880.lab56.client.Main;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
 
@@ -83,5 +86,14 @@ public class ClientMiscellaneousCommandHandlers
         } else {
             new BufferedReader(new InputStreamReader(help)).lines().forEach(ConsoleWrapper.console::println);
         }
+    }
+
+    @Override
+    public Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {
+        Map<String, CommandHandler> res = MiscellaneousCommandHandlers.super.generateHandlers(preprocessor);
+        res.putAll(ReflectionCommandHandlerGenerator.generate(
+                ClientMiscellaneousCommandHandlers.class, this, preprocessor
+        ));
+        return res;
     }
 }

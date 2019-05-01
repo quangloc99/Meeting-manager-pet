@@ -1,5 +1,9 @@
 package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
+
+import java.util.Map;
+
 /**
  * An interface providing a clean way to get the current command's name and parameters.
  * This interface is used with {@link ReflectionCommandHandlerGenerator}. {@link ReflectionCommandHandlerGenerator} will handle commands
@@ -20,4 +24,6 @@ public interface CommandHandlers {
 
     default String getCommandName() { return ""; }
     default Object[] getCommandParams() { return null; }
+
+    Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor);
 }

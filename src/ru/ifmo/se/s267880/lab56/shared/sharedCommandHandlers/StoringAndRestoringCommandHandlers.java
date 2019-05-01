@@ -1,18 +1,17 @@
 package ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers;
 
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.*;
 import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 
 public interface StoringAndRestoringCommandHandlers extends CommandHandlers {
     /**
      * Add all data from another file into the current collection.
-     * @param file the file that the data will be imported from.
      */
     @Command("import")
     @Usage("Add all data from the file given by the arg into the current collection.\nNote that the file name must be quoted")
@@ -37,7 +36,6 @@ public interface StoringAndRestoringCommandHandlers extends CommandHandlers {
 
     /**
      * Replace the current collection with the ones in another file. Also change the current working file to that file.
-     * @param path the path to the file.
      */
 //    @Command
     @Usage("load a file with name given by arg. The content of the collection will be replaced.\n" +
@@ -51,7 +49,6 @@ public interface StoringAndRestoringCommandHandlers extends CommandHandlers {
 
     /**
      * Just change the current working file. The data of that file will be replaced.
-     * @param path that path to the file.
      */
 //    @Command
     @Usage(
@@ -65,4 +62,11 @@ public interface StoringAndRestoringCommandHandlers extends CommandHandlers {
     @Command("list-collections")
     @Usage("List all saved collections with users email.")
     void listCollections(HandlerCallback<HashMap<String, String>> callback);
+
+    @Override
+    default Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {
+        return ReflectionCommandHandlerGenerator.generate(
+                StoringAndRestoringCommandHandlers.class, this, preprocessor
+        );
+    }
 }

@@ -1,9 +1,8 @@
 package ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers;
 
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.*;
 
 import javax.mail.internet.InternetAddress;
 import java.util.Map;
@@ -25,4 +24,11 @@ public interface UserAccountManipulationCommandHandlers extends CommandHandlers 
     @Command("list-users")
     @Usage("Print all user's email.")
     void listUsers(HandlerCallback<String[]> callback);
+
+    @Override
+    default Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {
+        return ReflectionCommandHandlerGenerator.generate(
+                UserAccountManipulationCommandHandlers.class, this, preprocessor
+        );
+    }
 }

@@ -10,13 +10,8 @@ import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.CollectionManipulationCommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.StoringAndRestoringCommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.UserAccountManipulationCommandHandlers;
 import sun.misc.Unsafe;
 
 import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
@@ -28,10 +23,9 @@ import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * @author Tran Quang Loc
@@ -81,7 +75,7 @@ public class Main {
     }
 
     private static CommandController createCommandController(SocketChannel sc) {
-        CommandController cc = new CommandController();
+        CommandController commandController = new CommandController();
         Broadcaster<MessageType> messageFromServerBroadcaster = new Broadcaster<>(Receiver.fromSocketChannel(sc));
         Sender messageToServerSender = Sender.fromSocketChannel(sc);
         new Thread(messageFromServerBroadcaster).start();
@@ -109,30 +103,25 @@ public class Main {
 
         Supplier<CommandToServerExecutor> commandExecutorSupplier = () ->
                 new CommandToServerExecutor(messageFromServerBroadcaster, messageToServerSender);
-        Map<Class, CommandHandlers> handlersMap = new HashMap<>();
-        handlersMap.put(CollectionManipulationCommandHandlers.class, new ClientCollectionManipulationCommandHandlers(commandExecutorSupplier));
-        handlersMap.put(StoringAndRestoringCommandHandlers.class, new ClientStoringAndRestoringCommandHandlers(commandExecutorSupplier));
-        handlersMap.put(UserAccountManipulationCommandHandlers.class, new ClientUserAccountManipulationCommandHandlers(commandExecutorSupplier));
-        handlersMap.put(MiscellaneousCommandHandlers.class, new ClientMiscellaneousCommandHandlers(commandExecutorSupplier));
+        InputPreprocessor inputPreprocessor = new ClientInputPreprocessor();
+        Stream.of(
+            new ClientCollectionManipulationCommandHandlers(commandExecutorSupplier),
+            new ClientStoringAndRestoringCommandHandlers(commandExecutorSupplier),
+            new ClientUserAccountManipulationCommandHandlers(commandExecutorSupplier),
+            new ClientMiscellaneousCommandHandlers(commandExecutorSupplier)
+        )
+                .map(handlers -> handlers.generateHandlers(inputPreprocessor))
+                .forEach(handlerMap -> handlerMap.forEach(commandController::addCommand));
 
-        handlersMap.forEach((cls, handlers) -> {
-            ReflectionCommandHandlerGenerator.generate(cls, handlers, new ClientInputPreprocessor())
-                    .forEach(cc::addCommand);
-
-            // also add additional handlers that not defined in the shard interfaces.
-            ReflectionCommandHandlerGenerator.generate(handlers.getClass(), handlers, new ClientInputPreprocessor())
-                    .forEach(cc::addCommand);
-        });
-
-        cc.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :) [Additional].", args -> {
+        commandController.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :) [Additional].", args -> {
             try {sc.close(); } catch (Exception ignored) {}
             System.exit(0);
         }));
 
-        cc.addCommand("list-commands", CommandHandler.ofConsumer(
+        commandController.addCommand("list-commands", CommandHandler.ofConsumer(
                 "[Additional] List all the commands.", args -> {
                     ConsoleWrapper.console.println("# Commands list:");
-                    cc.getCommandHandlers().forEach((commandName, handler) -> {
+                    commandController.getCommandHandlers().forEach((commandName, handler) -> {
                         ConsoleWrapper.console.printf("- ");
                         for (String s : handler.getUsage(commandName).split("\n")) {
                             ConsoleWrapper.console.printf("\t%s\n", s);
@@ -141,7 +130,7 @@ public class Main {
                     });
                 }
         ));
-        return cc;
+        return commandController;
     }
 
     private static void printAwesomeASCIITitle() {

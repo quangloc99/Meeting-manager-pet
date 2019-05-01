@@ -1,9 +1,8 @@
 package ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers;
 
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.*;
 
 import java.time.ZoneId;
 import java.util.Map;
@@ -27,10 +26,15 @@ public interface  MiscellaneousCommandHandlers extends CommandHandlers {
     void listTimeZones(int offsetHour, HandlerCallback<Map<Integer, ZoneId>> callback);
 
     /**
-     * Set the current time zone corresponding to to the key in {@link ZoneUtils#allZoneIds}
-     * @param timeZoneKey the time zone's key in {@link ZoneUtils#allZoneIds}
      */
     @Command(value="set-timezone", additional = true)
     @Usage("Set the time zone by index. Use command `list-timezones` for the list of time zones with indexes.")
     void setTimeZone(int timeZoneId, HandlerCallback callback);
+
+    @Override
+    default Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {
+        return ReflectionCommandHandlerGenerator.generate(
+                MiscellaneousCommandHandlers.class, this, preprocessor
+        );
+    }
 }
