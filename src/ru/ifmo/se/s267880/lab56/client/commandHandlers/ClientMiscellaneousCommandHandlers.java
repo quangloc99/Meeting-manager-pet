@@ -34,7 +34,8 @@ public class ClientMiscellaneousCommandHandlers
             Map<String, String> result = res.getResult();
             ConsoleWrapper.console.println("# Information");
             ConsoleWrapper.console.println("User email: " + result.get("user-email"));
-            ConsoleWrapper.console.println("File name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
+            ConsoleWrapper.console.println("Collection name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
+            ConsoleWrapper.console.println("Sort order: " + result.get("sort-order"));
             ConsoleWrapper.console.println("Time zone: UTC" + result.get("time-zone"));
             ConsoleWrapper.console.println("Number of meeting: " + result.get("meeting-count"));
             ConsoleWrapper.console.println("File load since: " + result.get("since"));

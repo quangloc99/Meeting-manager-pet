@@ -6,6 +6,7 @@ import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CannotPreprocessInputException;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.JsonBasicInputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
@@ -42,6 +43,12 @@ public class ClientInputPreprocessor extends JsonBasicInputPreprocessor {
                 return new SimpleEntry<InternetAddress, char[]>(new InternetAddress((String)obj, false), null);
             } catch (AddressException e) {
                 throw new CannotPreprocessInputException(obj + " has wrong email format.");
+            }
+
+            if (inputType == MeetingSortOrder.class) {
+                MeetingSortOrder ans = MeetingSortOrder.getByShorthand((String) obj);
+                if (ans == null) throw new CannotPreprocessInputException(obj + " must be one of sort order (exp. asc-time).");
+                return ans;
             }
             try {
                 Class wrapped = Helper.toWrapper(inputType);

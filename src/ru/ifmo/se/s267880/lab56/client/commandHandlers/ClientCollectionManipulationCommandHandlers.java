@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.client.commandHandlers;
 
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.CollectionManipulationCommandHandlers;
 
 import java.util.Iterator;
@@ -76,4 +77,8 @@ public class ClientCollectionManipulationCommandHandlers extends ClientCommandsH
         buildCommandExecutor().run(generateRequest(), callback);
     }
 
+    @Override
+    public void setOrder(MeetingSortOrder sort_order, HandlerCallback callback) {
+        buildCommandExecutor().run(generateRequest(), callback);
+    }
 }

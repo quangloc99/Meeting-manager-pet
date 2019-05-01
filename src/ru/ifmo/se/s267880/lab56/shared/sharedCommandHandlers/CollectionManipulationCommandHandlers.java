@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers;
 
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.*;
 
@@ -50,6 +51,14 @@ public interface CollectionManipulationCommandHandlers extends CommandHandlers {
     @Command(additional = true)
     @Usage("delete all the elements from the collection")
     void clear(HandlerCallback callback);
+
+    @Command(value="set-order", additional = true)
+    @Usage("set sort order. The accepted values are:\n" +
+            "- `asc-time`: ascending by time\n" +
+            "- `des-time`: descending by time\n" +
+            "- `asc-name`: ascending by name\n" +
+            "- `des-time`: descending by name")
+    void setOrder(MeetingSortOrder sort_order, HandlerCallback callback);
 
     @Override
     default Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {

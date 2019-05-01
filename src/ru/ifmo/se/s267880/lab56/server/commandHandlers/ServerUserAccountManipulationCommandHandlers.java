@@ -27,7 +27,7 @@ public class ServerUserAccountManipulationCommandHandlers extends ServerCommandH
     public void register(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
         try {
             String userEmail = userEmailAndPassword.getKey().getAddress();
-            if (services.getSqlHelper().getUserbyEmail(userEmail).next()) {
+            if (services.getSqlHelper().getUserByEmail(userEmail).next()) {
                 callback.onError(new Exception("User with email " + userEmail + " has already existed."));
                 return ;
             }
@@ -55,7 +55,7 @@ public class ServerUserAccountManipulationCommandHandlers extends ServerCommandH
     public void login(Map.Entry<InternetAddress, char[]> userEmailAndPassword, HandlerCallback<Boolean> callback) {
         try {
             String userEmail = userEmailAndPassword.getKey().getAddress();
-            ResultSet rs = services.getSqlHelper().getUserbyEmail(userEmail);
+            ResultSet rs = services.getSqlHelper().getUserByEmail(userEmail);
             if (!rs.next()) {
                 callback.onError(new Exception("Email or password not correct."));
                 return ;

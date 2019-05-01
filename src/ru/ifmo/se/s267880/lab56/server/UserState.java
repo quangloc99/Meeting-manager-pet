@@ -3,6 +3,7 @@ package ru.ifmo.se.s267880.lab56.server;
 import ru.ifmo.se.s267880.lab56.server.services.SQLHelper;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
 import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
 import ru.ifmo.se.s267880.lab56.shared.functional.FunctionWithException;
 
@@ -10,6 +11,7 @@ import java.security.InvalidParameterException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -19,6 +21,7 @@ public class UserState {
     private int userId = -1;
     private List<Meeting> meetingsCollection = Collections.synchronizedList(new LinkedList<>());
     private List<Meeting> removedMeetings = Collections.synchronizedList(new LinkedList<>());
+    private MeetingSortOrder meetingSortOrder = MeetingSortOrder.ASCENDING_TIME;
     private String collectionStoringName = null;
     private ZonedDateTime openSince = ZonedDateTime.now();
     private ZoneId timeZoneId = ZonedDateTime.now().getZone();
@@ -54,6 +57,10 @@ public class UserState {
             throw new Exception("Collection \"" + collectionName + "\" not found.");   // TODO (or not :p): create a class for this exception.
         }
         int collectionId = res.getInt("id");
+        meetingSortOrder = MeetingSortOrder.getByShorthand(res.getString("sort_order"));
+        if (meetingSortOrder == null) {
+            throw new Exception("An error occur while reading data from database. Please inform the creator if this message is shown.");
+        }
         List<Meeting> meetings = sqlHelper.getMeetingListByCollectionId(collectionId, timeZoneId);
         resetCollectionState(meetings);
         updateStoringName(collectionName);
@@ -70,7 +77,7 @@ public class UserState {
         if (sqlHelper == null) throw new NullPointerException("You are not signed in.");
         ResultSet res = sqlHelper.getCollectionByName(name);
         if (!res.next()) {
-            (res = sqlHelper.insertNewCollection(name, "asc-time", userId)).next();
+            (res = sqlHelper.insertNewCollection(name, meetingSortOrder, userId)).next();
         } else if (toNewCollection) {
             throw new InvalidParameterException("Collection with name \"" + name + "\" existed. Please choose another name.");
         }
@@ -89,6 +96,7 @@ public class UserState {
                 ))
                 .collect(Collectors.toList());
         resetCollectionState(newCollections);
+        sqlHelper.updateCollection(res.getInt("id"), meetingSortOrder);
         updateStoringName(name);
     }
 
@@ -137,7 +145,7 @@ public class UserState {
     }
 
     public List<Meeting> getMeetingsCollection() {
-        meetingsCollection.sort(Comparator.comparing(Meeting::getTime));
+        meetingsCollection.sort(meetingSortOrder.getMeetingComparator());
         return Collections.unmodifiableList(meetingsCollection);
     }
 
@@ -157,10 +165,15 @@ public class UserState {
         this.timeZoneId = timeZoneId;
     }
 
+    public void setMeetingSortOrder(MeetingSortOrder meetingSortOrder) {
+        this.meetingSortOrder = meetingSortOrder;
+    }
+
     public synchronized Map<String, String> generateInfo() throws SQLException {
         Map<String, String> result = new HashMap<>();
         result.put("user-email", getUserEmail());
         result.put("file", collectionStoringName);
+        result.put("sort-order", meetingSortOrder.toString());
         result.put("meeting-count", Integer.toString(meetingsCollection.size()));
         result.put("since", Helper.meetingDateFormat.format(openSince));
         result.put("time-zone", timeZoneId.toString() + " " + ZoneUtils.toUTCZoneOffsetString(timeZoneId));

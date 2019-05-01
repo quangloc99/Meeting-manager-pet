@@ -3,6 +3,7 @@ package ru.ifmo.se.s267880.lab56.server.commandHandlers;
 import ru.ifmo.se.s267880.lab56.server.services.Services;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.CollectionManipulationCommandHandlers;
 
 import java.util.Collections;
@@ -90,6 +91,12 @@ public class ServerCollectionManipulationCommandHandlers extends ServerCommandHa
     @SuppressWarnings("unchecked")
     public void clear(HandlerCallback callback) {
         services.getUserState().clear();
+        callback.onSuccess(null);
+    }
+
+    @Override
+    public void setOrder(MeetingSortOrder sort_order, HandlerCallback callback) {
+        services.getUserState().setMeetingSortOrder(sort_order);
         callback.onSuccess(null);
     }
 }

@@ -3,6 +3,7 @@ package ru.ifmo.se.s267880.lab56.server.services;
 import com.sun.istack.internal.NotNull;
 import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
+import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
 import ru.ifmo.se.s267880.lab56.shared.functional.ConsumerWithException;
 
 import java.sql.*;
@@ -29,7 +30,7 @@ public class SQLHelper {
     }
 
     private PreparedStatement getUserByEmailSt = null;
-    public ResultSet getUserbyEmail(@NotNull String email) throws SQLException {
+    public ResultSet getUserByEmail(@NotNull String email) throws SQLException {
         if (getUserByEmailSt == null) {
             getUserByEmailSt = connection.prepareStatement("select * from users where email = ?");
         }
@@ -57,16 +58,28 @@ public class SQLHelper {
     }
 
     private PreparedStatement insertCollectionAndGetSt = null;
-    public ResultSet insertNewCollection(@NotNull String name, String sortOrder, int ownerId) throws SQLException {
+    public ResultSet insertNewCollection(@NotNull String name, MeetingSortOrder sortOrder, int ownerId) throws SQLException {
         if (insertCollectionAndGetSt == null) {
                 insertCollectionAndGetSt = connection.prepareStatement(
                         "INSERT INTO collections (name, sort_order, owner_id) values (?, CAST(? AS meeting_collection_sort_order), ?) RETURNING *"
                 );
         }
         insertCollectionAndGetSt.setString(1, name);
-        insertCollectionAndGetSt.setString(2, sortOrder);   // TODO add sort order
+        insertCollectionAndGetSt.setString(2, sortOrder.toString());
         insertCollectionAndGetSt.setInt(3, ownerId);
         return insertCollectionAndGetSt.executeQuery();
+    }
+
+    private PreparedStatement updateCollectionSt = null;
+    public void updateCollection(int id, MeetingSortOrder sortOrder) throws SQLException {
+        if (updateCollectionSt == null) {
+            updateCollectionSt = connection.prepareStatement(
+                "Update collections set sort_order = CAST(? as meeting_collection_sort_order) where id = ?"
+            );
+        }
+        updateCollectionSt.setInt(2, id);
+        updateCollectionSt.setString(1, sortOrder.toString());
+        updateCollectionSt.executeUpdate();
     }
 
     private PreparedStatement getCollectionOfMeetingsSt = null;
