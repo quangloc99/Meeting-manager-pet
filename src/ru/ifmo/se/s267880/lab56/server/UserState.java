@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.server;
 
+import ru.ifmo.se.s267880.lab56.server.services.SQLHelper;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;

@@ -1,5 +1,6 @@
-package ru.ifmo.se.s267880.lab56.server;
+package ru.ifmo.se.s267880.lab56.server.services;
 
+import ru.ifmo.se.s267880.lab56.server.UserState;
 import ru.ifmo.se.s267880.lab56.server.commandHandlers.TokenVerifier;
 import ru.ifmo.se.s267880.lab56.shared.EventEmitter;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;

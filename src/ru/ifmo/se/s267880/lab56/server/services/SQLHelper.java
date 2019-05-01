@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56.server;
+package ru.ifmo.se.s267880.lab56.server.services;
 
 import com.sun.istack.internal.NotNull;
 import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;

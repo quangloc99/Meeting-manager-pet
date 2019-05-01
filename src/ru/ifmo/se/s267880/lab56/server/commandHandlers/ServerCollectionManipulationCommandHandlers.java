@@ -1,14 +1,12 @@
 package ru.ifmo.se.s267880.lab56.server.commandHandlers;
 
-import ru.ifmo.se.s267880.lab56.server.Services;
-import ru.ifmo.se.s267880.lab56.server.UserState;
+import ru.ifmo.se.s267880.lab56.server.services.Services;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.CollectionManipulationCommandHandlers;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class ServerCollectionManipulationCommandHandlers extends ServerCommandHandlers
     implements CollectionManipulationCommandHandlers

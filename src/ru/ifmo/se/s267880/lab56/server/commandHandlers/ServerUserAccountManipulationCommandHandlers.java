@@ -1,27 +1,19 @@
 package ru.ifmo.se.s267880.lab56.server.commandHandlers;
 
 import ru.ifmo.se.s267880.lab56.server.*;
+import ru.ifmo.se.s267880.lab56.server.services.SQLHelper;
+import ru.ifmo.se.s267880.lab56.server.services.Services;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.Helper;
-import ru.ifmo.se.s267880.lab56.shared.communication.TokenRequest;
 import ru.ifmo.se.s267880.lab56.shared.communication.UserNotification;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.UserAccountManipulationCommandHandlers;
 
-import javax.mail.MessagingException;
 import javax.mail.internet.InternetAddress;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class ServerUserAccountManipulationCommandHandlers extends ServerCommandHandlers
     implements UserAccountManipulationCommandHandlers

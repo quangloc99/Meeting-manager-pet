@@ -1,4 +1,4 @@
-package ru.ifmo.se.s267880.lab56.server;
+package ru.ifmo.se.s267880.lab56.server.services;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -6,12 +6,8 @@ import com.google.gson.JsonObject;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class MailSender {
     private String from;

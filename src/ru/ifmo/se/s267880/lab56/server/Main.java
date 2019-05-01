@@ -3,7 +3,9 @@ package ru.ifmo.se.s267880.lab56.server;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
+import ru.ifmo.se.s267880.lab56.server.services.MailSender;
+import ru.ifmo.se.s267880.lab56.server.services.Services;
+import ru.ifmo.se.s267880.lab56.server.services.UserStatePool;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.communication.UserNotification;
 

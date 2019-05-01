@@ -4,21 +4,14 @@ import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerCollectionManipulat
 import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerMiscellaneousCommandHandlers;
 import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerStoringAndRestoringCommandHandlers;
 import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerUserAccountManipulationCommandHandlers;
+import ru.ifmo.se.s267880.lab56.server.services.Services;
 import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
-import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
-import ru.ifmo.se.s267880.lab56.shared.functional.ConsumerWithException;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.CollectionManipulationCommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.StoringAndRestoringCommandHandlers;
-import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.UserAccountManipulationCommandHandlers;
 
 import java.io.*;
 import java.sql.SQLException;
-import java.util.*;
 import java.util.stream.Stream;
 
 public class QueryHandlerThread extends Thread {
