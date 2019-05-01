@@ -164,7 +164,6 @@ public class QueryHandlerThread extends Thread {
                         callback.onError(new Exception("Password must contains at least 6 characters."));
                         return ;
                     }
-                    // TODO add more verification.
                     String token = Helper.generateToken();
                     String mail = MessageFormat.format(mailTemplate, "registration", token);
                     mailSender.sendHTMLMail(userEmail, "Token for registration", mail);
@@ -190,6 +189,7 @@ public class QueryHandlerThread extends Thread {
                     callback.onError(e);
                 } catch (MessagingException e) {
                     callback.onError(new Exception("Token cannot be sent."));
+                    e.printStackTrace();
                 }
             }
 

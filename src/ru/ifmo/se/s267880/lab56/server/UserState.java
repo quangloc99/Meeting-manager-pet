@@ -149,6 +149,10 @@ public class UserState {
         return timeZoneId;
     }
 
+    public SQLHelper getSqlHelper() {
+        return sqlHelper;
+    }
+
     public void setTimeZone(ZoneId timeZoneId) {
         this.timeZoneId = timeZoneId;
     }

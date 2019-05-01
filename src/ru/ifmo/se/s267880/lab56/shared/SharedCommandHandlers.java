@@ -153,4 +153,9 @@ public interface SharedCommandHandlers extends CommandHandlers {
     @Command
     @Usage("Just logout.")
     void logout(HandlerCallback callback);
+
+
+    @Command(value="list-user")
+    @Usage("Print all user's email.")
+    void listUser(HandlerCallback<String[]> callback);
 }

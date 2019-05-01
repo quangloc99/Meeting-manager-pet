@@ -119,6 +119,13 @@ public class SQLHelper {
         return meeting.withId(rs.getInt("id"));
     }
 
+    private PreparedStatement getAllUsersPublicInfosSt = null;
+    public ResultSet getAllUser() throws SQLException {
+        if (getAllUsersPublicInfosSt == null) {
+            getAllUsersPublicInfosSt = connection.prepareStatement("SELECT id, email FROM users");
+        }
+        return getAllUsersPublicInfosSt.executeQuery();
+    }
 
     public Connection getConnection() {
         return connection;

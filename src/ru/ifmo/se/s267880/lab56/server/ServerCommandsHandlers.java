@@ -312,6 +312,22 @@ abstract public class ServerCommandsHandlers implements SharedCommandHandlers {
         callback.onSuccess(null);
     }
 
+    @Override
+    public void listUser(HandlerCallback<String[]> callback) {
+        if (state.getUserId() == -1) callback.onError(new Exception("You must login to server inorder to see the user lists."));
+        else try {
+            SQLHelper sqlHelper = state.getSqlHelper();   // get the helper from the state because its from
+                                                          // the database containing with the user.
+            List<String> res = new LinkedList<>();
+            for (ResultSet rs = sqlHelper.getAllUser(); rs.next(); ) {
+                res.add(rs.getString("email"));
+            }
+            callback.onSuccess(res.toArray(new String[0]));
+        } catch (SQLException e) {
+            callback.onError(e);
+        }
+    }
+
     public UserState getState() {
         return state;
     }

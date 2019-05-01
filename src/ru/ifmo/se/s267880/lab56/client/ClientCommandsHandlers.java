@@ -311,4 +311,14 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
             callback.onSuccess(null);
         }, callback::onError)).run();
     }
+
+    @Override
+    public void listUser(HandlerCallback<String[]> callback) {
+        new CommandExecutor(new HandlerCallback<>(res -> {
+            String[] userEmails = res.getResult();
+            ConsoleWrapper.console.println("# List of users:");
+            Arrays.stream(userEmails).forEach(ConsoleWrapper.console::println);
+            callback.onSuccess(userEmails);
+        }, callback::onError)).run();
+    }
 }
