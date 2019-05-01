@@ -13,64 +13,65 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SQLHelper {
-    private final PreparedStatement getUserByEmailSt;
-    private final PreparedStatement getUserByIdSt;
-    private final PreparedStatement getCollectionByNameSt;
-    private final PreparedStatement getCollectionOfMeetingsSt;
-    private final PreparedStatement insertUserAndGetSt;
-    private final PreparedStatement insertCollectionAndGetSt;
-    private final PreparedStatement insertMeetingAndGetSt;
-    private final PreparedStatement deleteMeetingSt;
-
     private Connection connection;
 
-    public SQLHelper(Connection connection) throws SQLException {
+    public SQLHelper(Connection connection) {
         this.connection = connection;
-        getUserByIdSt = connection.prepareStatement("select * from users where id = ?");
-        getUserByEmailSt = connection.prepareStatement("select * from users where email = ?");
-        getCollectionByNameSt = connection.prepareStatement("select * from collections where name = ?");
-        getCollectionOfMeetingsSt = connection.prepareStatement("select meetings.* from meetings where collection_id = ?");
-        insertCollectionAndGetSt = connection.prepareStatement(
-                "INSERT INTO collections (name, sort_order, owner_id) values (?, CAST(? AS meeting_collection_sort_order), ?) RETURNING *"
-        );
-        insertMeetingAndGetSt = connection.prepareStatement(
-                "INSERT INTO meetings (name, duration, location_building, location_floor, time, collection_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?) " +
-                "RETURNING id"
-        );
-        insertUserAndGetSt = connection.prepareStatement("INSERT INTO users (email, password_hash) values (?, ?) RETURNING *");
-        deleteMeetingSt = connection.prepareStatement("DELETE FROM meetings WHERE id = ?");
     }
 
+    private PreparedStatement getUserByIdSt = null;
     public ResultSet getUserById(int id) throws SQLException {
+        if (getUserByIdSt == null) {
+            getUserByIdSt = connection.prepareStatement("select * from users where id = ?");
+        }
         getUserByIdSt.setInt(1, id);
         return getUserByIdSt.executeQuery();
     }
 
+    private PreparedStatement getUserByEmailSt = null;
     public ResultSet getUserbyEmail(@NotNull String email) throws SQLException {
+        if (getUserByEmailSt == null) {
+            getUserByEmailSt = connection.prepareStatement("select * from users where email = ?");
+        }
         getUserByEmailSt.setString(1, email);
         return getUserByEmailSt.executeQuery();
     }
 
+    private PreparedStatement getCollectionByNameSt = null;
     public ResultSet getCollectionByName(@NotNull  String name) throws SQLException {
+        getCollectionByNameSt = connection.prepareStatement("select * from collections where name = ?");
         getCollectionByNameSt.setString(1, name);
         return getCollectionByNameSt.executeQuery();
     }
 
+    private PreparedStatement insertUserAndGetSt = null;
     public ResultSet insertNewUser(@NotNull String email, @NotNull String passwordHash) throws SQLException {
+        if (insertUserAndGetSt == null) {
+            insertUserAndGetSt = connection.prepareStatement("INSERT INTO users (email, password_hash) values (?, ?) RETURNING *");
+        }
         insertUserAndGetSt.setString(1, email);
         insertUserAndGetSt.setString(2, passwordHash);
         return insertUserAndGetSt.executeQuery();
     }
 
+    private PreparedStatement insertCollectionAndGetSt = null;
     public ResultSet insertNewCollection(@NotNull String name, String sortOrder, int ownerId) throws SQLException {
+        if (insertCollectionAndGetSt == null) {
+                insertCollectionAndGetSt = connection.prepareStatement(
+                        "INSERT INTO collections (name, sort_order, owner_id) values (?, CAST(? AS meeting_collection_sort_order), ?) RETURNING *"
+                );
+        }
         insertCollectionAndGetSt.setString(1, name);
         insertCollectionAndGetSt.setString(2, sortOrder);   // TODO add sort order
         insertCollectionAndGetSt.setInt(3, ownerId);
         return insertCollectionAndGetSt.executeQuery();
     }
 
+    private PreparedStatement getCollectionOfMeetingsSt = null;
     public List<Meeting> getMeetingListByCollectionId(int collectionId, ZoneId zoneId) throws SQLException {
+        if (getCollectionOfMeetingsSt == null) {
+            getCollectionOfMeetingsSt = connection.prepareStatement("select meetings.* from meetings where collection_id = ?");
+        }
         getCollectionOfMeetingsSt.setInt(1, collectionId);
         ResultSet rs = getCollectionOfMeetingsSt.executeQuery();
         List<Meeting> res = new LinkedList<>();
@@ -86,7 +87,11 @@ public class SQLHelper {
         return res;
     }
 
+    private PreparedStatement deleteMeetingSt = null;
     public void removeMeetings(List<Meeting> meetings) throws SQLException {
+        if (deleteMeetingSt == null) {
+            deleteMeetingSt = connection.prepareStatement("DELETE FROM meetings WHERE id = ?");
+        }
         meetings.forEach(ConsumerWithException.toConsumer(meeting -> {
             if (!meeting.getId().isPresent()) return;
             deleteMeetingSt.setInt(1, meeting.getId().getAsInt());
@@ -94,7 +99,15 @@ public class SQLHelper {
         }));
     }
 
+    private PreparedStatement insertMeetingAndGetSt = null;
     public Meeting storeMeetingToDatabase(Meeting meeting, int collectionStoringId) throws SQLException {
+        if (insertCollectionAndGetSt == null) {
+            insertMeetingAndGetSt = connection.prepareStatement(
+                    "INSERT INTO meetings (name, duration, location_building, location_floor, time, collection_id) " +
+                            "VALUES (?, ?, ?, ?, ?, ?) " +
+                            "RETURNING id"
+            );
+        }
         insertMeetingAndGetSt.setString(1, meeting.getName());
         insertMeetingAndGetSt.setLong(2, meeting.getDuration().toMinutes());
         insertMeetingAndGetSt.setInt(3, meeting.getLocation().getBuildingNumber());
