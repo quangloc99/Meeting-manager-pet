@@ -21,8 +21,10 @@ public class Main {
     private static UserStatePool userStatePool;
     private static MailSender mailSender;
     public static void main(String[] args) {
+        int NPORT = 0;
         try (FileInputStream configFile = new FileInputStream("config.json")) {
             JsonElement elm = new JsonParser().parse(new InputStreamReader(configFile));
+            NPORT = elm.getAsJsonObject().get("port").getAsInt();
             mailSender = MailSender.fromJson(elm.getAsJsonObject().getAsJsonObject("mail"));
             try {
                 JsonObject dbConfig = elm.getAsJsonObject().getAsJsonObject("database");
@@ -51,7 +53,7 @@ public class Main {
         handlerThreadBuilder.setOnNotificationEvent(onNotification);
         handlerThreadBuilder.setMailSender(mailSender);
 
-        try (ServerSocket ss = new ServerSocket(Config.COMMAND_EXECUTION_PORT)) {
+        try (ServerSocket ss = new ServerSocket(NPORT)) {
             System.out.println("Server connected at " + ss.getLocalPort());
             while (true) {
                 try {
