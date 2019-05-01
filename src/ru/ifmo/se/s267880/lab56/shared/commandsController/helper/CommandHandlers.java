@@ -17,4 +17,7 @@ public interface CommandHandlers {
      * @param params - the parameters will be pass into the command's handler.
      */
     default void setCommandInformation(String name, Object... params) {}
+
+    default String getCommandName() { return ""; }
+    default Object[] getCommandParams() { return null; }
 }

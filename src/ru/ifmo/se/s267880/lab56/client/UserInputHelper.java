@@ -40,7 +40,7 @@ public class UserInputHelper {
         return new InetSocketAddress(hostName, port);
     }
 
-    static char[] getCheckedPassword() {
+    public static char[] getCheckedPassword() {
         char[] pass1 = null;
         char[] pass2 = null;
         while (true) {

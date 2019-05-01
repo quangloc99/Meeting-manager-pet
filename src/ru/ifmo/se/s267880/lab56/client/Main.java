@@ -1,31 +1,37 @@
 package ru.ifmo.se.s267880.lab56.client;
 
 import com.google.gson.stream.JsonReader;
+import ru.ifmo.se.s267880.lab56.client.commandHandlers.*;
 import ru.ifmo.se.s267880.lab56.client.repl.MainLoop;
 import ru.ifmo.se.s267880.lab56.client.repl.input.DefaultUserInputArgumentParser;
 import ru.ifmo.se.s267880.lab56.client.repl.input.JsonUserInputArgumentParser;
 import ru.ifmo.se.s267880.lab56.client.repl.input.UserInputProvider;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.SharedCommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
+import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
+import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.CollectionManipulationCommandHandlers;
+import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
+import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.StoringAndRestoringCommandHandlers;
+import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.UserAccountManipulationCommandHandlers;
 import sun.misc.Unsafe;
 
 import static ru.ifmo.se.s267880.lab56.client.UserInputHelper.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author Tran Quang Loc
@@ -46,6 +52,13 @@ public class Main {
             public void onSuccess(SocketChannel sc) {
                 new MainLoop(createCommandController(sc), createUserInputProvider()).run(
                     HandlerCallback.ofErrorHandler(e -> socketConnector.tryConnectTo(address, this))
+                );
+            }
+
+            private UserInputProvider createUserInputProvider() {
+                return new UserInputProvider(new InputStreamReader(System.in),
+                        new JsonUserInputArgumentParser(),
+                        new DefaultUserInputArgumentParser()
                 );
             }
 
@@ -71,63 +84,50 @@ public class Main {
         CommandController cc = new CommandController();
         Broadcaster<MessageType> messageFromServerBroadcaster = new Broadcaster<>(Receiver.fromSocketChannel(sc));
         Sender messageToServerSender = Sender.fromSocketChannel(sc);
+        new Thread(messageFromServerBroadcaster).start();
 
         Consumer[] listeners = new Consumer[3];
         listeners[0] = messageFromServerBroadcaster.onError.listen(e -> {
-            messageFromServerBroadcaster.removeAllListeners();
+            messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).removeListener(listeners[1]);
+            messageFromServerBroadcaster.whenReceive(MessageType.REQUEST).removeListener(listeners[2]);
+            messageFromServerBroadcaster.onError.removeListener(listeners[0]);
         });
         listeners[1] = messageFromServerBroadcaster.whenReceive(MessageType.NOTIFICATION).listen(m -> {
             if (!(m instanceof UserNotification)) return;
             ConsoleWrapper.console.printf("\r>> %s%n> ", m);
         });
         listeners[2] = messageFromServerBroadcaster.whenReceive(MessageType.REQUEST).listen(res -> {
-            if (res instanceof TokenRequest) {
-                ConsoleWrapper.console.println(((TokenRequest) res).getDisplayingMessage());
-                String token = ConsoleWrapper.console.readLine("Enter your token (enter `\\abort` to cancel this operation):");
-                try {
-                    messageToServerSender.sendWithChannel(new Respond(
-                            MessageType.RESPOND_SUCCESS,
-                            "Token:" + token,
-                            null
-                    ));
-                } catch (IOException ignore) {
-                    // TODO make this part less tricky
-                }
+            if (!(res instanceof TokenRequest)) return;
+            ConsoleWrapper.console.println(((TokenRequest) res).getDisplayingMessage());
+            String token = ConsoleWrapper.console.readLine("Enter your token (enter `\\abort` to cancel this operation):");
+            try {
+                messageToServerSender.sendWithChannel(new Respond(MessageType.RESPOND_SUCCESS, "Token:" + token, null));
+            } catch (IOException ignore) {
+                // TODO make this part less tricky
             }
         });
 
-        new Thread(messageFromServerBroadcaster).start();
-        ClientCommandsHandlers handlers = new ClientCommandsHandlers(messageFromServerBroadcaster, messageToServerSender);
-        ReflectionCommandHandlerGenerator.generate(SharedCommandHandlers.class, handlers, new ClientInputPreprocessor())
-                .forEach(cc::addCommand);
-        cc.addCommand("toggle-quite", CommandHandler.ofConsumer(
-                "Turn on/off printing collections after successfully executed a command [Additional]",
-                args -> handlers.toggleQuite()
-        ));
-        cc.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :) [Additional].",
-                arg -> {
-                    try {sc.close(); } catch (Exception ignored) {}
-                    System.exit(0);
-                }
-        ));
-        cc.addCommand("clrscr", CommandHandler.ofConsumer("Clear the screen. [Additional]", arg-> {
-            try {
-                System.err.println("clrscr command will not work on IntelliJ IDE");
-                final String os = System.getProperty("os.name");
-                if (os.contains("Windows")) {
-                    Runtime.getRuntime().exec("cls");
-                } else {
-                    ConsoleWrapper.console.printf("\033[H\033[2J");
-                    ConsoleWrapper.console.flush();
-                    Runtime.getRuntime().exec("clear");
-                }
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
+        Supplier<CommandToServerExecutor> commandExecutorSupplier = () ->
+                new CommandToServerExecutor(messageFromServerBroadcaster, messageToServerSender);
+        Map<Class, CommandHandlers> handlersMap = new HashMap<>();
+        handlersMap.put(CollectionManipulationCommandHandlers.class, new ClientCollectionManipulationCommandHandlers(commandExecutorSupplier));
+        handlersMap.put(StoringAndRestoringCommandHandlers.class, new ClientStoringAndRestoringCommandHandlers(commandExecutorSupplier));
+        handlersMap.put(UserAccountManipulationCommandHandlers.class, new ClientUserAccountManipulationCommandHandlers(commandExecutorSupplier));
+        handlersMap.put(MiscellaneousCommandHandlers.class, new ClientMiscellaneousCommandHandlers(commandExecutorSupplier));
+
+        handlersMap.forEach((cls, handlers) -> {
+            ReflectionCommandHandlerGenerator.generate(cls, handlers, new ClientInputPreprocessor())
+                    .forEach(cc::addCommand);
+
+            // also add additional handlers that not defined in the shard interfaces.
+            ReflectionCommandHandlerGenerator.generate(handlers.getClass(), handlers, new ClientInputPreprocessor())
+                    .forEach(cc::addCommand);
+        });
+
+        cc.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :) [Additional].", args -> {
+            try {sc.close(); } catch (Exception ignored) {}
+            System.exit(0);
         }));
-        cc.addCommand("help", CommandHandler.ofConsumer(
-                "Display the help message, the arg json format. [Additional]", args -> help()
-        ));
 
         cc.addCommand("list-commands", CommandHandler.ofConsumer(
                 "[Additional] List all the commands.", args -> {
@@ -144,13 +144,6 @@ public class Main {
         return cc;
     }
 
-    private static UserInputProvider createUserInputProvider() {
-        return new UserInputProvider(new InputStreamReader(System.in),
-                new JsonUserInputArgumentParser(),
-                new DefaultUserInputArgumentParser()
-        );
-    }
-
     private static void printAwesomeASCIITitle() {
         ConsoleWrapper.console.println("  ___ ___    ___    ___ ______  ____  ____    ____      ___ ___   ____  ____    ____   ____    ___  ____");
         ConsoleWrapper.console.println("_|   |   |  /  _]  /  _]      ||    ||    \\  /    |    |   |   | /    ||    \\  /    | /    |  /  _]|    \\");
@@ -162,17 +155,6 @@ public class Main {
         ConsoleWrapper.console.println("Use \"help\" to display the help message. Use \"list-commands\" to display all the commands.");
     }
 
-    /**
-     * Print a help message.
-     */
-    public static void help() {
-        InputStream help = Main.class.getResourceAsStream("res/help.md");
-        if (help == null) {
-            ConsoleWrapper.console.println("No help found");
-        } else {
-            new BufferedReader(new InputStreamReader(help)).lines().forEach(ConsoleWrapper.console::println);
-        }
-    }
 
     /**
      * A method to remove <code>JsonParser.NON_EXECUTE_PREFIX</code>'s content.

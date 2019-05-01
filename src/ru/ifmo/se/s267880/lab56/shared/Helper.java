@@ -88,13 +88,6 @@ public class Helper {
         return res;
     }
 
-    public static String generateToken() {
-        Random random = new Random();
-        byte[] res = new byte[18];
-        random.nextBytes(res);
-        return Base64.getEncoder().encodeToString(res);
-    }
-
     public static Class<?> toWrapper(Class<?> clazz) {
         if (!clazz.isPrimitive())
             return clazz;

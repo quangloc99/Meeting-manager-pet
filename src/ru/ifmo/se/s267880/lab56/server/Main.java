@@ -47,19 +47,19 @@ public class Main {
             System.exit(0);
         }
 
-        QueryHandlerThread.Builder handlerThreadBuilder = new QueryHandlerThread.Builder();
-        handlerThreadBuilder.setDatabaseConnection(databaseConnection);
-        handlerThreadBuilder.setUserStatePool(userStatePool);
-        handlerThreadBuilder.setOnNotificationEvent(onNotification);
-        handlerThreadBuilder.setMailSender(mailSender);
+        Services.Builder servicesBuilder = new Services.Builder();
+        servicesBuilder.setDatabaseConnection(databaseConnection);
+        servicesBuilder.setUserStatePool(userStatePool);
+        servicesBuilder.setOnNotificationEvent(onNotification);
+        servicesBuilder.setMailSender(mailSender);
 
         try (ServerSocket ss = new ServerSocket(NPORT)) {
             System.out.println("Server connected at " + ss.getLocalPort());
             while (true) {
                 try {
-                    handlerThreadBuilder.setSocket(ss.accept());
-                    handlerThreadBuilder.build().start();
-                } catch (IOException | SQLException e) {
+                    servicesBuilder.setSocket(ss.accept());
+                    new QueryHandlerThread(servicesBuilder.build()).start();
+                } catch (IOException e) {
                     System.err.println("Cannot run thread: " + e.getMessage());
                     e.printStackTrace();
                 }
