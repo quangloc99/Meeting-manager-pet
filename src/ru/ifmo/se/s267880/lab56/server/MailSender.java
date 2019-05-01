@@ -25,11 +25,11 @@ public class MailSender {
         res.setFrom(obj.get("email-address").getAsString());
         res.setUsername(obj.get("username").getAsString());
         res.setPassword(obj.get("password").getAsString());
-        Properties props = new Properties();
+        Properties props = System.getProperties();
         for (Map.Entry<String, JsonElement> entry : obj.getAsJsonObject("properties").entrySet()) {
             props.put(entry.getKey(), entry.getValue().getAsString());
         }
-        res.setMessageSession(Session.getInstance(props, new Authenticator() {
+        res.setMessageSession(Session.getDefaultInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(res.username, res.password);
