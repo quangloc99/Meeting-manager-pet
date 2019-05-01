@@ -66,7 +66,7 @@ public class ReflectionCommandHandlerGenerator {
      * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
      */
     public static Map<String, CommandHandler> generate(Class metaDataClass, CommandHandlers commandHandlers, InputPreprocessor preprocessor) {
-        Map<String, CommandHandler> res = new HashMap<>();
+        Map<String, CommandHandler> res = new LinkedHashMap<>();
         for (Map.Entry<String, List<Method>> e : filterCommands(metaDataClass).entrySet()) {
             res.put(e.getKey(), CommandHandler.join(e.getValue().stream()
                     .map(m -> generateHandlerFromMethod(e.getKey(), m, commandHandlers, preprocessor))
@@ -97,8 +97,10 @@ public class ReflectionCommandHandlerGenerator {
     }
 
     private static Map<String, List<Method>> filterCommands(Class cls) {
-        Map<String, List<Method>> res = Arrays.stream(cls.getDeclaredMethods())
-                .collect(Collectors.groupingBy(ReflectionCommandHandlerGenerator::getCommandNameFromMethod));
+        Map<String, List<Method>> res = new LinkedHashMap<>();
+        for (Method method : cls.getDeclaredMethods()) {
+            res.computeIfAbsent(getCommandNameFromMethod(method), k -> new ArrayList<>()).add(method);
+        }
         res.remove("");
         return res;
     }
@@ -157,7 +159,7 @@ public class ReflectionCommandHandlerGenerator {
             }
 
             @Override
-            public String getUsage(String commandName) {
+            public String getUsage(String format, String commandName) {
                 int paramCount = med.getParameterCount() - (hasHandlerCallbackParam(med) ? 1 : 0);
                 Usage usage = med.getAnnotation(Usage.class);
                 Command command = med.getAnnotation(Command.class);
@@ -167,8 +169,13 @@ public class ReflectionCommandHandlerGenerator {
                     params[i] = "<" + med.getParameters()[i].getName() + ">";
                 }
                 String res = commandName + " " + String.join(" ", params);
-                if (usage == null) return res + "\n\tThis command has no usage";
-                return res + "\n\t" + usage.value();
+                String usageStr = usage == null ? "This command has no usage." : usage.value();
+                String[] lines = usageStr.split("\n");
+                lines[0] = String.format(format, res, lines[0]);
+                for (int i = 1; i < lines.length; ++i) {
+                    lines[i] = String.format(format, " ", lines[i]);
+                }
+                return String.join("\n", lines);
             }
         };
     }

@@ -23,6 +23,7 @@ import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -105,28 +106,25 @@ public class Main {
                 new CommandToServerExecutor(messageFromServerBroadcaster, messageToServerSender);
         InputPreprocessor inputPreprocessor = new ClientInputPreprocessor();
         Stream.of(
+            new ClientUserAccountManipulationCommandHandlers(commandExecutorSupplier),
             new ClientCollectionManipulationCommandHandlers(commandExecutorSupplier),
             new ClientStoringAndRestoringCommandHandlers(commandExecutorSupplier),
-            new ClientUserAccountManipulationCommandHandlers(commandExecutorSupplier),
             new ClientMiscellaneousCommandHandlers(commandExecutorSupplier)
         )
                 .map(handlers -> handlers.generateHandlers(inputPreprocessor))
                 .forEach(handlerMap -> handlerMap.forEach(commandController::addCommand));
 
-        commandController.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :) [Additional].", args -> {
+        commandController.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :).", args -> {
             try {sc.close(); } catch (Exception ignored) {}
             System.exit(0);
         }));
 
         commandController.addCommand("list-commands", CommandHandler.ofConsumer(
-                "[Additional] List all the commands.", args -> {
+                "List all the commands.", args -> {
                     ConsoleWrapper.console.println("# Commands list:");
                     commandController.getCommandHandlers().forEach((commandName, handler) -> {
-                        ConsoleWrapper.console.printf("- ");
-                        for (String s : handler.getUsage(commandName).split("\n")) {
-                            ConsoleWrapper.console.printf("\t%s\n", s);
-                        }
-                        ConsoleWrapper.console.println("");
+                        Arrays.stream(handler.getUsage("  %-30s %s", commandName).split("\n"))
+                                .forEach(ConsoleWrapper.console::println);
                     });
                 }
         ));

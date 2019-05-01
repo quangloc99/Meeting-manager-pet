@@ -13,7 +13,11 @@ import java.util.stream.Collectors;
  */
 public interface CommandHandler {
     void process(Object[] args, HandlerCallback<Object> callback);
-    default String getUsage(String commandName) { return commandName + "\n\tThis command has no usage"; }
+    default String getUsage(String format, String commandName) {
+        return String.format(format, commandName, "This command has no usage");
+    }
+
+    default String getUsage(String commandName) { return getUsage("%s  %s", commandName); }
 
     static CommandHandler withUsage(String usage, CommandHandler handler) {
         return new CommandHandler() {
@@ -23,7 +27,9 @@ public interface CommandHandler {
             }
 
             @Override
-            public String getUsage(String commandName) { return commandName + "\n\t" + usage; }
+            public String getUsage(String format, String commandName) {
+                return String.format(format, commandName, usage);
+            }
         };
     }
 
@@ -49,7 +55,9 @@ public interface CommandHandler {
             }
 
             @Override
-            public String getUsage(String commandName) { return commandName + "\n\t" + usage; }
+            public String getUsage(String format, String commandName) {
+                return String.format(format, commandName, usage);
+            }
         };
     }
 
@@ -77,7 +85,9 @@ public interface CommandHandler {
             }
 
             @Override
-            public String getUsage(String commandName) { return commandName + "\n\t" + usage; }
+            public String getUsage(String format, String commandName) {
+                return String.format(format, commandName, usage);
+            }
         };
     }
 
@@ -109,9 +119,9 @@ public interface CommandHandler {
             }
 
             @Override
-            public String getUsage(String commandName) {
+            public String getUsage(String format, String commandName) {
                 return handlers.stream()
-                        .map(h -> h.getUsage(commandName))
+                        .map(h -> h.getUsage(format, commandName))
                         .collect(Collectors.joining("\n"));
             }
         };

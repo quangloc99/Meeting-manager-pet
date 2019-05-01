@@ -14,7 +14,7 @@ public interface CollectionManipulationCommandHandlers extends CommandHandlers {
      */
     @Command
     @Usage("add new meeting into the collection.")
-    void add(Meeting meetingJson, HandlerCallback callback);
+    void add(Meeting meeting_json, HandlerCallback callback);
 
     /**
      * List all the meetings.
@@ -28,21 +28,21 @@ public interface CollectionManipulationCommandHandlers extends CommandHandlers {
      */
     @Command
     @Usage("remove the meeting correspond to the argument.")
-    void remove(Meeting meetingJson, HandlerCallback callback);
+    void remove(Meeting meeting_json, HandlerCallback callback);
 
     /**
      * Remove a meeting from the collection by index.
      */
     @Command
     @Usage("remove the meeting with index.")
-    void remove(int meetingId, HandlerCallback callback);
+    void remove(int meeting_id, HandlerCallback callback);
 
     /**
      * Add new meeting into the collection if it's date is before every other meeting in the collection.
      */
     @Command("add_if_min")
     @Usage("add new meeting into the collection if it's date is before every other meeting in the collection.")
-    void addIfMin(Meeting meetingJson, HandlerCallback callback);
+    void addIfMin(Meeting meeting_json, HandlerCallback callback);
 
     /**
      * Clear the collection.

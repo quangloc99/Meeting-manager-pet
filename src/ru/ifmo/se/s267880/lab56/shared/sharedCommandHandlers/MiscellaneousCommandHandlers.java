@@ -23,13 +23,13 @@ public interface  MiscellaneousCommandHandlers extends CommandHandlers {
     @Command(value="list-timezones", additional = true)
     @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-timezones 3` will list all" +
             " the time zone with the offset \"UTF+3\"")
-    void listTimeZones(int offsetHour, HandlerCallback<Map<Integer, ZoneId>> callback);
+    void listTimeZones(int offset_hour, HandlerCallback<Map<Integer, ZoneId>> callback);
 
     /**
      */
     @Command(value="set-timezone", additional = true)
     @Usage("Set the time zone by index. Use command `list-timezones` for the list of time zones with indexes.")
-    void setTimeZone(int timeZoneId, HandlerCallback callback);
+    void setTimeZone(int time_zone_id, HandlerCallback callback);
 
     @Override
     default Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {

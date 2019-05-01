@@ -15,7 +15,7 @@ import java.util.List;
  * @author Tran Quang Loc
  */
 public class CommandController {
-    private Map<String, CommandHandler> commandHandlers = Collections.synchronizedMap(new TreeMap<>());
+    private Map<String, CommandHandler> commandHandlers = Collections.synchronizedMap(new LinkedHashMap<>());
 
     /**
      * Add a command with no argument.
