@@ -313,7 +313,7 @@ abstract public class ServerCommandsHandlers implements SharedCommandHandlers {
     }
 
     @Override
-    public void listUser(HandlerCallback<String[]> callback) {
+    public void listUsers(HandlerCallback<String[]> callback) {
         if (state.getUserId() == -1) callback.onError(new Exception("You must login to server inorder to see the user lists."));
         else try {
             SQLHelper sqlHelper = state.getSqlHelper();   // get the helper from the state because its from
@@ -323,6 +323,20 @@ abstract public class ServerCommandsHandlers implements SharedCommandHandlers {
                 res.add(rs.getString("email"));
             }
             callback.onSuccess(res.toArray(new String[0]));
+        } catch (SQLException e) {
+            callback.onError(e);
+        }
+    }
+
+    @Override
+    public void listCollections(HandlerCallback<HashMap<String, String>> callback) {
+        if (state.getUserId() == -1) callback.onError(new Exception("You must login to server inorder to see the collections lists."));
+        else try {
+            HashMap<String, String> collectionsInfo = new HashMap<>();
+            for (ResultSet rs = state.getSqlHelper().getAllCollection(); rs.next(); ) {
+                collectionsInfo.put(rs.getString("collection_name"), rs.getString("user_email"));
+            }
+            callback.onSuccess(collectionsInfo);
         } catch (SQLException e) {
             callback.onError(e);
         }

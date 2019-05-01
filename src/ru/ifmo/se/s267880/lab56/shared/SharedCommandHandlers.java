@@ -9,6 +9,7 @@ import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
 
 import java.io.File;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.Map.Entry;
@@ -155,7 +156,11 @@ public interface SharedCommandHandlers extends CommandHandlers {
     void logout(HandlerCallback callback);
 
 
-    @Command(value="list-user")
+    @Command("list-users")
     @Usage("Print all user's email.")
-    void listUser(HandlerCallback<String[]> callback);
+    void listUsers(HandlerCallback<String[]> callback);
+
+    @Command("list-collections")
+    @Usage("List all collections with users email.")
+    void listCollections(HandlerCallback<HashMap<String, String>> callback);
 }

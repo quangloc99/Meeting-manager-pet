@@ -39,7 +39,9 @@ public class SQLHelper {
 
     private PreparedStatement getCollectionByNameSt = null;
     public ResultSet getCollectionByName(@NotNull  String name) throws SQLException {
-        getCollectionByNameSt = connection.prepareStatement("select * from collections where name = ?");
+        if (getCollectionByNameSt == null) {
+            getCollectionByNameSt = connection.prepareStatement("select * from collections where name = ?");
+        }
         getCollectionByNameSt.setString(1, name);
         return getCollectionByNameSt.executeQuery();
     }
@@ -101,7 +103,7 @@ public class SQLHelper {
 
     private PreparedStatement insertMeetingAndGetSt = null;
     public Meeting storeMeetingToDatabase(Meeting meeting, int collectionStoringId) throws SQLException {
-        if (insertCollectionAndGetSt == null) {
+        if (insertMeetingAndGetSt == null) {
             insertMeetingAndGetSt = connection.prepareStatement(
                     "INSERT INTO meetings (name, duration, location_building, location_floor, time, collection_id) " +
                             "VALUES (?, ?, ?, ?, ?, ?) " +
@@ -125,6 +127,17 @@ public class SQLHelper {
             getAllUsersPublicInfosSt = connection.prepareStatement("SELECT id, email FROM users");
         }
         return getAllUsersPublicInfosSt.executeQuery();
+    }
+
+    private PreparedStatement getAllCollectionsWithUsersSt = null;
+    public ResultSet getAllCollection() throws SQLException {
+        if (getAllCollectionsWithUsersSt == null) {
+            getAllCollectionsWithUsersSt = connection.prepareStatement(
+                    "SELECT collections.name AS collection_name, users.email As user_email " +
+                            "from collections inner join users on collections.owner_id = users.id"
+            );
+        }
+        return getAllCollectionsWithUsersSt.executeQuery();
     }
 
     public Connection getConnection() {

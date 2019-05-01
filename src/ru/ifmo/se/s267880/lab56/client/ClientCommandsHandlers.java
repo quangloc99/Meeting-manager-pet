@@ -7,10 +7,7 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import java.io.*;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -313,12 +310,25 @@ public class ClientCommandsHandlers implements SharedCommandHandlers {
     }
 
     @Override
-    public void listUser(HandlerCallback<String[]> callback) {
+    public void listUsers(HandlerCallback<String[]> callback) {
         new CommandExecutor(new HandlerCallback<>(res -> {
             String[] userEmails = res.getResult();
             ConsoleWrapper.console.println("# List of users:");
             Arrays.stream(userEmails).forEach(ConsoleWrapper.console::println);
             callback.onSuccess(userEmails);
+        }, callback::onError)).run();
+    }
+
+    @Override
+    public void listCollections(HandlerCallback<HashMap<String, String>> callback) {
+        new CommandExecutor(new HandlerCallback<>(res -> {
+            HashMap<String, String> collections = res.getResult();
+            final String format = "| %-30s | %-30s |\n";
+            ConsoleWrapper.console.println("# Collections lists:");
+            ConsoleWrapper.console.printf(format, "Collection name", "User email");
+            ConsoleWrapper.console.printf(String.format(format, " ", " ").replace(" ", "-"));
+            collections.forEach((collectionName, userEmail) -> ConsoleWrapper.console.printf(format, collectionName, userEmail));
+            callback.onSuccess(collections);
         }, callback::onError)).run();
     }
 }
