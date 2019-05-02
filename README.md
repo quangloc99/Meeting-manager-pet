@@ -1,6 +1,7 @@
 # Meeting manager
 
 [![asciicast](https://asciinema.org/a/EDJUUaN6ZPeh6StQrHYPtLD15.svg)](https://asciinema.org/a/EDJUUaN6ZPeh6StQrHYPtLD15)
+_Sadly I still not updated this screen cast since lab 5_
 
 This is one of my lab at the university (my 5th lab in programming). But I think it was interesting so I extended it
 a little bit more and now it is looks like a pet project to me.
@@ -23,6 +24,8 @@ for the command lines, I played around with reflection to bend it to fit my need
 
 - Also with reflection and annotations, I was able to create a system for my commands very easily. I was able to handle 
 commands with more arguments and more types.
+
+- I still need to update this part, because there is whole lots more :stuck_out_tongue:.
 
 ## Final thought
 I spend a lots of times in this one. Hope I got good point on the defense part :smile:.
