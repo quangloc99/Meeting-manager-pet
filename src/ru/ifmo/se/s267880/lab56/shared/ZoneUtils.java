@@ -18,6 +18,11 @@ public class ZoneUtils {
         return timeZone.equals(DEFAULT_GMT_TIMEZONE) || !TimeZone.getTimeZone(timeZone).getID().equals(DEFAULT_GMT_TIMEZONE);
     }
 
+    public static String timeZoneToGMTString(TimeZone zone) {
+        long minutes = zone.getRawOffset() / 1000 / 60;
+        return String.format("GMT%+d:%02d", minutes / 60, (minutes % 60 + 60) % 60);
+    }
+
     static public final Map<Integer, ZoneId> allZoneIds = Collections.unmodifiableMap(generateZonesIdWithIndex());
     static private Map<Integer, ZoneId> generateZonesIdWithIndex() {
         Map<Integer, ZoneId> zones = new HashMap<>();

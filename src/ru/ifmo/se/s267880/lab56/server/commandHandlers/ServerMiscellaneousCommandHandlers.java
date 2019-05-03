@@ -6,8 +6,11 @@ import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
 
 import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 public class ServerMiscellaneousCommandHandlers extends ServerCommandHandlers
     implements MiscellaneousCommandHandlers
@@ -29,8 +32,18 @@ public class ServerMiscellaneousCommandHandlers extends ServerCommandHandlers
     }
 
     @Override
-    public void listTimeZones(int offsetHour, HandlerCallback<Map<Integer, ZoneId>> callback) {
-        callback.onSuccess(ZoneUtils.getZonesBy(z -> ZoneUtils.toUTCZoneOffset(z).getTotalSeconds() / 3600 == offsetHour));
+    public void listTimeZones(HandlerCallback<List<TimeZone>> callback) {
+        callback.onSuccess(Arrays.stream(TimeZone.getAvailableIDs())
+                .map(TimeZone::getTimeZone)
+                .collect(Collectors.toList()));
+    }
+
+    @Override
+    public void listTimeZones(int offsetHour, HandlerCallback<List<TimeZone>> callback) {
+        callback.onSuccess(Arrays.stream(TimeZone.getAvailableIDs())
+                .map(TimeZone::getTimeZone)
+                .filter(zone -> zone.getRawOffset() / 1000 / 3600 == offsetHour)
+                .collect(Collectors.toList()));
     }
 
     @Override

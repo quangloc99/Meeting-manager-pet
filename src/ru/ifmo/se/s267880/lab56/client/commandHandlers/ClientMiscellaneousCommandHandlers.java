@@ -15,7 +15,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.ZoneId;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class ClientMiscellaneousCommandHandlers
@@ -45,11 +45,26 @@ public class ClientMiscellaneousCommandHandlers
     }
 
     @Override
-    public void listTimeZones(int offset, HandlerCallback<Map<Integer, ZoneId>> callback) {
+    public void listTimeZones(HandlerCallback<List<TimeZone>> callback) {
         buildCommandExecutor().run(generateRequest(), new HandlerCallback<>(res -> {
-            ZoneUtils.printZonesByZoneOffset(res.getResult());
-            callback.onSuccess(null);
+            sortAndPrintTimezones(res.getResult());
+            callback.onSuccess(res.getResult());
         }, callback::onError));
+    }
+
+    @Override
+    public void listTimeZones(int offset, HandlerCallback<List<TimeZone>> callback) {
+        buildCommandExecutor().run(generateRequest(), new HandlerCallback<>(res -> {
+            sortAndPrintTimezones(res.getResult());
+            callback.onSuccess(res.getResult());
+        }, callback::onError));
+    }
+
+    private void sortAndPrintTimezones(List<TimeZone> zones) {
+        zones.sort(Comparator.comparing(TimeZone::getRawOffset).thenComparing(TimeZone::getID));
+        zones.forEach(s -> ConsoleWrapper.console.printf("\t%s: %s\n",
+                ZoneUtils.timeZoneToGMTString(s), s.getID()
+        ));
     }
 
     @Override

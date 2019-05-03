@@ -5,7 +5,10 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.*;
 
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TimeZone;
 
 public interface  MiscellaneousCommandHandlers extends CommandHandlers {
     /**
@@ -15,6 +18,10 @@ public interface  MiscellaneousCommandHandlers extends CommandHandlers {
     @Usage("Show some basic information.")
     void info(HandlerCallback<Map<String, String>> callback);
 
+    @Command("list-timezones")
+    @Usage("List all the supported time zones. Note that the list will be very LONG.")
+    void listTimeZones(HandlerCallback<List<TimeZone>> callback);
+
     /**
      * Get all the time zone with index that has ZoneOffset's hour equals to the parameter.
      * @param offsetHour the time zone offset's hour
@@ -23,7 +30,7 @@ public interface  MiscellaneousCommandHandlers extends CommandHandlers {
     @Command(value="list-timezones", additional = true)
     @Usage("Display all the time zone corresponding the the parameters.\nExample: `list-timezones 3` will list all" +
             " the time zone with the offset \"UTF+3\"")
-    void listTimeZones(int offset_hour, HandlerCallback<Map<Integer, ZoneId>> callback);
+    void listTimeZones(int offset_hour, HandlerCallback<List<TimeZone>> callback);
 
     /**
      */
