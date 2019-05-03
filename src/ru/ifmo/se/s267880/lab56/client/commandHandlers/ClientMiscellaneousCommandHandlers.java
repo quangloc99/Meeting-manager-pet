@@ -53,7 +53,7 @@ public class ClientMiscellaneousCommandHandlers
     }
 
     @Override
-    public void setTimeZone(int timeZoneKey, HandlerCallback callback) {
+    public void setTimeZone(String zoneId, HandlerCallback callback) {
         buildCommandExecutor().run(generateRequest(), callback);
     }
 

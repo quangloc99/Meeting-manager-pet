@@ -11,6 +11,13 @@ import java.util.stream.Collectors;
 
 // An utility class for processing time zone.
 public class ZoneUtils {
+    public static boolean isValidTimeZone(final String timeZone) {
+        // This code got from:
+        // https://stackoverflow.com/a/40939623
+        final String DEFAULT_GMT_TIMEZONE = "GMT";
+        return timeZone.equals(DEFAULT_GMT_TIMEZONE) || !TimeZone.getTimeZone(timeZone).getID().equals(DEFAULT_GMT_TIMEZONE);
+    }
+
     static public final Map<Integer, ZoneId> allZoneIds = Collections.unmodifiableMap(generateZonesIdWithIndex());
     static private Map<Integer, ZoneId> generateZonesIdWithIndex() {
         Map<Integer, ZoneId> zones = new HashMap<>();

@@ -28,8 +28,14 @@ public interface  MiscellaneousCommandHandlers extends CommandHandlers {
     /**
      */
     @Command(value="set-timezone", additional = true)
-    @Usage("Set the time zone by index. Use command `list-timezones` for the list of time zones with indexes.")
-    void setTimeZone(int time_zone_id, HandlerCallback callback);
+    @Usage("Set your time zone. There is 2 way to set the time zone:\n" +
+            "1) With supported zone id. Use command `list-timezones` for the list of supported time zones. Example:\n" +
+            "\tset-timezone Europe/Moscow\n" +
+            "\tset-timezone Asia/Ho_Chi_Minh\n" +
+            "2) With custom zone id. Use the following syntax to describe the time zone: GMT+/-HH or GMT+/-HH:MM. Example:\n" +
+            "\tset-timezone GMT+3\n" +
+            "\tset-timezone GMT+7")
+    void setTimeZone(String zone_id, HandlerCallback callback);
 
     @Override
     default Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {

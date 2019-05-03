@@ -7,6 +7,7 @@ import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousComman
 
 import java.time.ZoneId;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class ServerMiscellaneousCommandHandlers extends ServerCommandHandlers
     implements MiscellaneousCommandHandlers
@@ -34,14 +35,11 @@ public class ServerMiscellaneousCommandHandlers extends ServerCommandHandlers
 
     @Override
     @SuppressWarnings("unchecked")
-    public void setTimeZone(int timeZoneKey, HandlerCallback callback) {
-        if (!ZoneUtils.allZoneIds.containsKey(timeZoneKey)) {
-            callback.onError(new NoSuchFieldException(String.format(
-                    "There is no time zones with index %d. " +
-                            "Please use command `list-time-zones` for the list of time zones", timeZoneKey)));
-            return;
+    public void setTimeZone(String zoneId, HandlerCallback callback) {
+        if (!ZoneUtils.isValidTimeZone(zoneId)) {
+            callback.onError(new Exception("Incorrect time zone!"));
         }
-        services.getUserState().setTimeZone(ZoneUtils.allZoneIds.get(timeZoneKey));
+        services.getUserState().setTimeZone(TimeZone.getTimeZone(zoneId).toZoneId());
         callback.onSuccess(null);
     }
 }
