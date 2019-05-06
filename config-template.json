@@ -1,0 +1,24 @@
+{
+  "__comment": "This project require a file named config.json to run. This is the template for that file.",
+
+  "port": "number - your port number to run the server. Example: 55007",
+  "database": {
+    "url": "string - your database URL. Note that this project use PostgreSQL. Example jdbc:postgresql://localhost:5432/meeting_manager",
+    "user": "string - your user name to the database",
+    "password": "string - your password to the database"
+  },
+  "mail": {
+    "__comment": "This is the config for JavaMail.",
+    "properties": {
+      "__comment": "This is where you specify the properties for JavaMail. Here is an example with gmail.",
+      "mail.smtp.auth": true,
+      "mail.smtp.host": "smtp.gmail.com",
+      "mail.smtp.port": "587",
+      "mail.smtp.starttls.enable": true,
+      "mail.mine.charset": "UTF-8"
+    },
+    "email-address": "String - the email address of the sender to send the email.",
+    "username": "string - the user name of the sender.",
+    "password": "string - the password of the sender"
+  }
+}

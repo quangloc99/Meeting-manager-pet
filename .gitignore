@@ -12,3 +12,5 @@ out/
 .idea/artifacts
 
 **/META-INF
+
+config.json
