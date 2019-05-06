@@ -28,8 +28,8 @@ public class UserState {
     private SQLHelper sqlHelper;
 
     public UserState(int userId, Connection connection) throws SQLException {
-        this.userId = userId;
         this.sqlHelper = new SQLHelper(connection);
+        setUserId(userId);
     }
 
     public UserState() {
@@ -161,14 +161,27 @@ public class UserState {
         return sqlHelper;
     }
 
-    public void setTimeZone(ZoneId timeZoneId) throws SQLException {
+    public synchronized void setUserId(int userId) throws SQLException {
+        this.userId = userId;
+        if (userId == -1) {
+            return;
+        }
+        if (sqlHelper == null) {
+            throw new RuntimeException("You need to login first");
+        }
+        ResultSet rs = sqlHelper.getUserById(userId);
+        rs.next();
+        this.timeZoneId = TimeZone.getTimeZone(rs.getString("zone_id")).toZoneId();
+    }
+
+    public synchronized void setTimeZone(ZoneId timeZoneId) throws SQLException {
         if (sqlHelper != null) {
             sqlHelper.updateUserTimeZone(userId, timeZoneId.toString());
         }
         this.timeZoneId = timeZoneId;
     }
 
-    public void setMeetingSortOrder(MeetingSortOrder meetingSortOrder) {
+    public synchronized void setMeetingSortOrder(MeetingSortOrder meetingSortOrder) {
         this.meetingSortOrder = meetingSortOrder;
     }
 

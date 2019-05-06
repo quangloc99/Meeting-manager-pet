@@ -9,6 +9,7 @@ import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.UserAccountManipula
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -29,13 +30,20 @@ public class ClientUserAccountManipulationCommandHandlers extends ClientCommands
                 return ;
             }
             userEmailAndPassword.setValue(pass);
+            // well this is now the callback hell, so...
+            // TODO: change the way to set user default information.
             buildCommandExecutor().run(generateRequest(), new HandlerCallback<>(res -> {
                 if (res.<Boolean>getResult()) {
-                    ConsoleWrapper.console.println("Registration completed. You are now login.");
+                    services.getCommandController().execute("set-timezone", Collections.emptyList(),
+                            new HandlerCallback<>(newRes -> {
+                                    ConsoleWrapper.console.println("Registration completed. You are now login.");
+                                    callback.onSuccess(true);
+                            }, callback::onError)
+                    );
                 } else {
                     ConsoleWrapper.console.println("Registration aborted.");
+                    callback.onSuccess(res.getResult());
                 }
-                callback.onSuccess(res.getResult());
             }, callback::onError));
             Arrays.fill(pass, '\0');
         } catch (AddressException e) {
