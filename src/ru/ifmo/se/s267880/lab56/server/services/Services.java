@@ -52,7 +52,7 @@ public class Services {
 
     public void setUserStateWithId(int id) throws SQLException {
         if (id < 0) userState = new UserState();
-        userState = userStatePool.getUserState(id);
+        else userState = userStatePool.getUserState(id);
     }
 
     public Socket getClientSocket() {
