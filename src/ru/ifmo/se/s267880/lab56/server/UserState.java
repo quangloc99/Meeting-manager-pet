@@ -21,7 +21,7 @@ public class UserState {
     private List<Meeting> removedMeetings = Collections.synchronizedList(new LinkedList<>());
     private MeetingSortOrder meetingSortOrder = MeetingSortOrder.ASCENDING_TIME;
     private String collectionStoringName = null;
-    private ZonedDateTime openSince = ZonedDateTime.now();
+    private ZonedDateTime lastModifyingTime = ZonedDateTime.now();
     private ZoneId timeZoneId = ZonedDateTime.now().getZone();
     private SQLHelper sqlHelper;
 
@@ -44,7 +44,7 @@ public class UserState {
     public synchronized void updateStoringName(String storingName) {
         if (!Objects.equals(storingName, collectionStoringName)) {
             collectionStoringName = storingName;
-            openSince = ZonedDateTime.now();
+            lastModifyingTime = ZonedDateTime.now();
         }
     }
 
@@ -161,6 +161,10 @@ public class UserState {
         return sqlHelper;
     }
 
+    public ZonedDateTime getLastModifyingTime() {
+        return lastModifyingTime;
+    }
+
     public synchronized void setUserId(int userId) throws SQLException {
         this.userId = userId;
         if (userId == -1) {
@@ -191,7 +195,7 @@ public class UserState {
         result.put("file", collectionStoringName);
         result.put("sort-order", meetingSortOrder.toString());
         result.put("meeting-count", Integer.toString(meetingsCollection.size()));
-        result.put("since", Helper.meetingDateFormat.format(openSince));
+        result.put("since", Helper.meetingDateFormat.format(lastModifyingTime));
         result.put("time-zone", String.format("%s (%s)", timeZoneId.toString(), Helper.timeZoneToGMTString(TimeZone.getTimeZone(timeZoneId))));
         return result;
     }
