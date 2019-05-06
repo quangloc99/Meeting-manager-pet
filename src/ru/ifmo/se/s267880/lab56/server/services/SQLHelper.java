@@ -50,7 +50,7 @@ public class SQLHelper {
     private PreparedStatement insertUserAndGetSt = null;
     public ResultSet insertNewUser(@NotNull String email, @NotNull String passwordHash) throws SQLException {
         if (insertUserAndGetSt == null) {
-            insertUserAndGetSt = connection.prepareStatement("INSERT INTO users (email, password_hash) values (?, ?) RETURNING *");
+            insertUserAndGetSt = connection.prepareStatement("INSERT INTO users (email, password_hash, zone_id) values (?, ?, 'GMT') RETURNING *");
         }
         insertUserAndGetSt.setString(1, email);
         insertUserAndGetSt.setString(2, passwordHash);
