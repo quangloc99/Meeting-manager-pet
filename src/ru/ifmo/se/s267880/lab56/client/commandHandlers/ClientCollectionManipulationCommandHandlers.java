@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client.commandHandlers;
 
+import ru.ifmo.se.s267880.lab56.client.Services;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
@@ -13,8 +14,8 @@ import java.util.stream.IntStream;
 public class ClientCollectionManipulationCommandHandlers extends ClientCommandsHandlers
         implements CollectionManipulationCommandHandlers
 {
-    public ClientCollectionManipulationCommandHandlers(Supplier<CommandToServerExecutor> commandExecutorSupplier) {
-        super(commandExecutorSupplier);
+    public ClientCollectionManipulationCommandHandlers(Services services) {
+        super(services);
     }
 
     /**

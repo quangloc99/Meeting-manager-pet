@@ -102,18 +102,6 @@ public class Main {
             }
         });
 
-        Supplier<CommandToServerExecutor> commandExecutorSupplier = () ->
-                new CommandToServerExecutor(messageFromServerBroadcaster, messageToServerSender);
-        InputPreprocessor inputPreprocessor = new ClientInputPreprocessor();
-        Stream.of(
-            new ClientUserAccountManipulationCommandHandlers(commandExecutorSupplier),
-            new ClientCollectionManipulationCommandHandlers(commandExecutorSupplier),
-            new ClientStoringAndRestoringCommandHandlers(commandExecutorSupplier),
-            new ClientMiscellaneousCommandHandlers(commandExecutorSupplier)
-        )
-                .map(handlers -> handlers.generateHandlers(inputPreprocessor))
-                .forEach(handlerMap -> handlerMap.forEach(commandController::addCommand));
-
         commandController.addCommand("exit", CommandHandler.ofConsumer( "I don't have to explain :).", args -> {
             try {sc.close(); } catch (Exception ignored) {}
             System.exit(0);
@@ -128,6 +116,21 @@ public class Main {
                     });
                 }
         ));
+
+        Services.Builder servicesBuilder = new Services.Builder();
+        servicesBuilder.setCommandController(commandController);
+        servicesBuilder.setMessageFromServerBroadcaster(messageFromServerBroadcaster);
+        servicesBuilder.setMessageToServerSender(messageToServerSender);
+        Services services = servicesBuilder.build();
+        InputPreprocessor inputPreprocessor = new ClientInputPreprocessor();
+        Stream.of(
+            new ClientUserAccountManipulationCommandHandlers(services),
+            new ClientCollectionManipulationCommandHandlers(services),
+            new ClientStoringAndRestoringCommandHandlers(services),
+            new ClientMiscellaneousCommandHandlers(services)
+        )
+                .map(handlers -> handlers.generateHandlers(inputPreprocessor))
+                .forEach(handlerMap -> handlerMap.forEach(commandController::addCommand));
         return commandController;
     }
 

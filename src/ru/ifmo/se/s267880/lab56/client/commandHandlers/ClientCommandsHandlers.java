@@ -1,5 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client.commandHandlers;
 
+import ru.ifmo.se.s267880.lab56.client.Services;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.CommandHandlers;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
@@ -10,10 +11,10 @@ import java.util.function.Supplier;
 abstract public class ClientCommandsHandlers implements CommandHandlers {
     private String commandName = null;
     private Object[] commandParams;
-    private Supplier<CommandToServerExecutor> commandExecutorSupplier;
+    protected Services services;
 
-    public ClientCommandsHandlers(Supplier<CommandToServerExecutor> commandExecutorSupplier) {
-        this.commandExecutorSupplier = commandExecutorSupplier;
+    public ClientCommandsHandlers(Services services) {
+        this.services = services;
     }
 
     @Override
@@ -36,6 +37,6 @@ abstract public class ClientCommandsHandlers implements CommandHandlers {
     }
 
     public CommandToServerExecutor buildCommandExecutor() {
-        return commandExecutorSupplier.get();
+        return services.createCommandToServerExecutor();
     }
 }

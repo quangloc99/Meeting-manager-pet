@@ -2,6 +2,7 @@ package ru.ifmo.se.s267880.lab56.client.commandHandlers;
 
 import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
 import ru.ifmo.se.s267880.lab56.client.Main;
+import ru.ifmo.se.s267880.lab56.client.Services;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
@@ -24,9 +25,10 @@ public class ClientMiscellaneousCommandHandlers
     extends ClientCommandsHandlers
     implements MiscellaneousCommandHandlers
 {
-    public ClientMiscellaneousCommandHandlers(Supplier<CommandToServerExecutor> commandExecutorSupplier) {
-        super(commandExecutorSupplier);
+    public ClientMiscellaneousCommandHandlers(Services services) {
+        super(services);
     }
+
     /**
      * show file name, number of meeting and the time the file first load during this session.
      */
