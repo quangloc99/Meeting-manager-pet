@@ -2,7 +2,7 @@ package ru.ifmo.se.s267880.lab56.client.commandHandlers;
 
 import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
 import ru.ifmo.se.s267880.lab56.client.Services;
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRequest;
 import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.StoringAndRestoringCommandHandlers;
@@ -10,7 +10,6 @@ import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.StoringAndRestoring
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
-import java.util.function.Supplier;
 
 public class ClientStoringAndRestoringCommandHandlers extends ClientCommandsHandlers
     implements StoringAndRestoringCommandHandlers

@@ -6,8 +6,7 @@ import ru.ifmo.se.s267880.lab56.client.repl.MainLoop;
 import ru.ifmo.se.s267880.lab56.client.repl.input.DefaultUserInputArgumentParser;
 import ru.ifmo.se.s267880.lab56.client.repl.input.JsonUserInputArgumentParser;
 import ru.ifmo.se.s267880.lab56.client.repl.input.UserInputProvider;
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.Config;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
@@ -25,7 +24,6 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Arrays;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -38,7 +36,7 @@ public class Main {
         printAwesomeASCIITitle();
 
         if (address == null) {
-            address = getInitSocketAddressFromUserInput("localhost", Config.COMMAND_EXECUTION_PORT);
+            address = getInitSocketAddressFromUserInput("localhost", 0);
         }
 
         SocketConnector socketConnector = new SocketConnector(5, 1300);

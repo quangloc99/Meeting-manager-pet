@@ -1,6 +1,6 @@
 package ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers;
 
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;

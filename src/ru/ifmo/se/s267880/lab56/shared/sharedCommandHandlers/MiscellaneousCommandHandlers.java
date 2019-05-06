@@ -1,13 +1,11 @@
 package ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers;
 
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.*;
 
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TimeZone;
 
 public interface  MiscellaneousCommandHandlers extends CommandHandlers {

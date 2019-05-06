@@ -1,6 +1,6 @@
 package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.IncorrectInputException;
@@ -8,7 +8,6 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.IncorrectInputExceptio
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * An utility class that use reflection and annotation to add commands for {@link CommandController} more easily

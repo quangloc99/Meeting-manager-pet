@@ -5,10 +5,10 @@ import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerMiscellaneousComman
 import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerStoringAndRestoringCommandHandlers;
 import ru.ifmo.se.s267880.lab56.server.commandHandlers.ServerUserAccountManipulationCommandHandlers;
 import ru.ifmo.se.s267880.lab56.server.services.Services;
-import ru.ifmo.se.s267880.lab56.shared.*;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 
 import java.io.*;
 import java.sql.SQLException;

@@ -1,7 +1,6 @@
 package ru.ifmo.se.s267880.lab56.shared.commandsController;
 
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.Helper;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 
 import java.util.*;
 import java.util.List;

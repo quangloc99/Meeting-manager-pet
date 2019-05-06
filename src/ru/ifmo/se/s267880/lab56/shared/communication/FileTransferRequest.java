@@ -1,7 +1,6 @@
 package ru.ifmo.se.s267880.lab56.shared.communication;
 
 import ru.ifmo.se.s267880.lab56.shared.BoundedInputStream;
-import ru.ifmo.se.s267880.lab56.shared.Config;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 
 import java.io.*;

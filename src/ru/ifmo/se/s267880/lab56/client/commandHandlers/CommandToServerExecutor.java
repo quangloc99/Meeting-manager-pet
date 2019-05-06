@@ -1,6 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client.commandHandlers;
 
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.communication.*;
 
 import java.io.IOException;

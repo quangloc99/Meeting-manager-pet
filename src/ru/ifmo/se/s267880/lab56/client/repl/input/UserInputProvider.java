@@ -1,6 +1,6 @@
 package ru.ifmo.se.s267880.lab56.client.repl.input;
 
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 
 import java.io.BufferedReader;
 import java.io.IOException;

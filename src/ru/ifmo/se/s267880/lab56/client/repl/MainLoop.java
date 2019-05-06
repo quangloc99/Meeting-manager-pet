@@ -2,7 +2,7 @@ package ru.ifmo.se.s267880.lab56.client.repl;
 
 import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
 import ru.ifmo.se.s267880.lab56.client.repl.input.UserInputProvider;
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.communication.CommunicationIOException;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 

@@ -1,13 +1,8 @@
 package ru.ifmo.se.s267880.lab56.shared;
 
 import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
  * @author Tran Quang Loc
@@ -44,8 +39,15 @@ public class Helper {
         }
     }
 
+    public static String TEMP_FILE_PREFIX = "meeting_manager_temp";
+    public static File TEMP_DIR = new File(".temp/");
     public static File createTempFile() throws IOException {
-        File res = File.createTempFile(Config.TEMP_FILE_PREFIX, null);
+        if (!TEMP_DIR.exists()) {
+            if (!TEMP_DIR.mkdir()) {
+                throw new IOException("cannot create temp file");
+            }
+        }
+        File res = File.createTempFile(TEMP_FILE_PREFIX, null, TEMP_DIR);
         res.deleteOnExit();
         return res;
     }

@@ -1,7 +1,7 @@
 package ru.ifmo.se.s267880.lab56.server.commandHandlers;
 
 import ru.ifmo.se.s267880.lab56.server.services.Services;
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
 

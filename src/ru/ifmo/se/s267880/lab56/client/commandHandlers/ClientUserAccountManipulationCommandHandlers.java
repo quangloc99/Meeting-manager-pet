@@ -3,7 +3,7 @@ package ru.ifmo.se.s267880.lab56.client.commandHandlers;
 import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
 import ru.ifmo.se.s267880.lab56.client.Services;
 import ru.ifmo.se.s267880.lab56.client.UserInputHelper;
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.UserAccountManipulationCommandHandlers;
 
 import javax.mail.internet.AddressException;
@@ -11,7 +11,6 @@ import javax.mail.internet.InternetAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class ClientUserAccountManipulationCommandHandlers extends ClientCommandsHandlers
     implements UserAccountManipulationCommandHandlers

@@ -4,7 +4,7 @@ import ru.ifmo.se.s267880.lab56.csv.CsvReader;
 import ru.ifmo.se.s267880.lab56.csv.CsvRowWithNamesWriter;
 import ru.ifmo.se.s267880.lab56.server.services.Services;
 import ru.ifmo.se.s267880.lab56.shared.BuildingLocation;
-import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
+import ru.ifmo.se.s267880.lab56.shared.functional.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.communication.FileTransferRequest;
