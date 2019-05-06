@@ -9,12 +9,14 @@ import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.ReflectionCommandHandlerGenerator;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Usage;
+import ru.ifmo.se.s267880.lab56.shared.communication.CommandExecuteRequest;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -72,6 +74,12 @@ public class ClientMiscellaneousCommandHandlers
         buildCommandExecutor().run(generateRequest(), callback);
     }
 
+    @Command("set-timezone")
+    @Usage("automatically detect and set the time zone to your current time zone.")
+    public void setTimeZone(HandlerCallback callback) {
+        buildCommandExecutor().run(new CommandExecuteRequest(getCommandName(), ZonedDateTime.now().getZone().toString()), callback);
+    }
+
     @Command
     @Usage("Clear the screen.")
     public void clrscr() {
@@ -98,7 +106,7 @@ public class ClientMiscellaneousCommandHandlers
     public static void help() {
         InputStream help = Main.class.getResourceAsStream("res/help.md");
         if (help == null) {
-            ConsoleWrapper.console.println("No help found");
+            ConsoleWrapper.console.println("No help found. Contact the developer if you see this message.");
         } else {
             new BufferedReader(new InputStreamReader(help)).lines().forEach(ConsoleWrapper.console::println);
         }
@@ -107,9 +115,9 @@ public class ClientMiscellaneousCommandHandlers
     @Override
     public Map<String, CommandHandler> generateHandlers(InputPreprocessor preprocessor) {
         Map<String, CommandHandler> res = MiscellaneousCommandHandlers.super.generateHandlers(preprocessor);
-        res.putAll(ReflectionCommandHandlerGenerator.generate(
-                ClientMiscellaneousCommandHandlers.class, this, preprocessor
-        ));
+        ReflectionCommandHandlerGenerator.generate(
+            ClientMiscellaneousCommandHandlers.class, this, preprocessor
+        ).forEach((commandName, handler) -> res.merge(commandName, handler, CommandHandler::join));
         return res;
     }
 }
