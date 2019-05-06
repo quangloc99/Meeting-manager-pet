@@ -67,12 +67,12 @@ public class ReflectionCommandHandlerGenerator {
      */
     public static Map<String, CommandHandler> generate(Class metaDataClass, CommandHandlers commandHandlers, InputPreprocessor preprocessor) {
         Map<String, CommandHandler> res = new LinkedHashMap<>();
-        for (Map.Entry<String, List<Method>> e : filterCommands(metaDataClass).entrySet()) {
-            res.put(e.getKey(), CommandHandler.join(e.getValue().stream()
-                    .map(m -> generateHandlerFromMethod(e.getKey(), m, commandHandlers, preprocessor))
+        filterCommands(metaDataClass).forEach((commandName, methods) ->
+            res.put(commandName, CommandHandler.join(methods.stream()
+                    .map(m -> generateHandlerFromMethod(commandName, m, commandHandlers, preprocessor))
                     .toArray(CommandHandler[]::new)
-            ));
-        }
+            ))
+        );
         return res;
     }
 
