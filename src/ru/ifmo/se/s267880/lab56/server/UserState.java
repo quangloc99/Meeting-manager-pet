@@ -4,7 +4,6 @@ import ru.ifmo.se.s267880.lab56.server.services.SQLHelper;
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.Meeting;
 import ru.ifmo.se.s267880.lab56.shared.MeetingSortOrder;
-import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
 import ru.ifmo.se.s267880.lab56.shared.functional.FunctionWithException;
 
 import java.security.InvalidParameterException;
@@ -193,7 +192,7 @@ public class UserState {
         result.put("sort-order", meetingSortOrder.toString());
         result.put("meeting-count", Integer.toString(meetingsCollection.size()));
         result.put("since", Helper.meetingDateFormat.format(openSince));
-        result.put("time-zone", String.format("%s (%s)", timeZoneId.toString(), ZoneUtils.timeZoneToGMTString(TimeZone.getTimeZone(timeZoneId))));
+        result.put("time-zone", String.format("%s (%s)", timeZoneId.toString(), Helper.timeZoneToGMTString(TimeZone.getTimeZone(timeZoneId))));
         return result;
     }
 }

@@ -13,44 +13,10 @@ import java.util.regex.Pattern;
  * @author Tran Quang Loc
  */
 public class Helper {
-    public static final Pattern PASSWORD_PATTERN = Pattern.compile("[\\w@#$%^&+=]{6,}");
     /**
      * The default date format for <i>almost</i> Date object.
      */
     public static final DateTimeFormatter meetingDateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss z");
-
-    /**
-     * Contains the mapping between the string representation of Calendar's fields (YEAR, MONTH) and those contansts.
-     * For example {@code calendarFieldMap.get("year") == Calendar.YEAR;}
-     */
-    public static final Map<String, Integer> calendarFieldMap = new HashMap<>();
-
-    /**
-     * Contains mapping between human integer's presentation for month and Calendar.{@code <MONTH>} constants.
-     */
-    public static final Map<Integer, Integer> monthMap = new HashMap<>();
-
-    static {
-        calendarFieldMap.put("year", Calendar.YEAR);
-        calendarFieldMap.put("month", Calendar.MONTH);
-        calendarFieldMap.put("date", Calendar.DATE);
-        calendarFieldMap.put("hour", Calendar.HOUR);
-        calendarFieldMap.put("minute", Calendar.MINUTE);
-        calendarFieldMap.put("second", Calendar.SECOND);
-
-        monthMap.put(1, Calendar.JANUARY);
-        monthMap.put(2, Calendar.FEBRUARY);
-        monthMap.put(3, Calendar.MARCH);
-        monthMap.put(4, Calendar.APRIL);
-        monthMap.put(5, Calendar.MAY);
-        monthMap.put(6, Calendar.JUNE);
-        monthMap.put(7, Calendar.JULY);
-        monthMap.put(8, Calendar.AUGUST);
-        monthMap.put(9, Calendar.SEPTEMBER);
-        monthMap.put(10, Calendar.OCTOBER);
-        monthMap.put(11, Calendar.NOVEMBER);
-        monthMap.put(12, Calendar.DECEMBER);
-    }
 
     public static String join(CharSequence delimitor, Object[] obj) {
         String [] str = new String[obj.length];
@@ -63,10 +29,6 @@ public class Helper {
     @SuppressWarnings("unchecked")
     public static <E extends Throwable> void sneakyThrows(Throwable e) throws E {
         throw (E) e;
-    }
-
-    public static <K, V> AbstractMap.SimpleEntry<K, V> makePair(K key, V value) {
-        return new AbstractMap.SimpleEntry<>(key, value);
     }
 
     public static byte[] serializableToByteArray(Serializable obj) {
@@ -112,6 +74,18 @@ public class Helper {
             return Void.class;
 
         return clazz;
+    }
+
+    public static boolean isValidTimeZone(final String timeZone) {
+        // This code got from:
+        // https://stackoverflow.com/a/40939623
+        final String DEFAULT_GMT_TIMEZONE = "GMT";
+        return timeZone.equals(DEFAULT_GMT_TIMEZONE) || !TimeZone.getTimeZone(timeZone).getID().equals(DEFAULT_GMT_TIMEZONE);
+    }
+
+    public static String timeZoneToGMTString(TimeZone zone) {
+        long minutes = zone.getRawOffset() / 1000 / 60;
+        return String.format("GMT%+d:%02d", minutes / 60, (minutes % 60 + 60) % 60);
     }
 }
 

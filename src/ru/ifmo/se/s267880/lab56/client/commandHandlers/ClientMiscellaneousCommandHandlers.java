@@ -4,7 +4,7 @@ import ru.ifmo.se.s267880.lab56.client.ConsoleWrapper;
 import ru.ifmo.se.s267880.lab56.client.Main;
 import ru.ifmo.se.s267880.lab56.client.Services;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
+import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandHandler;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.Command;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.helper.InputPreprocessor;
@@ -16,10 +16,8 @@ import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousComman
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Supplier;
 
 public class ClientMiscellaneousCommandHandlers
     extends ClientCommandsHandlers
@@ -67,7 +65,7 @@ public class ClientMiscellaneousCommandHandlers
     private void sortAndPrintTimezones(List<TimeZone> zones) {
         zones.sort(Comparator.comparing(TimeZone::getRawOffset).thenComparing(TimeZone::getID));
         zones.forEach(s -> ConsoleWrapper.console.printf("\t%s: %s\n",
-                ZoneUtils.timeZoneToGMTString(s), s.getID()
+                Helper.timeZoneToGMTString(s), s.getID()
         ));
     }
 

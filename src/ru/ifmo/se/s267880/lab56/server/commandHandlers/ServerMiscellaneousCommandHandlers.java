@@ -2,11 +2,10 @@ package ru.ifmo.se.s267880.lab56.server.commandHandlers;
 
 import ru.ifmo.se.s267880.lab56.server.services.Services;
 import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
-import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
+import ru.ifmo.se.s267880.lab56.shared.Helper;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
 
 import java.sql.SQLException;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,7 @@ public class ServerMiscellaneousCommandHandlers extends ServerCommandHandlers
     @Override
     @SuppressWarnings("unchecked")
     public void setTimeZone(String zoneId, HandlerCallback callback) {
-        if (!ZoneUtils.isValidTimeZone(zoneId)) {
+        if (!Helper.isValidTimeZone(zoneId)) {
             callback.onError(new Exception("Incorrect time zone!"));
         }
         try {
