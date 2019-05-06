@@ -11,7 +11,6 @@ import java.security.InvalidParameterException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -145,8 +144,10 @@ public class UserState {
     }
 
     public List<Meeting> getMeetingsCollection() {
-        meetingsCollection.sort(meetingSortOrder.getMeetingComparator());
-        return Collections.unmodifiableList(meetingsCollection);
+        return meetingsCollection.stream()
+                .map(this::transformMeetingTimeSameInstant)
+                .sorted(meetingSortOrder.getMeetingComparator())
+                .collect(Collectors.toList());
     }
 
     public String getCollectionStoringName() {
