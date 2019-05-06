@@ -161,7 +161,10 @@ public class UserState {
         return sqlHelper;
     }
 
-    public void setTimeZone(ZoneId timeZoneId) {
+    public void setTimeZone(ZoneId timeZoneId) throws SQLException {
+        if (sqlHelper != null) {
+            sqlHelper.updateUserTimeZone(userId, timeZoneId.toString());
+        }
         this.timeZoneId = timeZoneId;
     }
 

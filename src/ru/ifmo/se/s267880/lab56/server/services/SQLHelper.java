@@ -57,6 +57,16 @@ public class SQLHelper {
         return insertUserAndGetSt.executeQuery();
     }
 
+    private PreparedStatement updateUserTimeZoneSt = null;
+    public int updateUserTimeZone(int userId, String timeZoneId) throws SQLException {
+        if (updateCollectionSt == null) {
+            updateCollectionSt = connection.prepareStatement("UPDATE users set zone_id = ? where id = ?");
+        }
+        updateUserTimeZoneSt.setInt(2, userId);
+        updateUserTimeZoneSt.setString(1, timeZoneId);
+        return updateUserTimeZoneSt.executeUpdate();
+    }
+
     private PreparedStatement insertCollectionAndGetSt = null;
     public ResultSet insertNewCollection(@NotNull String name, MeetingSortOrder sortOrder, int ownerId) throws SQLException {
         if (insertCollectionAndGetSt == null) {

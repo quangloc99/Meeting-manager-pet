@@ -5,6 +5,7 @@ import ru.ifmo.se.s267880.lab56.shared.HandlerCallback;
 import ru.ifmo.se.s267880.lab56.shared.ZoneUtils;
 import ru.ifmo.se.s267880.lab56.shared.sharedCommandHandlers.MiscellaneousCommandHandlers;
 
+import java.sql.SQLException;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +53,11 @@ public class ServerMiscellaneousCommandHandlers extends ServerCommandHandlers
         if (!ZoneUtils.isValidTimeZone(zoneId)) {
             callback.onError(new Exception("Incorrect time zone!"));
         }
-        services.getUserState().setTimeZone(TimeZone.getTimeZone(zoneId).toZoneId());
-        callback.onSuccess(null);
+        try {
+            services.getUserState().setTimeZone(TimeZone.getTimeZone(zoneId).toZoneId());
+            callback.onSuccess(null);
+        } catch (SQLException e) {
+            callback.onError(e);
+        }
     }
 }
