@@ -8,5 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="com.google.code.gson:gson:2.8.5" level="project" />
+    <orderEntry type="library" name="org.postgresql:postgresql:42.2.5.jre7" level="project" />
+    <orderEntry type="library" name="com.sun.mail:javax.mail:1.6.2" level="project" />
   </component>
 </module>
