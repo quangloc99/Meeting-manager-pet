@@ -11,7 +11,8 @@ $$;
 CREATE TABLE IF NOT EXISTS users (
   id serial PRIMARY KEY,
   email text UNIQUE,
-  password_hash text
+  password_hash text,
+  zone_id text
 );
 
 CREATE TABLE IF NOT EXISTS collections (
