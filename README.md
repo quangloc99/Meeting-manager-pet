@@ -1,31 +1,24 @@
 # Meeting manager
 
-[![asciicast](https://asciinema.org/a/EDJUUaN6ZPeh6StQrHYPtLD15.svg)](https://asciinema.org/a/EDJUUaN6ZPeh6StQrHYPtLD15)
-_Sadly I still not updated this screen cast since lab 5_
+## What is this?
 
-This is one of my lab at the university (my 5th lab in programming). But I think it was interesting so I extended it
+This is one of my lab at the university (my 5th, 6th and 7th lab in programming). But I think it was interesting so I extended it
 a little bit more and now it is looks like a pet project to me.
 
-## The goal
-My task is to create a command line app that must use 1 java's `Collection` to manage 1 of the classes I have done in the
-forth lab. My class's name is `Meeting` so hence the name of the repo.
-
-The app must let's user type some commands with or without 1 arguments, and it maybe a *multiple line* json string.
-
-The app must also store the user data into files. My variant is to store it into CSV files.
+## But really, what is this?
+This is an app that manage meetings, but not really. The main purpose of this app is just for practicing. So there will be features that missing,
+but also features that does not need :stuck_out_tongue:. Still you can add and remove meetings, sort the meetings. Other features
+is below.
 
 ## Features
-- For the storing user's data, I wrote my own CSV reader and writer. The reader use the same technique with 
-[my json parson in Python](https://github.com/quangloc99/simple-json-parser),
+- Allow user to add/remove a meetings with JSON input from keyboard via CLI.
 
-- In order to read JSON object multiple lines and also combine it with another data type, I use
-[Google's Gson](https://github.com/google/gson), but because that library was designed to parse String and Files, not
-for the command lines, I played around with reflection to bend it to fit my need.
+- It can be run with a client and server app separately or run combine both client and server into one app.
 
-- Also with reflection and annotations, I was able to create a system for my commands very easily. I was able to handle 
-commands with more arguments and more types.
+- Users can register accounts (and verify the account via email), create collections of meetings and store them into the database.
 
-- I still need to update this part, because there is whole lots more :stuck_out_tongue:.
+- Users can also view the collections of other user. They can also modify and store that list as their own. 
 
-## Final thought
-I spend a lots of times in this one. Hope I got good point on the defense part :smile:.
+- If you don't want to create an account, you can still use the app.
+Your progress can be stored and restored with file view commands `import` and `export` with CSV file format.
+
