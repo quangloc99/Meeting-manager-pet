@@ -37,12 +37,12 @@ public class ClientMiscellaneousCommandHandlers
         buildCommandExecutor().run(generateRequest(), new HandlerCallback<>(res -> {
             Map<String, String> result = res.getResult();
             ConsoleWrapper.console.println("# Information");
-            ConsoleWrapper.console.println("User email: " + result.get("user-email"));
+            ConsoleWrapper.console.println("User email: " + (result.get("user-email") == null ? "<<you are currently logging out>>" : result.get("user-email")));
             ConsoleWrapper.console.println("Collection name: " + (result.get("file") == null ? "<<no name>>" : result.get("file")));
             ConsoleWrapper.console.println("Sort order: " + result.get("sort-order"));
-            ConsoleWrapper.console.println("Time zone: UTC" + result.get("time-zone"));
+            ConsoleWrapper.console.println("Time zone: " + result.get("time-zone"));
             ConsoleWrapper.console.println("Number of meeting: " + result.get("meeting-count"));
-            ConsoleWrapper.console.println("File load since: " + result.get("since"));
+            ConsoleWrapper.console.println("Load since: " + result.get("since"));
 //            ConsoleWrapper.console.println("Is quite: " + isQuite);
             callback.onSuccess(result);
         }, callback::onError));

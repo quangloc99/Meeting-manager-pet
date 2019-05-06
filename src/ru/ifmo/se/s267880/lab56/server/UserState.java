@@ -193,7 +193,7 @@ public class UserState {
         result.put("sort-order", meetingSortOrder.toString());
         result.put("meeting-count", Integer.toString(meetingsCollection.size()));
         result.put("since", Helper.meetingDateFormat.format(openSince));
-        result.put("time-zone", timeZoneId.toString() + " " + ZoneUtils.toUTCZoneOffsetString(timeZoneId));
+        result.put("time-zone", String.format("%s (%s)", timeZoneId.toString(), ZoneUtils.timeZoneToGMTString(TimeZone.getTimeZone(timeZoneId))));
         return result;
     }
 }

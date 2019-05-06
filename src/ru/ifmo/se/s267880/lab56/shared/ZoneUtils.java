@@ -22,42 +22,4 @@ public class ZoneUtils {
         long minutes = zone.getRawOffset() / 1000 / 60;
         return String.format("GMT%+d:%02d", minutes / 60, (minutes % 60 + 60) % 60);
     }
-
-    static public final Map<Integer, ZoneId> allZoneIds = Collections.unmodifiableMap(generateZonesIdWithIndex());
-    static private Map<Integer, ZoneId> generateZonesIdWithIndex() {
-        Map<Integer, ZoneId> zones = new HashMap<>();
-        ZoneId.getAvailableZoneIds().stream()
-                .map(ZoneId::of)
-                .sorted(Comparator.comparing(ZoneId::toString))
-                .sorted(Comparator.comparing(ZoneUtils::toUTCZoneOffset))
-                .forEachOrdered(e -> zones.put(zones.size(), e));
-        return zones;
-    }
-
-    public static ZoneOffset toUTCZoneOffset(ZoneId id) {
-        return LocalDateTime.now().atZone(id).getOffset();
-    }
-
-    public static String toUTCZoneOffsetString(ZoneId id) {
-        return toUTCZoneOffset(id).toString().replace("Z", "+00:00");
-    }
-
-    public static Map<Integer, ZoneId> getZonesBy(Predicate<ZoneId> predicate) {
-        return allZoneIds.entrySet().stream()
-                .filter(e -> predicate.test(e.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    public static void printAllZone() {
-        printZonesByZoneOffset(allZoneIds);
-    }
-
-    public static void printZonesByZoneOffset(Map<Integer, ZoneId> zones) {
-        new TreeMap<>(
-            zones.entrySet().stream().collect(Collectors.groupingBy(e -> toUTCZoneOffset(e.getValue())))
-        ) .forEach((k, v) -> {
-            ConsoleWrapper.console.printf("UTC%s%n", toUTCZoneOffsetString(k));
-            v.forEach(e -> ConsoleWrapper.console.printf("\t%d) %s%n", e.getKey(), e.getValue()));
-        }) ;
-    }
 }
