@@ -34,12 +34,8 @@ public class HandlerCallback<T> {
 
     public HandlerCallback<T> andThen(HandlerCallback<T> after) {
         return new HandlerCallback<>(
-                onSuccessCallback == null ? after.onSuccessCallback :
-                        after.onSuccessCallback == null ? onSuccessCallback :
-                                onSuccessCallback.andThen(after.onSuccessCallback),
-                onErrorCallback == null ? after.onErrorCallback :
-                        after.onErrorCallback== null ? onErrorCallback :
-                                onErrorCallback.andThen(after.onErrorCallback)
+                o -> { onSuccess(o); after.onSuccess(o); },
+                e -> { onError(e); after.onError(e); }
         );
     }
 }

@@ -2,14 +2,12 @@ package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
 import java.lang.annotation.*;
 
-import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
-
 /**
  * An annotation mark a method to be a commands.
  *
- * The object that has methods with this annotation can be passed to {@link ReflectionCommandHandlerGenerator#addCommand(CommandController, Object, InputPreprocessor)}
+ * The object that has methods with this annotation can be passed to {@link ReflectionCommandHandlerGenerator#generate(Class, CommandHandlers, InputPreprocessor)}
  *
- * @Author Tran Quang Loc
+ * @author Tran Quang Loc
  * @see ReflectionCommandHandlerGenerator
  * @see Usage
  */

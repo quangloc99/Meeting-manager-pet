@@ -2,6 +2,9 @@ package ru.ifmo.se.s267880.lab56.shared.commandsController;
 
 import ru.ifmo.se.s267880.lab56.shared.Helper;
 
+/**
+ * An Exception that will be thrown when the input for a command is incorrect.
+ */
 public class IncorrectInputException extends Exception {
     public IncorrectInputException() {
         super();

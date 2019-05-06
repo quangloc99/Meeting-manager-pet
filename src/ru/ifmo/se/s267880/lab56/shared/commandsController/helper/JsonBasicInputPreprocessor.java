@@ -4,17 +4,17 @@ import com.google.gson.JsonElement;
 import ru.ifmo.se.s267880.lab56.shared.commandsController.CommandController;
 
 /**
- * A badic input preprocessor that transform Json into some primitive types.
+ * A basic input preprocessor that transform Json into some primitive types.
  * @author Tran Quang Loc
  * @see ReflectionCommandHandlerGenerator
  */
 public class JsonBasicInputPreprocessor implements InputPreprocessor {
     /**
-     * This method is used without generic, so it can extends easily, and beside it is used only with
-     * {@link ReflectionCommandHandlerGenerator#addCommand(CommandController, Class, CommandHandlers, InputPreprocessor)}
-     *
-     * @param obj the object that was entered by the user.
-     * @param inputType the desired class of the output.
+     * Transform the object into the desired type.
+     * @param obj the object needed to be transform.
+     * @param inputType the class of the desired type
+     * @return transformed object
+     * @throws CannotPreprocessInputException when cannot transform or there is another exception during the transformation process.
      */
     public Object preprocess(Object obj, Class inputType) throws CannotPreprocessInputException {
         if (!(obj instanceof  JsonElement)) throw new CannotPreprocessInputException("obj must be JsonElement");
@@ -25,7 +25,7 @@ public class JsonBasicInputPreprocessor implements InputPreprocessor {
      * Transform an JsonElement into desired class.
      * @param elm the json element that entered by the user.
      * @param inputType the desired class of the output.
-     * @throws CannotPreprocessInputException when cannot parse the primitive type.
+     * @throws CannotPreprocessInputException when cannot transform or there is another exception during the transformation process.
      */
     protected Object preprocessJson(JsonElement elm, Class inputType) throws CannotPreprocessInputException {
         try {

@@ -1,7 +1,7 @@
 package ru.ifmo.se.s267880.lab56.shared.commandsController.helper;
 
 /**
- * An exeption that will be thrown when a {@link InputPreprocessor} cannot preprocess the input.
+ * An exception that will be thrown when a {@link InputPreprocessor} cannot preprocess the input.
  * @author Tran Quang Loc
  */
 public class CannotPreprocessInputException extends Exception {

@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 /**
- * An utility class that use reflection and annotation to add commands for {@link CommandController} more easily
+ * An utility class that use reflection and annotation to generate commands for {@link CommandController} more easily
  * and nicely.
  * Example: <pre>
  *      class MyCommands {
@@ -35,12 +35,9 @@ import java.util.*;
  *
  *      {@code
  *      public static void main(String[] args) {
- *          CommandController cc = new CommandController();  // use CLIWithJsonCommandController inorder to display all the commands.
- *          ReflectionCommandHandlerGenerator.addCommand(cc, new MyCommands(), new JsonBasicInputPreprocessor());
- *          cc.addCommand("exit", "just exit", () -> {
-     *        System.exit(0);
- *            return CommandController.SUCESS;
- *          });  // beside using this adder, we can combined it with the traditional ones.
+ *          CommandController cc = new CommandController();  // use CLIWithJsonCommandController in order to display all the commands.
+ *          ReflectionCommandHandlerGenerator.generate(MyCommands.class, new MyCommands(), new JsonBasicInputPreprocessor())
+ *              .forEach(cc::addCommand);
  *          while (1) {
  *              cc.execute();
  *          }
@@ -55,14 +52,11 @@ import java.util.*;
 public class ReflectionCommandHandlerGenerator {
 
     /**
-     * The only method in this class, that add all commands represented by commandHandlers's methods (with annotation {@link Command}),
-     * which has input preprocessed by preprocessor.
-     * This class introduce metaDataClass inorder to get more freedom: the annotations can be added in the super class
-     * and the subclass does not need to add.
+     * Generate command handlers.
      *
-     * @param metaDataClass the class that has methods with annotation {@link Command}
+     * @param metaDataClass the class that has methods to be handlers, marked with annotation {@link Command}
      * @param commandHandlers the object that is an instance of metaDataClass
-     * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
+     * @param preprocessor an object for preprocess the input.
      */
     public static Map<String, CommandHandler> generate(Class metaDataClass, CommandHandlers commandHandlers, InputPreprocessor preprocessor) {
         Map<String, CommandHandler> res = new LinkedHashMap<>();
@@ -76,14 +70,11 @@ public class ReflectionCommandHandlerGenerator {
     }
 
     /**
-     * The only method in this class, that add all commands represented by commandHandlers's methods (with annotation {@link Command}),
-     * which has input preprocessed by preprocessor.
+     * Generate command handlers. This method calls {@link #generate(Class, CommandHandlers, InputPreprocessor)} with
+     * metaDataClass is the direct class of commandHandlers.
      *
-     * This method called {@link #generate(Class, CommandHandlers, InputPreprocessor)} with metaDataClass
-     * is commandHandlers.getClass().
-     *
-     * @param commandHandlers the object that has methods with annotation {@link Command}
-     * @param preprocessor an object for preprocess the input entered by the user. Note that this class can be extends to be used with the other types.
+     * @param commandHandlers the object that is an instance of metaDataClass
+     * @param preprocessor an object for preprocess the input.
      */
     public static Map<String, CommandHandler> generate(CommandHandlers commandHandlers, InputPreprocessor preprocessor) {
         return generate(commandHandlers.getClass(), commandHandlers, preprocessor);
@@ -132,15 +123,9 @@ public class ReflectionCommandHandlerGenerator {
                     );
                     if (hasCallback) {
                         preprocessedArgs[paramCount] = new HandlerCallback<>(
-                                o -> {
-                                    commandHandlers.setCommandInformation(null);
-                                    callback.onSuccess(o);
-                                },
-                                e -> {
-                                    commandHandlers.setCommandInformation(null);
-                                    callback.onError(e);
-                                }
-                        );
+                                o -> commandHandlers.setCommandInformation(null),
+                                e -> commandHandlers.setCommandInformation(null)
+                        ).andThen(callback);
                     }
                     commandHandlers.setCommandInformation(commandName, Arrays.copyOfRange(preprocessedArgs, 0, paramCount));
                     Object res = med.invoke(commandHandlers, preprocessedArgs);
